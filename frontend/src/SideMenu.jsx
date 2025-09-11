@@ -1,23 +1,37 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-
+//Style for Sign In
 const buttonStyle = {
-    backgroundColor: 'rgba(255, 123, 0, 1)', // orange background
-    color: 'white', //white text
+    backgroundColor: 'rgba(255, 123, 0, 1)',
+    color: 'white',
     border: 'none',
-    marginTop:'50px',
+    marginTop: '20px',
     width: '100%',
     borderRadius: '5px',
     fontWeight: 'bold',
     padding: '7.5px 15px',
-    transition: '0.3s ease'
+    transition: '0.3s ease',
+    cursor: 'pointer'
+}
+//Style for Log In
+const buttonStyle1 = {
+    backgroundColor: 'rgba(151, 151, 151, 1)',
+    color: 'white',
+    border: 'none',
+    marginTop: '50px',
+    width: '100%',
+    borderRadius: '5px',
+    fontWeight: 'bold',
+    padding: '7.5px 15px',
+    transition: '0.3s ease',
+    cursor: 'pointer'
 }
 
 function SideMenu({ isOpen, onClose, children, activeIndex }) {
     const menuRef = useRef(null);
 
     const [isMenuExpanded, setIsMenuExpanded] = useState(false); // 👈 stare pt submeniu
-  
+
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -40,7 +54,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
             setIsMenuExpanded(false);
         }
     }, [isOpen]);
-    
+
     return (
         <>
             {/* Overlay */}
@@ -97,9 +111,23 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                         title="Close"
                     >
                         ✕
+
                     </button>
-                    
-                        <button
+                    <button
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
+
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)';
+
+                        }}
+                        onClick={() => window.location.href = '/login'}
+                        style={buttonStyle1} >
+                        Log In
+                    </button>
+                    <button
+                        onClick={() => window.location.href = '/signup'}
                         onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
 
@@ -109,13 +137,13 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
 
                         }}
                         style={buttonStyle} >
-                        Sign In
+                        Sign Up
                     </button>
-                    
-                    
+
+
                 </div>
 
-                
+
             </div>
         </>
     );

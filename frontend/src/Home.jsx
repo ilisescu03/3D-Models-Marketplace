@@ -1,18 +1,22 @@
 import React from "react";
 import Header from "./Header";
 
-const homeStyle = {
+const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
-    backgroundAttachment: "fixed", // face imaginea fixă
+    backgroundAttachment: "fixed",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     backgroundSize: "cover",
-    minHeight: "100vh", // ocupă tot ecranul
-  };
+    minHeight: "100vh",
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center', // center vertical
+};
 
 function Home(){
     return(
-        <div style={homeStyle}>
+        <div style={backgroundStyle}>
         <Header />
         
         </div>
