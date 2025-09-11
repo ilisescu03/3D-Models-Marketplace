@@ -15,12 +15,12 @@
     
    - Firebase Firestore : For storing metadata about 3D models
     
-   -Firebase  Storage : For storing and retrieving actual 3D model files
+   - Firebase  Storage : For storing and retrieving actual 3D model files
 
-   -Upload: Users can upload files directly to Firebase Storage via React forms
+   - Upload: Users can upload files directly to Firebase Storage via React forms
     
-   -Download: Files can be downloaded using direct links from Firebase Storage or through a download button in the app
+   - Download: Files can be downloaded using direct links from Firebase Storage or through a download button in the app
 
-   -Optional payment integration (Stripe or PayPal) for paid downloads
+   - Optional payment integration (Stripe or PayPal) for paid downloads
  
 
