@@ -1,5 +1,6 @@
-import React from "react";
-import Header from "./Header";
+import { useState, useEffect } from "react";
+import Header from "../UI+UX/Header";
+import validation from "../validations/LogInValidation.jsx";
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
@@ -41,7 +42,8 @@ const inputStyle = {
 }
 const formRowStyle = {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginRight: '1rem',
     gap: '1.5rem'
 }
 const labelStyle = {
@@ -89,41 +91,89 @@ const buttonStyle2 = {
     transition: '0.3s ease',
     cursor: 'pointer'
 }
-function SignUp() {
+function LogIn() {
+    const [values, setValues] = useState({ email: "", password: "" });
+    const [errors, setErrors] = useState({});
+
+    const handleChange = (e) => {
+        setValues({ ...values, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const validationErrors = validation(values);
+
+        if (validationErrors.email || validationErrors.password) {
+            setErrors(validationErrors);
+        } else {
+
+            console.log("(Login) Succesful", values);
+
+
+            setValues({ email: "", password: "" });
+            setErrors({});
+        }
+    };
     return (
         <div style={backgroundStyle}>
             <Header />
-            <form style={formStyle}>
-                <h2>Sign Up</h2>
+            <form onSubmit={handleSubmit} style={formStyle} noValidate>
+                <h2>Log In</h2>
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Email:</p>
-                    <input type="email" placeholder="Email" style={inputStyle} required />
-                </div>
-                <div style={formRowStyle}>
-                    <p style={labelStyle}>Username:</p>
-                    <input type="username" placeholder="UserName" style={inputStyle} required />
+                    <div style={{ flex: 1 }}>
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Email"
+                            value={values.email}
+                            onChange={handleChange}
+                            style={{
+                                ...inputStyle,
+                                border: errors.email ? "2px solid red" : inputStyle.border,
+                            }}
+                        />
+                        {errors.email && (
+                            <p style={{ color: "red", fontSize: "0.8rem", marginTop: "5px" }}>
+                                {errors.email}
+                            </p>
+                        )}
+                    </div>
                 </div>
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Password:</p>
-                    <input type="password" placeholder="Password" style={inputStyle} required />
-                </div>
-                <div style={formRowStyle}>
-                    <p style={labelStyle}>Confirm password:</p>
-                    <input type="confirm-password" placeholder="Confirm Password" style={inputStyle} required />
+                    <div style={{ flex: 1 }}>
+                        <input
+                            type="password"
+                            name="password"
+                            placeholder="Password"
+                            value={values.password}
+                            onChange={handleChange}
+                            style={{
+                                ...inputStyle,
+                                border: errors.password ? "2px solid red" : inputStyle.border,
+                            }}
+                        />
+                        {errors.password && (
+                            <p style={{ color: "red", fontSize: "0.8rem", marginTop: "5px" }}>
+                                {errors.password}
+                            </p>
+                        )}
+                    </div>
                 </div>
                 <button
+                    type="submit"
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
+                        e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
 
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)';
+                        e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)';
 
                     }}
-                    style={buttonStyle2} >
-                    Sign Up
+                    style={buttonStyle1} >
+                    Log In
                 </button>
-                
                 <a style={{
                     fontSize: '0.75rem',
                     marginBottom: '0px',
@@ -139,18 +189,19 @@ function SignUp() {
                     color: 'rgba(59, 59, 59, 1)',
                 }}>or</p>
                 <button
-
+                    type="button"
+                    onClick={() => window.location.href = '/signup'}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
+                        e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
 
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)';
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)';
 
                     }}
-                    onClick={() => window.location.href = '/login'}
-                    style={buttonStyle1} >
-                    Log In
+
+                    style={buttonStyle2} >
+                    Sign Up
                 </button>
                 <button style={buttonStyle}
                     onMouseEnter={(e) => {
@@ -190,4 +241,4 @@ function SignUp() {
         </div>
     )
 }
-export default SignUp;
+export default LogIn;

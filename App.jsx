@@ -4,9 +4,9 @@ import { useState } from 'react'
 import '/frontend/css/App.css'
 //routes
 import { Routes, Route } from 'react-router-dom';
-import Home from '/frontend/src/Home.jsx';
-import LogIn from '/frontend/src/LogIn.jsx';
-import SignUp from '/frontend/src/SignUp.jsx';
+import Home from '/frontend/src/pages/Home.jsx';
+import LogIn from '/frontend/src/pages/LogIn.jsx';
+import SignUp from '/frontend/src/pages/SignUp.jsx';
 function App() {
   
 

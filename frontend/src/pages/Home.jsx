@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "./Header";
+import Header from "../UI+UX/Header";
 
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
