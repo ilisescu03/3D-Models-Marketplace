@@ -11,6 +11,7 @@
   -Frontend:
     -Languages:html, css, javascript
     -Framework: React
+    
   -Backend:
     - Firebase Authentication : For user sign-up and login
     - Firebase Firestore : For storing metadata about 3D models
