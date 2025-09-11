@@ -9,19 +9,27 @@
 # USED TECHNOLOGIES
 
   -Frontend:
+  
     -Languages:html, css, javascript
+    
     -Framework: React
     
   -Backend:
+  
     - Firebase Authentication : For user sign-up and login
+    
     - Firebase Firestore : For storing metadata about 3D models
+    
     -Firebase  Storage : For storing and retrieving actual 3D model files
 
   -Download / Upload:
+  
     -Upload: Users can upload files directly to Firebase Storage via React forms
+    
     -Download: Files can be downloaded using direct links from Firebase Storage or through a download button in the app
 
   -Additional tools:
+  
     -Optional payment integration (Stripe or PayPal) for paid downloads
  
 
