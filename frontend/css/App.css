@@ -1,0 +1,50 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y:auto;
+  overflow-x: hidden;
+}
+footer {
+    
+    margin-top: auto;
+    text-align: center;
+    padding: 10px 0;
+    color: white; /* schimbat din #333 în white pentru vizibilitate mai bună */
+    background-color: rgba(30, 30, 30, 0.4); /* fundal transparent */
+    backdrop-filter: blur(8px); /* blur pentru tot ce e în spatele footer-ului */
+    -webkit-backdrop-filter: blur(8px); /* pentru Safari */
+    border-radius: 12px 12px 0 0; /* colțuri rotunjite doar sus */
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1); /* umbră subtilă în sus */
+}
+/* ȘTERGE sau comentează asta din body */
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+
+header {
+    background-color: rgb(239, 239, 239); 
+   
+    height:100px;
+   
+    
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.486); 
+}
+
+.image-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px; /* opțional, colțuri rotunjite */
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
