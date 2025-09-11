@@ -1,12 +1,26 @@
-# React + Vite
+# 3D MODELS APP
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ Web app made for graphic designers. This app allows the users to download 3D models made by other creators and upload their own work.
 
-Currently, two official plugins are available:
+  -Estimated pages: 10 
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+  -Functionalities: Sign Up, Download, Upload, Online payments
 
-## Expanding the ESLint configuration
+# USED TECHNOLOGIES
+   - Languages:html, css, javascript
+    
+   - Framework: React
+    
+   - Firebase Authentication : For user sign-up and login
+    
+   - Firebase Firestore : For storing metadata about 3D models
+    
+   - Firebase  Storage : For storing and retrieving actual 3D model files
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+   - Upload: Users can upload files directly to Firebase Storage via React forms
+    
+   - Download: Files can be downloaded using direct links from Firebase Storage or through a download button in the app
+
+   - Optional payment integration (Stripe or PayPal) for paid downloads
+ 
+
