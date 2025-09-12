@@ -107,17 +107,28 @@ function checkPasswordRules(password) {
 function SignUp() {
     const [values, setValues] = useState({ email: "", userName: "", password: "", submitPassword: "" });
     const [errors, setErrors] = useState({});
+    const [backendError, setBackendError] = useState("");
     const [passwordFocused, setPasswordFocused] = useState(false);
     const navigate = useNavigate();
 
     const rules = checkPasswordRules(values.password);
 
     const handleChange = (e) => {
-        setValues({ ...values, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+  
+        setValues((prev) => ({ ...prev, [name]: value }));
+
+     
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+
+      
+        if (backendError) setBackendError("");
     };
 
+
     const handleSubmit = async (e) => {
-        e.preventDefault(); // previne refresh
+        e.preventDefault();
 
         const validationErrors = validation(values);
         const hasErrors = Object.values(validationErrors).some((err) => err !== "");
@@ -131,34 +142,35 @@ function SignUp() {
 
                 setValues({ email: "", userName: "", password: "", submitPassword: "" });
                 setErrors({});
+                setBackendError("");
 
 
-                alert("User created successfully!");
+                alert("Check your email to activate your account!");
                 navigate("/");
             } catch (error) {
                 console.error("Error creating user:", error.message);
-                alert(error.message);
+                setBackendError(error.message);
             }
         }
     };
     const handleGoogleSignIn = async () => {
         try {
             const result = await doSignInWithGoogle();
-            alert("Signed in with Google!");
+
             navigate("/");
         } catch (error) {
             console.error(error);
-            alert(error.message);
+            setBackendError(error.message);
         }
     }
     const handleGitHubSignIn = async () => {
         try {
             const result = await doSignInWithGitHub();
-            alert("Signed in with Github!");
+
             navigate("/");
         } catch (error) {
             console.error(error);
-            alert(error.message);
+            setBackendError(error.message);
         }
     }
 
@@ -179,7 +191,21 @@ function SignUp() {
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
                 <h2 style={{ fontSize: '2rem' }}>Sign Up</h2>
 
-
+                {backendError && (
+                    <p style={{
+                        color: "red",
+                        fontSize: "0.9rem",
+                        textAlign: "center",
+                        margin: "0",
+                        padding: "10px",
+                        backgroundColor: "#ffebee",
+                        borderRadius: "5px",
+                        border: "1px solid #ffcdd2",
+                        width: "70%"
+                    }}>
+                        {backendError}
+                    </p>
+                )}
                 <div style={formRowStyle}>
                     <label style={labelStyle}>Email:</label>
                     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>

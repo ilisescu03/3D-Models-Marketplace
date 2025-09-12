@@ -120,7 +120,7 @@ function LogIn() {
 
 
                 if (!user.emailVerified) {
-                    await doSignOut();
+                    doSignOut();
                     setLoginError("You have to verify your email before logging in.");
                     return;
                 }
@@ -138,38 +138,56 @@ function LogIn() {
                     setLoginError("This email doesn't exist.");
                 } else if (err.code === "auth/wrong-password") {
                     setLoginError("This password is wrong.");
-                } else {
+                } else if (err.code === "auth/invalid-credential") {
+                    setLoginError("Wrong email or password!");
+                }
+                else {
                     setLoginError(err.message || "Authentification error.");
                 }
             }
         }
     };
-    
+
     const handleGoogleSignIn = async () => {
         try {
             const result = await doSignInWithGoogle();
-            alert("Signed in with Google!");
+         
             navigate("/");
         } catch (error) {
             console.error(error);
-            alert(error.message);
+               setLoginError(error.message);
         }
     }
     const handleGitHubSignIn = async () => {
-            try {
-                const result = await doSignInWithGitHub();
-                alert("Signed in with Github!");
-                navigate("/");
-            } catch (error) {
-                console.error(error);
-                alert(error.message);
-            }
+        try {
+            const result = await doSignInWithGitHub();
+     
+            navigate("/");
+        } catch (error) {
+            console.error(error);
+            setLoginError(error.message);
         }
+    }
     return (
         <div style={backgroundStyle}>
             <Header />
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
                 <h2 style={{ fontSize: '2rem' }}>Log In</h2>
+                {loginError && (
+                    <p style={{
+                        color: "red",
+                        fontSize: "0.9rem",
+                        textAlign: "center",
+                        margin: "0",
+                        padding: "10px",
+                        backgroundColor: "#ffebee",
+                        borderRadius: "5px",
+                        border: "1px solid #ffcdd2",
+                        width: "70%"
+                    }}>
+                        {loginError}
+                    </p>
+                )}
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Email:</p>
                     <div style={{ flex: 1 }}>
