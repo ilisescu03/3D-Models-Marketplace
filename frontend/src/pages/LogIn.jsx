@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import Header from "../UI+UX/Header";
 import validation from "../validations/LogInValidation.jsx";
-import { doSignInWithEmailAndPassword } from "/backend/auth.js";
+import { doSignInWithEmailAndPassword, doSignOut, doSignInWithGitHub, doSignInWithGoogle } from "/backend/auth.js";
+import { useNavigate } from "react-router-dom";
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
@@ -95,31 +96,80 @@ const buttonStyle2 = {
 function LogIn() {
     const [values, setValues] = useState({ email: "", password: "" });
     const [errors, setErrors] = useState({});
-
+    const [loginError, setLoginError] = useState("");
+    const navigate = useNavigate();
     const handleChange = (e) => {
         setValues({ ...values, [e.target.name]: e.target.value });
+        setErrors({ ...errors, [e.target.name]: "" });
+        setLoginError("");
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const validationErrors = validation(values);
 
         if (validationErrors.email || validationErrors.password) {
             setErrors(validationErrors);
         } else {
+            try {
 
-            console.log("(Login) Succesful", values);
+                const userCredential = await doSignInWithEmailAndPassword(values.email, values.password);
+                const user = userCredential.user;
+
+                await user.reload();
 
 
-            setValues({ email: "", password: "" });
-            setErrors({});
+                if (!user.emailVerified) {
+                    await doSignOut();
+                    setLoginError("You have to verify your email before logging in.");
+                    return;
+                }
+
+                navigate('/');
+                console.log("Login successful", user);
+                setValues({ email: "", password: "" });
+                setErrors({});
+                setLoginError("");
+
+            } catch (err) {
+                console.error(err);
+
+                if (err.code === "auth/user-not-found") {
+                    setLoginError("This email doesn't exist.");
+                } else if (err.code === "auth/wrong-password") {
+                    setLoginError("This password is wrong.");
+                } else {
+                    setLoginError(err.message || "Authentification error.");
+                }
+            }
         }
     };
+    
+    const handleGoogleSignIn = async () => {
+        try {
+            const result = await doSignInWithGoogle();
+            alert("Signed in with Google!");
+            navigate("/");
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    }
+    const handleGitHubSignIn = async () => {
+            try {
+                const result = await doSignInWithGitHub();
+                alert("Signed in with Github!");
+                navigate("/");
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            }
+        }
     return (
         <div style={backgroundStyle}>
             <Header />
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
-                <h2 style={{fontSize:'2rem'}}>Log In</h2>
+                <h2 style={{ fontSize: '2rem' }}>Log In</h2>
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Email:</p>
                     <div style={{ flex: 1 }}>
@@ -205,6 +255,9 @@ function LogIn() {
                     Sign Up
                 </button>
                 <button style={buttonStyle}
+
+                    onClick={handleGoogleSignIn}
+                    type="button"
                     onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
 
@@ -222,6 +275,9 @@ function LogIn() {
                     }}>Continue with Google</span>
                 </button>
                 <button style={buttonStyle}
+
+                    onClick={handleGitHubSignIn}
+                    type="button"
                     onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
 

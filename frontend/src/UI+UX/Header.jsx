@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { doSignOut } from '/backend/auth.js';
-import { auth } from '/backend/firebase.js';
+import { auth, db } from '/backend/firebase.js';
 
 import { onAuthStateChanged } from 'firebase/auth';
+import {doc, getDoc} from 'firebase/firestore';
 import SideMenu from './SideMenu.jsx';
 
 //Style for Sign Up
@@ -44,13 +45,24 @@ function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [user, setUser] = useState(null);
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                setUser({
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    displayName: currentUser.displayName || currentUser.email
-                });
+                // Preia username din Firestore
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                if (userDoc.exists()) {
+                    setUser({
+                        uid: currentUser.uid,
+                        email: currentUser.email,
+                        username: userDoc.data().username
+                    });
+                } else {
+                    // fallback dacă nu există doc
+                    setUser({
+                        uid: currentUser.uid,
+                        email: currentUser.email,
+                        username: currentUser.displayName || currentUser.email
+                    });
+                }
             } else {
                 setUser(null);
             }
@@ -122,7 +134,7 @@ function Header() {
                     </button>
                     {user ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontWeight: 'bold' }}>Logged in: {user.displayName}</span>
+                            <span style={{ fontWeight: 'bold' }}>Logged in: {user.username}</span>
                             <button
                                 onClick={async () => {
                                     await doSignOut();

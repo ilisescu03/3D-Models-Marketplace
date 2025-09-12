@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
+
+import { doSignOut } from '/backend/auth.js';
+import { auth, db } from '/backend/firebase.js';
+
+import { onAuthStateChanged } from 'firebase/auth';
 import { Link } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
 //Style for Sign In
+const logoutButtonStyle = { backgroundColor: 'red', color: 'white', padding: '7.5px 15px', borderRadius: '5px', marginTop: '20px', cursor: 'pointer', border: 'none', fontWeight: 'bold', width: '100%' };
+
 const buttonStyle = {
     backgroundColor: 'rgba(255, 123, 0, 1)',
     color: 'white',
@@ -30,8 +38,38 @@ const buttonStyle1 = {
 function SideMenu({ isOpen, onClose, children, activeIndex }) {
     const menuRef = useRef(null);
 
-    const [isMenuExpanded, setIsMenuExpanded] = useState(false); // 👈 stare pt submeniu
+    const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+    const [user, setUser] = useState(null);
+    const [username, setUsername] = useState("");
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            if (currentUser) {
+                setUser(currentUser);
 
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                if (userDoc.exists()) {
+                    setUsername(userDoc.data().username);
+                } else {
+                    setUsername(currentUser.email);
+                }
+            } else {
+                setUser(null);
+                setUsername("");
+            }
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleLogout = async () => {
+        try {
+            await doSignOut();
+            setUser(null);
+            setUsername("");
+            onClose();
+        } catch (err) {
+            console.error("Log out error:", err);
+        }
+    };
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -113,33 +151,28 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                         ✕
 
                     </button>
-                    <button
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
+                    {user ? (
+                        <>
+                            <p style={{ marginTop: '50px', marginLeft:'1rem', fontWeight: 'bold', fontFamily:'Arial, sans-serif', fontSize:'0.7rem' }}>Welcome, {username}</p>
+                            <button onClick={handleLogout} style={logoutButtonStyle}>Log Out</button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => window.location.href = '/login'}
+                                style={buttonStyle1}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)'}
+                            >Log In</button>
 
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)';
-
-                        }}
-                        onClick={() => window.location.href = '/login'}
-                        style={buttonStyle1} >
-                        Log In
-                    </button>
-                    <button
-                        onClick={() => window.location.href = '/signup'}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
-
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)';
-
-                        }}
-                        style={buttonStyle} >
-                        Sign Up
-                    </button>
-
+                            <button
+                                onClick={() => window.location.href = '/signup'}
+                                style={buttonStyle}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)'}
+                            >Sign Up</button>
+                        </>
+                    )}
 
                 </div>
 
