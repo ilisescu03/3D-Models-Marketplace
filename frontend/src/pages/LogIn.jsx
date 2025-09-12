@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Header from "../UI+UX/Header";
 import validation from "../validations/LogInValidation.jsx";
+import { doSignInWithEmailAndPassword } from "/backend/auth.js";
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
