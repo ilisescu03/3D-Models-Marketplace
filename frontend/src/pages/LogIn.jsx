@@ -118,7 +118,7 @@ function LogIn() {
         <div style={backgroundStyle}>
             <Header />
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
-                <h2>Log In</h2>
+                <h2 style={{fontSize:'2rem'}}>Log In</h2>
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Email:</p>
                     <div style={{ flex: 1 }}>

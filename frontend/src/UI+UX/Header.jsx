@@ -1,5 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { doSignOut } from '/backend/auth.js';
+import { auth } from '/backend/firebase.js';
+
+import { onAuthStateChanged } from 'firebase/auth';
 import SideMenu from './SideMenu.jsx';
+
 //Style for Sign Up
 const buttonStyle = {
     backgroundColor: 'rgba(255, 123, 0, 1)',
@@ -32,11 +37,27 @@ const imageButtonStyle = {
 const imageButtonStyle1 = {
     border: 'none',
     backgroundColor: 'transparent',
-    padding:'0px 0px',
+    padding: '0px 0px',
     cursor: 'pointer',
 }
 function Header() {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [user, setUser] = useState(null);
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            if (currentUser) {
+                setUser({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    displayName: currentUser.displayName || currentUser.email
+                });
+            } else {
+                setUser(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     //For mobile
     if (window.innerWidth < 600) {
@@ -99,34 +120,40 @@ function Header() {
                         <img src="WebsiteLogo.png" alt="ShapeHive Logo" style={{ height: '100px' }}>
                         </img>
                     </button>
-                    <div>
-                        <button
-                            onClick={() => window.location.href = '/login'}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
+                    {user ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontWeight: 'bold' }}>Logged in: {user.displayName}</span>
+                            <button
+                                onClick={async () => {
+                                    await doSignOut();
+                                    setUser(null);
+                                }}
+                                style={buttonStyle1}
+                            >
+                                Log Out
+                            </button>
+                        </div>
+                    ) : (
+                        <div>
+                            <button
+                                onClick={() => window.location.href = '/login'}
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)'; }}
+                                style={buttonStyle1}
+                            >
+                                Log In
+                            </button>
+                            <button
+                                onClick={() => window.location.href = '/signup'}
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)'; }}
+                                style={buttonStyle}
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+                    )}
 
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)';
-
-                            }}
-                            style={buttonStyle1} >
-                            Log In
-                        </button>
-                        <button
-                            onClick={() => window.location.href = '/signup'}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
-
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)';
-
-                            }}
-                            style={buttonStyle} >
-                            Sign Up
-                        </button>
-                    </div>
                 </nav>
             </header>
         </>

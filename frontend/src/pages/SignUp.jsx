@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import Header from "../UI+UX/Header";
 import validation from "../validations/SignUpValidation.jsx";
+import { useAuth } from "/backend/contexts/authContext";
+import { useNavigate } from "react-router-dom";
+import { doCreateUserWithEmailAndPassword, doSignInWithGoogle, doSignInWithGitHub } from "/backend/auth.js";
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
@@ -43,7 +46,7 @@ const inputStyle = {
 const formRowStyle = {
     display: 'flex',
     alignItems: 'flex-start',
-    marginRight:'1rem',
+    marginRight: '1rem',
     gap: '1.5rem'
 }
 const labelStyle = {
@@ -105,6 +108,7 @@ function SignUp() {
     const [values, setValues] = useState({ email: "", userName: "", password: "", submitPassword: "" });
     const [errors, setErrors] = useState({});
     const [passwordFocused, setPasswordFocused] = useState(false);
+    const navigate = useNavigate();
 
     const rules = checkPasswordRules(values.password);
 
@@ -112,19 +116,52 @@ function SignUp() {
         setValues({ ...values, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault(); // previne refresh
-        const validationErrors = validation(values);
 
+        const validationErrors = validation(values);
         const hasErrors = Object.values(validationErrors).some((err) => err !== "");
+
         if (hasErrors) {
             setErrors(validationErrors);
         } else {
-            console.log("SignUp successful", values);
-            setValues({ email: "", userName: "", password: "", submitPassword: "" });
-            setErrors({});
+            try {
+                await doCreateUserWithEmailAndPassword(values.userName, values.email, values.password);
+
+
+                setValues({ email: "", userName: "", password: "", submitPassword: "" });
+                setErrors({});
+
+
+                alert("User created successfully!");
+                navigate("/");
+            } catch (error) {
+                console.error("Error creating user:", error.message);
+                alert(error.message);
+            }
         }
     };
+    const handleGoogleSignIn = async () => {
+        try {
+            const result = await doSignInWithGoogle();
+            alert("Signed in with Google!");
+            navigate("/");
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    }
+    const handleGitHubSignIn = async () => {
+        try {
+            const result = await doSignInWithGitHub();
+            alert("Signed in with Github!");
+            navigate("/");
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    }
+
 
     const renderRule = (condition, text) => (
         <li style={{
@@ -140,9 +177,9 @@ function SignUp() {
         <div style={backgroundStyle}>
             <Header />
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
-                <h2>Sign Up</h2>
+                <h2 style={{ fontSize: '2rem' }}>Sign Up</h2>
 
-             
+
                 <div style={formRowStyle}>
                     <label style={labelStyle}>Email:</label>
                     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
@@ -161,7 +198,7 @@ function SignUp() {
                     </div>
                 </div>
 
-             
+
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Username:</p>
                     <div style={{ flex: 1 }}>
@@ -209,7 +246,7 @@ function SignUp() {
                     </div>
                 </div>
 
-             
+
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Confirm password:</p>
                     <div style={{ flex: 1 }}>
@@ -246,6 +283,8 @@ function SignUp() {
 
                     }} style={buttonStyle1} onClick={() => window.location.href = '/login'}>Log In</button>
                 <button style={buttonStyle}
+                    type="button"
+                    onClick={handleGoogleSignIn}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
 
@@ -263,6 +302,8 @@ function SignUp() {
                     }}>Continue with Google</span>
                 </button>
                 <button style={buttonStyle}
+                    type="button"
+                    onClick={handleGitHubSignIn}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
 
