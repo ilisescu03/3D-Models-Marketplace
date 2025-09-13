@@ -34,7 +34,11 @@ const buttonStyle1 = {
     transition: '0.3s ease',
     cursor: 'pointer'
 }
-
+const imageButtonStyle = {
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+}
 function SideMenu({ isOpen, onClose, children, activeIndex }) {
     const menuRef = useRef(null);
 
@@ -128,7 +132,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                     zIndex: 1002,
                     display: 'flex',
                     flexDirection: 'column',
-                    overflowY: 'auto', // <- important dacă se umple ecranul
+                    overflowY: 'auto', 
                 }}
             >
                 <div>
@@ -153,7 +157,13 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                     </button>
                     {user ? (
                         <>
-                            <p style={{ marginTop: '50px', marginLeft:'1rem', fontWeight: 'bold', fontFamily:'Arial, sans-serif', fontSize:'0.7rem' }}>Welcome, {username}</p>
+                            <button
+                                onClick={() => window.location.href = '/dashboard'}
+                                style={imageButtonStyle}
+                            >
+                                <img style={{marginLeft:'1rem',  width: '80px',  marginTop: '50px',  borderRadius: '50%' }} src="profile.png" alt="Profile" />
+                            </button>
+                            <p style={{marginLeft:'1rem', fontWeight: 'bold', fontFamily:'Arial, sans-serif', fontSize:'0.8rem' }}>Welcome, {username}</p>
                             <button onClick={handleLogout} style={logoutButtonStyle}>Log Out</button>
                         </>
                     ) : (

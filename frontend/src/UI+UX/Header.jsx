@@ -3,7 +3,7 @@ import { doSignOut } from '/backend/auth.js';
 import { auth, db } from '/backend/firebase.js';
 
 import { onAuthStateChanged } from 'firebase/auth';
-import {doc, getDoc} from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import SideMenu from './SideMenu.jsx';
 
 //Style for Sign Up
@@ -42,12 +42,13 @@ const imageButtonStyle1 = {
     cursor: 'pointer',
 }
 function Header() {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [user, setUser] = useState(null);
+    const [menuOpen, setMenuOpen] = useState(false);//for side menu
+    const [user, setUser] = useState(null);//for verifying if the user is logged in or not
+    //verify if the user is logged in
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                // Preia username din Firestore
+               
                 const userDoc = await getDoc(doc(db, "users", currentUser.uid));
                 if (userDoc.exists()) {
                     setUser({
@@ -56,7 +57,7 @@ function Header() {
                         username: userDoc.data().username
                     });
                 } else {
-                    // fallback dacă nu există doc
+                   
                     setUser({
                         uid: currentUser.uid,
                         email: currentUser.email,
@@ -84,7 +85,7 @@ function Header() {
                         padding: '0 10px',
                         gap: '20px',
                         fontFamily: 'Arial, sans-serif',
-                        flexWrap: 'nowrap', // Previne wrapping
+                        flexWrap: 'nowrap', 
                         minHeight: '60px'
                     }}
                 >
@@ -122,7 +123,7 @@ function Header() {
                         padding: '0 50px',
                         gap: '20px',
                         fontFamily: 'Arial, sans-serif',
-                        flexWrap: 'nowrap', // Previne wrapping
+                        flexWrap: 'nowrap',
                         minHeight: '60px'
                     }}
                 >
@@ -133,20 +134,62 @@ function Header() {
                         </img>
                     </button>
                     {user ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontWeight: 'bold' }}>Logged in: {user.username}</span>
+                        <div
+                            style={{ position: 'relative', display: 'inline-block' }}
+                            onMouseEnter={() => setMenuOpen(true)}
+                            onMouseLeave={() => setMenuOpen(false)}
+                        >
                             <button
-                                onClick={async () => {
-                                    await doSignOut();
-                                    setUser(null);
-                                }}
-                                style={buttonStyle1}
+                                onClick={() => window.location.href = '/dashboard'}
+                                style={imageButtonStyle}
                             >
-                                Log Out
+                                <img style={{ width: '50px', borderRadius: '50%' }} src="profile.png" alt="Profile" />
                             </button>
+
+                            {/* Submenu */}
+                            {menuOpen && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: '50px',     
+                                        right: 0,         
+                                        backgroundColor: 'rgb(239, 239, 239)',
+                                        
+                                        borderRadius: '3px',
+                                        display:'flex',
+                                        
+                                        padding: '0px',
+                                        minWidth: '150px',
+                                        zIndex: 2000,
+                                    }}
+                                >
+                                    <button
+                                        onClick={doSignOut}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'black',
+                                            
+                                            cursor: 'pointer',
+                                            padding: '8px 12px',
+                                            width: '100%',
+                                            textAlign: 'center',
+                                            borderRadius: '5px',
+                                        }}
+                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#eeb004ff',
+                                            e.currentTarget.style.color='white'
+                                        )}
+                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent',
+                                            e.currentTarget.style.color='black')}
+                                    >
+                                        Log Out
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div>
+                            {/* If the user is not logged in the login and sign up buttons are displayed*/}
                             <button
                                 onClick={() => window.location.href = '/login'}
                                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)'; }}

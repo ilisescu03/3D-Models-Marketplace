@@ -8,6 +8,7 @@ import Home from '/frontend/src/pages/Home.jsx';
 import LogIn from '/frontend/src/pages/LogIn.jsx';
 import SignUp from '/frontend/src/pages/SignUp.jsx';
 import ForgotPassword from '/frontend/src/pages/ForgotPassword';
+import Dashboard from '/frontend/src/pages/Dashboard';
 function App() {
   
 
@@ -18,6 +19,7 @@ function App() {
         <Route path='/login' element={<LogIn />} />
         <Route path='/signup' element={<SignUp />} />
         <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/dashboard' element={<Dashboard/>}/>
       </Routes>
     </>
   )

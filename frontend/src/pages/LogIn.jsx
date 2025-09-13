@@ -171,7 +171,10 @@ function LogIn() {
     const handleGoogleSignIn = async () => {
         try {
             const result = await doSignInWithGoogle();
-
+            if(!result.succes){
+                setLoginError("This account already exist!");
+                return;
+            } 
             navigate("/");
         } catch (error) {
             console.error(error);
@@ -184,7 +187,10 @@ function LogIn() {
     const handleGitHubSignIn = async () => {
         try {
             const result = await doSignInWithGitHub();
-
+             if(!result.succes){
+                setLoginError("This account already exist!");
+                return;
+            } 
             navigate("/");
         } catch (error) {
             console.error(error);

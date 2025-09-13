@@ -1,5 +1,5 @@
 import { auth, db } from "./firebase.js";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signOut, sendPasswordResetEmail, deleteUser, sendEmailVerification } from "firebase/auth";
+import { fetchSignInMethodsForEmail, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signOut, sendPasswordResetEmail, deleteUser, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, getDocs, collection, query, where, deleteDoc } from "firebase/firestore";
 
 //Sign Up
@@ -97,29 +97,38 @@ export const doSignInWithEmailAndPassword = async (email, password) => {
 const googleProvider = new GoogleAuthProvider();
 
 export const doSignInWithGoogle = async () => {
+try {
+    
+    //Call signInWithPopup with Google provider
 
-  //Call signInWithPopup with Google provider
+    const result = await signInWithPopup(auth, googleProvider);
+    console.log(result);
+    const user = result.user; //Get user from result
+    const emailQuery = query(collection(db, "users"), where("email", "==", user.email));//Check if user exists in Firestore DB
+    
+    const emailSnap = await getDocs(emailQuery);//Execute query
+    
+  
+    //If user doesn't exist, add to Firestore DB
+    
+    if (emailSnap.empty) {
+      await setDoc(doc(db, "users", user.uid), {
+        username: user.displayName || user.email,
+        email: user.email,
+        provider: "google",
+        createdAt: new Date()
+      });
+    }
+    return { succes: true, user }; //Succes
+  } catch (error) {
 
-  const result = await signInWithPopup(auth, googleProvider);
-  console.log(result);
-  const user = result.user; //Get user from result
-  const emailQuery = query(collection(db, "users"), where("email", "==", user.email)); //Check if user exists in Firestore DB
-  const emailSnap = await getDocs(emailQuery);   //Execute query
+    //Errors safety
 
-  //If user doesn't exist, add to Firestore DB
-
-  if (emailSnap.empty) {
-    await setDoc(doc(db, "users", user.uid), {
-      username: user.displayName || user.email,
-      email: user.email,
-      provider: "google",
-      createdAt: new Date()
-    });
+    if (error.code === 'auth/account-exists-with-different-credential') {
+      throw new Error("An account already exists with the same email address but different sign-in credentials. Please use a different sign-in method.");
+    }
+    return { succes: false, message: error.message }; //Fail
   }
-
-  //Return result
-
-  return result;
 }
 
 //GitHub SignIn
