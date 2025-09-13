@@ -94,44 +94,62 @@ const buttonStyle2 = {
     cursor: 'pointer'
 }
 function LogIn() {
-    const [values, setValues] = useState({ email: "", password: "" });
-    const [errors, setErrors] = useState({});
-    const [loginError, setLoginError] = useState("");
-    const navigate = useNavigate();
+    const [values, setValues] = useState({ email: "", password: "" }); //form values
+    const [errors, setErrors] = useState({}); //form errors
+    const [loginError, setLoginError] = useState(""); //login error from firebase
+    const navigate = useNavigate(); //navigation hook
+
+    //Input change handler
+
     const handleChange = (e) => {
         setValues({ ...values, [e.target.name]: e.target.value });
         setErrors({ ...errors, [e.target.name]: "" });
         setLoginError("");
     };
 
+    //Form submit handler
+
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        const validationErrors = validation(values);
+        e.preventDefault(); //prevent default form submission behavior
+        const validationErrors = validation(values); //validate form values
+
+        //If there are validation errors, set them in state
 
         if (validationErrors.email || validationErrors.password) {
             setErrors(validationErrors);
         } else {
+
+            //If no validation errors, proceed with Firebase authentication
+
             try {
+
+                // Attempt to sign in the user
 
                 const userCredential = await doSignInWithEmailAndPassword(values.email, values.password);
                 const user = userCredential.user;
 
+                await new Promise(res => setTimeout(res, 1000)); // Wait for 1 second to ensure email verification status is updated
                 await user.reload();
 
+                // Check if email is verified
 
                 if (!user.emailVerified) {
-                    doSignOut();
+                    await doSignOut();
                     setLoginError("You have to verify your email before logging in.");
                     return;
                 }
 
+
+                // If sign-in is successful and email is verified, navigate to home page
+
                 navigate('/');
                 console.log("Login successful", user);
-                setValues({ email: "", password: "" });
-                setErrors({});
-                setLoginError("");
+                setValues({ email: "", password: "" }); // Clear form values
+                setErrors({}); // Clear form errors
+                setLoginError(""); // Clear login error
 
             } catch (err) {
+                // Handle Firebase authentication errors
                 console.error(err);
 
                 if (err.code === "auth/user-not-found") {
@@ -148,31 +166,46 @@ function LogIn() {
         }
     };
 
+    //Google SignIn
+
     const handleGoogleSignIn = async () => {
         try {
             const result = await doSignInWithGoogle();
-         
-            navigate("/");
-        } catch (error) {
-            console.error(error);
-               setLoginError(error.message);
-        }
-    }
-    const handleGitHubSignIn = async () => {
-        try {
-            const result = await doSignInWithGitHub();
-     
+
             navigate("/");
         } catch (error) {
             console.error(error);
             setLoginError(error.message);
         }
     }
+
+    //GitHub SignIn
+
+    const handleGitHubSignIn = async () => {
+        try {
+            const result = await doSignInWithGitHub();
+
+            navigate("/");
+        } catch (error) {
+            console.error(error);
+            setLoginError(error.message);
+        }
+    }
+
+    
+
+      
     return (
         <div style={backgroundStyle}>
             <Header />
+
+            {/* Log In Form */}
+
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
                 <h2 style={{ fontSize: '2rem' }}>Log In</h2>
+
+                {/* Display login error if any */}
+
                 {loginError && (
                     <p style={{
                         color: "red",
@@ -188,6 +221,9 @@ function LogIn() {
                         {loginError}
                     </p>
                 )}
+
+                {/* Email Field */}
+
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Email:</p>
                     <div style={{ flex: 1 }}>
@@ -209,6 +245,9 @@ function LogIn() {
                         )}
                     </div>
                 </div>
+
+                {/* Password Field */}
+
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Password:</p>
                     <div style={{ flex: 1 }}>
@@ -230,6 +269,9 @@ function LogIn() {
                         )}
                     </div>
                 </div>
+
+                {/* Submit Button */}
+
                 <button
                     type="submit"
                     onMouseEnter={(e) => {
@@ -243,7 +285,11 @@ function LogIn() {
                     style={buttonStyle1} >
                     Log In
                 </button>
-                <a style={{
+
+                {/* Forgot password */}
+
+                <a href="/forgot-password" 
+                style={{
                     fontSize: '0.75rem',
                     marginBottom: '0px',
                     fontWeight: 'bold',
@@ -251,12 +297,16 @@ function LogIn() {
                     color: 'rgba(59, 59, 59, 1)',
                     cursor: 'pointer'
                 }}>I forgot my password</a>
+
                 <p style={{
                     fontSize: '0.9rem',
                     marginBottom: '0px',
                     fontWeight: 'bold',
                     color: 'rgba(59, 59, 59, 1)',
                 }}>or</p>
+
+                {/* Navigate to Sign Up Page */}
+
                 <button
                     type="button"
                     onClick={() => window.location.href = '/signup'}
@@ -272,6 +322,9 @@ function LogIn() {
                     style={buttonStyle2} >
                     Sign Up
                 </button>
+
+                {/* OAuth Buttons */}
+
                 <button style={buttonStyle}
 
                     onClick={handleGoogleSignIn}
@@ -292,6 +345,7 @@ function LogIn() {
                         bottom: '5px', color: 'rgba(19, 19, 19, 1)'
                     }}>Continue with Google</span>
                 </button>
+
                 <button style={buttonStyle}
 
                     onClick={handleGitHubSignIn}

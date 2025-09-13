@@ -7,6 +7,7 @@ import { Routes, Route } from 'react-router-dom';
 import Home from '/frontend/src/pages/Home.jsx';
 import LogIn from '/frontend/src/pages/LogIn.jsx';
 import SignUp from '/frontend/src/pages/SignUp.jsx';
+import ForgotPassword from '/frontend/src/pages/ForgotPassword';
 function App() {
   
 
@@ -16,6 +17,7 @@ function App() {
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<LogIn />} />
         <Route path='/signup' element={<SignUp />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
       </Routes>
     </>
   )

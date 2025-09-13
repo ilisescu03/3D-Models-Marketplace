@@ -4,7 +4,7 @@ function validation(values) {
     const email_pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const password_pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
 
-    
+
 
     if (!values.userName) {
         errors.userName = "User name is required";
@@ -12,7 +12,7 @@ function validation(values) {
     } else {
         errors.userName = ""
     }
-    
+
     if (!values.email) {
         errors.email = "Email is required";
     } else if (!email_pattern.test(values.email)) {
@@ -36,7 +36,14 @@ function validation(values) {
     else {
         errors.submitPassword = ""
     }
+    if (!values.terms) {
+        errors.terms = "You must accept the terms and conditions";
+    } else {
+        errors.terms = "";
+    }
+
     return errors;
+
 }
 
 export default validation;

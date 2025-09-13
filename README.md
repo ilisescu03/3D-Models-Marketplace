@@ -2,9 +2,9 @@
 
  Web app made for graphic designers. This app allows the users to download 3D models made by other creators and upload their own work.
 
-  -Estimated pages: 10 
+   - Estimated pages: 10 
 
-  -Functionalities: Sign Up, Download, Upload, Online payments
+   - Functionalities: Sign Up, Download, Upload, Online payments
 
 # USED TECHNOLOGIES
    - Languages:html, css, javascript
