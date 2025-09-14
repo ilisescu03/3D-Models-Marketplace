@@ -4,8 +4,7 @@ import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { getUserStats, getFollowers, doFollowUser, doUnfollowUser } from '/backend/auth.js';
-
+import { getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser } from '/backend/users.js';
 
 //Background Style
 
@@ -42,7 +41,7 @@ const textContainerStyle = {
     alignItems: 'flex-start',
 };
 
-
+//Profile picture style
 const imageStyle = {
     width: '100px',
     height: '100px',
@@ -50,7 +49,7 @@ const imageStyle = {
     objectFit: 'cover',
 };
 
-
+//Username style
 const usernameStyle = {
     color: 'white',
     fontWeight: 'bold',
@@ -86,7 +85,7 @@ const getTabButtonStyle = (isActive) => ({
     color: isActive ? 'white' : 'black',
     fontWeight: 'bold',
 });
-
+//Style for followers and following texts
 const followersStyle = {
     color: 'white',
     fontWeight: 'bold',
@@ -95,6 +94,7 @@ const followersStyle = {
     marginTop: '0.5rem',
     cursor: 'pointer',
 };
+//Style for the users cards
 const followerCardStyle = {
     display: "flex",
     flexDirection: "column",
@@ -104,11 +104,11 @@ const followerCardStyle = {
     borderRadius: "10px",
     padding: "1rem",
     width: "200px",
-    fontFamily:'Arial, sans-serif',
+    fontFamily: 'Arial, sans-serif',
     backgroundColor: "white",
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
 };
-
+//Style for grid display of users
 const followerGridStyle = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
@@ -129,34 +129,42 @@ function Dashboard() {
         profilePicture: ""
     }); //for user stats and profile picture display
     const [loading, setLoading] = useState(true); //loading state for user stats
-    const [followersData, setFollowersData] = useState([]);
+    const [followersData, setFollowersData] = useState([]); //data for followers
+    const [followingData, setFollowingData] = useState([]); //data for following users
 
     const navigate = useNavigate();
 
-
-
+    //Effect for check authentification and fetch user data
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
                 //user logged in
                 setUser(currentUser);
-                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-                if (userDoc.exists()) {
-                    setUsername(userDoc.data().username);
-                    try {
-                        const stats = await getUserStats(currentUser.uid);
-                        setUserStats(stats);
+                try {
+                    const userDocRef = doc(db, "users", currentUser.uid);
+                    const userDocSnap = await getDoc(userDocRef);
 
-                        const followers = await getFollowers(currentUser.uid);
-                        setFollowersData(followers);
-                    } catch (error) {
-                        console.log(userStats)
-                        console.error("Error fetching user or followers stats");
+                    if (userDocSnap.exists()) {
+                        const userData = userDocSnap.data();
+                        setUsername(userData.username || userData.email);
                     }
-                } else {
-                    setUsername(currentUser.email);
+                } catch (error) {
+                    console.error("Error getting user data:", error);
                 }
-                setLoading(false);
+
+                //listen to real-time user stats updates
+                const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
+                    setUserStats(stats);
+
+                    //fetch followers and following lists
+                    const followers = await getFollowers(currentUser.uid);
+                    setFollowersData(followers);
+
+                    const followings = await getFollowing(currentUser.uid);
+                    setFollowingData(followings);
+                });
+                //Clean up listener on unmount
+                return () => stopListening();
             } else {
                 //user logged out
                 setUser(null);
@@ -187,7 +195,7 @@ function Dashboard() {
                         e.target.src = "profile.png";
                     }}
                 />
-
+                {/* Username, edit button, followers/following */}
                 <div style={textContainerStyle}>
                     <p style={usernameStyle}>{username}</p>
 
@@ -227,7 +235,8 @@ function Dashboard() {
                             Favourites
                         </button>
                     </div>
-                    {/* Contents for each navigation button*/}
+
+                    {/* Tab content 1*/}
                     {activeIndex == 0 && (<h2
                         style={{
                             fontFamily: "Arial, sans-serif",
@@ -275,6 +284,8 @@ function Dashboard() {
                     >
                         You don't have models uploaded at the moment.
                     </h2>)}
+
+                    {/* Tab content 2*/}
                     {activeIndex == 1 && (<img src="bookmark-star_2.png"
                         style={{
                             width: '150px',
@@ -310,6 +321,7 @@ function Dashboard() {
                     >
                         You don't have models at favourites at the moment.
                     </h2>)}
+                    {/* Followers content*/}
                     {activeIndex === 2 && (
                         <>
                             <h2
@@ -323,9 +335,10 @@ function Dashboard() {
                             >
                                 Followers:
                             </h2>
+                            {/* Followers list */}
                             <div style={followerGridStyle}>
                                 {followersData.length === 0 ? (
-                                    <p style={{ textAlign: "center", color: "gray" }}>No followers yet.</p>
+                                    <p style={{ textAlign: "center", fontFamily:'Arial, sans-serif', fontWeight:'bold', color: "gray" }}>No followers yet.</p>
                                 ) : (
                                     followersData.map((f) => (
                                         <div key={f.uid} style={followerCardStyle}>
@@ -339,6 +352,8 @@ function Dashboard() {
                                             <p style={{ margin: 0, fontSize: "0.8rem", color: "gray" }}>
                                                 Followers: {f.followers} | Following: {f.following}
                                             </p>
+
+                                            {/* Follow/Unfollow button*/}
                                             {user && (
                                                 <button
                                                     style={{
@@ -353,21 +368,33 @@ function Dashboard() {
                                                     }}
                                                     onClick={async () => {
                                                         try {
+                                                            let result;
                                                             if (userStats.followingList.includes(f.uid)) {
-                                                                await doUnfollowUser(f.uid);
-                                                                setUserStats((prev) => ({
-                                                                    ...prev,
-                                                                    followingList: prev.followingList.filter((id) => id !== f.uid),
-                                                                    following: prev.following - 1
-                                                                }));
+                                                                result = await doUnfollowUser(f.uid);
                                                             } else {
-                                                                await doFollowUser(f.uid);
-                                                                setUserStats((prev) => ({
-                                                                    ...prev,
-                                                                    followingList: [...prev.followingList, f.uid],
-                                                                    following: prev.following + 1
-                                                                }));
+                                                                result = await doFollowUser(f.uid);
                                                             }
+                                                            if (result.succes) {
+                                                                //Update following list
+                                                                if (userStats.followingList.includes(f.uid)) {
+                                                                    setUserStats((prev) => ({
+                                                                        ...prev,
+                                                                        followingList: prev.followingList.filter((id) => id !== f.uid),
+                                                                        following: prev.following - 1
+                                                                    }));
+                                                                } else {
+                                                                    setUserStats((prev) => ({
+                                                                        ...prev,
+                                                                        followingList: [...prev.followingList, f.uid],
+                                                                        following: prev.following + 1
+                                                                    }));
+                                                                }
+                                                                const followers = await getFollowers(user.uid)
+                                                                setFollowersData(followers);
+                                                            } else {
+                                                                console.log(result.message);
+                                                            }
+
                                                         } catch (err) {
                                                             console.error(err);
                                                         }
@@ -382,7 +409,92 @@ function Dashboard() {
                             </div>
                         </>
                     )}
+                    {/* Following content */}
+                    {activeIndex === 3 && (
+                        <>
+                            <h2 style={{
+                                fontFamily: "Arial, sans-serif",
+                                color: 'gray',
+                                fontSize: '1.5rem',
+                                textAlign: 'center',
+                                fontWeight: 'normal',
+                            }}>
+                                Followed users:
+                            </h2>
+                            <div style={followerGridStyle}>
+                                {followingData.length === 0 ? (
+                                    <p style={{ textAlign: 'center',  fontFamily:'Arial, sans-serif', fontWeight:'bold', color: 'gray' }}>You're not following anyone.</p>
+                                ) : (
+                                    followingData.map((f) => (
+                                        <div key={f.uid} style={followerCardStyle}>
+                                            <img
+                                                src={f.profilePicture}
+                                                alt={f.username}
+                                                style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover" }}
+                                                onError={(e) => (e.target.src = "profile.png")}
+                                            />
+                                            <h3 style={{ margin: "0.5rem 0" }}>{f.username}</h3>
+                                            <p style={{ margin: 0, fontSize: "0.8rem", color: "gray" }}>
+                                                Followers: {f.followers} | Following: {f.following}
+                                            </p>
+                                            
+                                            {/* Follow/Unfollow button*/}
+                                            {user && (
+                                                <button style={{
+                                                    marginTop: "0.5rem",
+                                                    padding: "0.3rem 0.7rem",
+                                                    borderRadius: "5px",
+                                                    border: "none",
+                                                    cursor: "pointer",
+                                                    backgroundColor: userStats.followingList.includes(f.uid) ? "red" : "#575757",
+                                                    color: "white",
+                                                    fontWeight: "bold",
+                                                }}
+                                                    onClick={
+                                                        async () => {
+                                                            try {
+                                                                let result;
+                                                                if (userStats.followingList.includes(f.uid)) {
+                                                                    result = await doUnfollowUser(f.uid);
+                                                                } else {
+                                                                    result = await doFollowUser(f.uid);
+                                                                }
+                                                                if (result.succes) {
+                                                                    if (userStats.followingList.includes(f.uid)) {
+                                                                        setUserStats((prev) => ({
+                                                                            ...prev,
+                                                                            followingList: prev.followingList.filter((id) => id !== f.uid),
+                                                                            following: prev.following - 1
+                                                                        }));
+                                                                    } else {
+                                                                        setUserStats((prev) => ({
+                                                                            ...prev,
+                                                                            followingList: [...prev.followingList, f.uid],
+                                                                            following: prev.following + 1
+                                                                        }));
+                                                                    }
+                                                                    const followers = await getFollowers(user.uid)
+                                                                    setFollowersData(followers);
+                                                                } else {
+                                                                    console.log(result.message);
+                                                                }
 
+                                                            } catch (err) {
+                                                                console.error(err);
+                                                            }
+                                                        }
+                                                    }
+                                                >
+                                                    {userStats.followingList.includes(f.uid) ? "Unfollow" : "Follow"}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+
+                            </div>
+                        </>
+                    )}
                 </section>
 
             </div>
