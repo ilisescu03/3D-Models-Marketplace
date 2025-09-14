@@ -1,6 +1,6 @@
 import { auth, db } from "./firebase.js";
 import { fetchSignInMethodsForEmail, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, GithubAuthProvider, signInWithPopup, signOut, sendPasswordResetEmail, deleteUser, sendEmailVerification } from "firebase/auth";
-import { doc, setDoc, getDocs, collection, query, where, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, updateDoc, getDocs, getDoc, collection, query, where, deleteDoc } from "firebase/firestore";
 
 //Sign Up
 
@@ -48,6 +48,9 @@ export const doCreateUserWithEmailAndPassword = async (username, email, password
       email: email,
       provider: "password",
       createdAt: new Date(),
+      profilePicture: "",
+      followersList: [],
+      followingList: []
 
     });
 
@@ -97,26 +100,29 @@ export const doSignInWithEmailAndPassword = async (email, password) => {
 const googleProvider = new GoogleAuthProvider();
 
 export const doSignInWithGoogle = async () => {
-try {
-    
+  try {
+
     //Call signInWithPopup with Google provider
 
     const result = await signInWithPopup(auth, googleProvider);
     console.log(result);
     const user = result.user; //Get user from result
     const emailQuery = query(collection(db, "users"), where("email", "==", user.email));//Check if user exists in Firestore DB
-    
+
     const emailSnap = await getDocs(emailQuery);//Execute query
-    
-  
+
+
     //If user doesn't exist, add to Firestore DB
-    
+
     if (emailSnap.empty) {
       await setDoc(doc(db, "users", user.uid), {
         username: user.displayName || user.email,
         email: user.email,
         provider: "google",
-        createdAt: new Date()
+        createdAt: new Date(),
+        profilePicture: user.photoURL || "",
+        followersList: [],
+        followingList: []
       });
     }
     return { succes: true, user }; //Succes
@@ -153,7 +159,10 @@ export const doSignInWithGitHub = async () => {
         username: user.displayName || user.email,
         email: user.email,
         provider: "github",
-        createdAt: new Date()
+        createdAt: new Date(),
+        profilePicture: user.photoURL || "",
+        followersList: [],
+        followingList: [],
       });
     }
     return { succes: true, user }; //Succes
@@ -181,10 +190,10 @@ export const doPasswordReset = async (email) => {
     await sendPasswordResetEmail(auth, email); // Send email
     return { success: true, message: "Password reset email sent." }; //Succes
   } catch (error) {
-    
+
     //Error handling
 
-    if (error.code === "auth/user-not-found"||error.code==="auth/missing-email") {
+    if (error.code === "auth/user-not-found" || error.code === "auth/missing-email") {
       throw new Error("No account with this email exists.");
     }
     throw new Error(error.message || "Failed to send password reset email.");
@@ -207,3 +216,187 @@ export const doSendEmailVerification = async () => {
   }
   return Promise.reject(new Error('No user is currently signed in.'));
 }
+
+
+// Follow a user
+export const doFollowUser = async (targetUserId) => {
+  if (!auth.currentUser) {
+    throw new Error('No user is currently signed in.');
+  }
+
+  const currentUserId = auth.currentUser.uid;
+
+  if (currentUserId === targetUserId) {
+    throw new Error('You cannot follow yourself.');
+  }
+
+  try {
+    const currentUserRef = doc(db, "users", currentUserId);
+    const targetUserRef = doc(db, "users", targetUserId);
+
+    // Get current user data
+    const currentUserSnap = await getDoc(currentUserRef);
+    const targetUserSnap = await getDoc(targetUserRef);
+
+    if (!currentUserSnap.exists() || !targetUserSnap.exists()) {
+      throw new Error('User not found.');
+    }
+
+    const currentUserData = currentUserSnap.data();
+    const targetUserData = targetUserSnap.data();
+
+    // Check if already following
+    if (currentUserData.followingList?.includes(targetUserId)) {
+      throw new Error('You are already following this user.');
+    }
+
+    // Update current user's following list
+    await updateDoc(currentUserRef, {
+      followingList: [...(currentUserData.followingList || []), targetUserId]
+    });
+
+    await updateDoc(targetUserRef, {
+      followersList: [...(targetUserData.followersList || []), currentUserId]
+    });
+
+
+
+    return { success: true, message: 'User followed successfully.' };
+  } catch (error) {
+    throw new Error(error.message || 'Failed to follow user.');
+  }
+};
+
+// Unfollow a user
+export const doUnfollowUser = async (targetUserId) => {
+  if (!auth.currentUser) {
+    throw new Error('No user is currently signed in.');
+  }
+
+  const currentUserId = auth.currentUser.uid;
+
+  try {
+    const currentUserRef = doc(db, "users", currentUserId);
+    const targetUserRef = doc(db, "users", targetUserId);
+
+    // Get current user data
+    const currentUserSnap = await getDoc(currentUserRef);
+    const targetUserSnap = await getDoc(targetUserRef);
+
+    if (!currentUserSnap.exists() || !targetUserSnap.exists()) {
+      throw new Error('User not found.');
+    }
+
+    const currentUserData = currentUserSnap.data();
+    const targetUserData = targetUserSnap.data();
+
+    // Check if not following
+    if (!currentUserData.followingList?.includes(targetUserId)) {
+      throw new Error('You are not following this user.');
+    }
+
+    // Update current user's following list
+    await updateDoc(currentUserRef, {
+      followingList: (currentUserData.followingList || []).filter(id => id !== targetUserId)
+    });
+
+    await updateDoc(targetUserRef, {
+      followersList: (targetUserData.followersList || []).filter(id => id !== currentUserId)
+    });
+
+
+    return { success: true, message: 'User unfollowed successfully.' };
+  } catch (error) {
+    throw new Error(error.message || 'Failed to unfollow user.');
+  }
+};
+
+// Get user's  stats 
+export const getUserStats = async (userId) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      throw new Error('User not found.');
+    }
+
+    const userData = userSnap.data();
+
+    return {
+      followers: (userData.followersList || []).length, // Calculate from array length
+      following: (userData.followingList || []).length, // Calculate from array length
+      followersList: userData.followersList || [],
+      followingList: userData.followingList || [],
+      profilePicture: userData.profilePicture || ""
+    };
+  } catch (error) {
+    throw new Error(error.message || 'Failed to get user stats.');
+  }
+};
+
+// Update profile picture
+export const doUpdateProfilePicture = async (imageUrl) => {
+  if (!auth.currentUser) {
+    throw new Error('No user is currently signed in.');
+  }
+
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      throw new Error('User document not found.');
+    }
+
+    const userData = userSnap.data();
+
+    await updateDoc(userRef, {
+      profilePicture: imageUrl
+    });
+
+
+    return { success: true, message: 'Profile picture updated successfully.' };
+  } catch (error) {
+    throw new Error(error.message || 'Failed to update profile picture.');
+  }
+};
+
+
+export const getFollowers = async (userId) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      throw new Error("User not found.");
+    }
+
+    const userData = userSnap.data();
+    const followersList = userData.followersList || [];
+
+    const followersData = await Promise.all(
+      followersList.map(async (followerId) => {
+        const followerRef = doc(db, "users", followerId);
+        const followerSnap = await getDoc(followerRef);
+
+        if (followerSnap.exists()) {
+          const data = followerSnap.data();
+          return {
+            uid: followerId,
+            username: data.username || data.email,
+            profilePicture: data.profilePicture || "profile.png",
+            followers: (data.followersList || []).length,
+            following: (data.followingList || []).length,
+          };
+        }
+        return null;
+      })
+    );
+
+    return followersData.filter((f) => f !== null);
+  } catch (error) {
+    console.error("Error fetching followers:", error);
+    return [];
+  }
+};

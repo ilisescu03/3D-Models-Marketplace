@@ -44,11 +44,19 @@ const imageButtonStyle1 = {
 function Header() {
     const [menuOpen, setMenuOpen] = useState(false);//for side menu
     const [user, setUser] = useState(null);//for verifying if the user is logged in or not
+     const [loading, setLoading] = useState(true); 
     //verify if the user is logged in
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-               
+                await currentUser.reload(); 
+                if (!currentUser.emailVerified) {
+                    
+                    await doSignOut();
+                    setUser(null);
+                    setLoading(false);
+                    return;
+                }
                 const userDoc = await getDoc(doc(db, "users", currentUser.uid));
                 if (userDoc.exists()) {
                     setUser({
@@ -67,6 +75,7 @@ function Header() {
             } else {
                 setUser(null);
             }
+            setLoading(false);
         });
 
         return () => unsubscribe();
@@ -133,34 +142,36 @@ function Header() {
                         <img src="WebsiteLogo.png" alt="ShapeHive Logo" style={{ height: '100px' }}>
                         </img>
                     </button>
-                    {user ? (
+                    {!loading && (
+                    user ? (
                         <div
                             style={{ position: 'relative', display: 'inline-block' }}
                             onMouseEnter={() => setMenuOpen(true)}
                             onMouseLeave={() => setMenuOpen(false)}
                         >
                             <button
-                                onClick={() => window.location.href = '/dashboard'}
+                                onClick={() => (window.location.href = '/dashboard')}
                                 style={imageButtonStyle}
                             >
-                                <img style={{ width: '50px', borderRadius: '50%' }} src="profile.png" alt="Profile" />
+                                <img
+                                    style={{ width: '50px', borderRadius: '50%' }}
+                                    src="profile.png"
+                                    alt="Profile"
+                                />
                             </button>
 
-                            {/* Submenu */}
                             {menuOpen && (
                                 <div
                                     style={{
                                         position: 'absolute',
-                                        top: '50px',     
-                                        right: 0,         
+                                        top: '50px',
+                                        right: 0,
                                         backgroundColor: 'rgb(239, 239, 239)',
-                                        
                                         borderRadius: '3px',
-                                        display:'flex',
-                                        
+                                        display: 'flex',
                                         padding: '0px',
                                         minWidth: '150px',
-                                        zIndex: 2000,
+                                        zIndex: 2000
                                     }}
                                 >
                                     <button
@@ -169,18 +180,20 @@ function Header() {
                                             background: 'transparent',
                                             border: 'none',
                                             color: 'black',
-                                            
                                             cursor: 'pointer',
                                             padding: '8px 12px',
                                             width: '100%',
                                             textAlign: 'center',
-                                            borderRadius: '5px',
+                                            borderRadius: '5px'
                                         }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#eeb004ff',
-                                            e.currentTarget.style.color='white'
-                                        )}
-                                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent',
-                                            e.currentTarget.style.color='black')}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#eeb004ff';
+                                            e.currentTarget.style.color = 'white';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                            e.currentTarget.style.color = 'black';
+                                        }}
                                     >
                                         Log Out
                                     </button>
@@ -207,6 +220,7 @@ function Header() {
                                 Sign Up
                             </button>
                         </div>
+                    )
                     )}
 
                 </nav>
