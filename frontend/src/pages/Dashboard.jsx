@@ -4,7 +4,10 @@ import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser } from '/backend/users.js';
+import {
+    getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
+    updateUsername
+} from '/backend/users.js';
 
 //Background Style
 
@@ -111,9 +114,11 @@ const followerCardStyle = {
 //Style for grid display of users
 const followerGridStyle = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: "1rem",
-    marginTop: "2rem",
+    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+    gap: "1.5rem",
+    width: "100vw",
+    padding: "0 2rem",
+    boxSizing: "border-box",
 };
 
 function Dashboard() {
@@ -133,6 +138,34 @@ function Dashboard() {
     const [followingData, setFollowingData] = useState([]); //data for following users
 
     const navigate = useNavigate();
+
+    const [accountType, setAccountType] = useState('individual'); // Account type state
+    // Individual role options
+    const individualRoles = [
+        { value: 'other', label: 'Other' },
+        { value: 'game-developer', label: 'Game Developer' },
+        { value: 'graphic-designer', label: 'Graphic Designer' },
+        { value: '3d-scanning', label: '3D scanning enthusiast' },
+        { value: '3d-printing', label: '3D printing enthusiast' },
+        { value: 'animator', label: 'Animator' },
+        { value: 'architect', label: 'Architect' },
+        { value: 'scientist', label: 'Scientist' },
+    ];
+    
+    // Organization role options
+    const organizationRoles = [
+        { value: 'other', label: 'Other' },
+        { value: 'school', label: 'School' },
+        { value: '3d-studio', label: '3D Creation Studio' },
+        { value: 'game-studio', label: 'Game Studio' },
+        { value: 'brand', label: 'Brand' },
+        { value: 'non-profit', label: 'Non Profit Organization' },
+        { value: 'university', label: 'University' },
+        { value: 'tech-company', label: 'Tech Company' },
+        { value: 'research-lab', label: 'Research Lab' },
+    ];
+    // Determine which roles to show based on account type
+    const roles = accountType === 'individual' ? individualRoles : organizationRoles;
 
     //Effect for check authentification and fetch user data
     useEffect(() => {
@@ -200,7 +233,9 @@ function Dashboard() {
                     <p style={usernameStyle}>{username}</p>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-                        <button style={buttonStyle}>Edit</button>
+                        <button
+                            onClick={() => setActiveIndex(4)}
+                            style={buttonStyle}>Edit</button>
                         <span onClick={() => setActiveIndex(2)} style={followersStyle}>Followers: {userStats.followers}</span>
                         <span onClick={() => setActiveIndex(3)} style={followersStyle}>Following: {userStats.following}</span>
                     </div>
@@ -236,7 +271,7 @@ function Dashboard() {
                         </button>
                     </div>
 
-                    {/* Tab content 1*/}
+                    {/* Tab content 1 - Your Work*/}
                     {activeIndex == 0 && (<h2
                         style={{
                             fontFamily: "Arial, sans-serif",
@@ -285,7 +320,7 @@ function Dashboard() {
                         You don't have models uploaded at the moment.
                     </h2>)}
 
-                    {/* Tab content 2*/}
+                    {/* Tab content 2- Favourites*/}
                     {activeIndex == 1 && (<img src="bookmark-star_2.png"
                         style={{
                             width: '150px',
@@ -338,7 +373,7 @@ function Dashboard() {
                             {/* Followers list */}
                             <div style={followerGridStyle}>
                                 {followersData.length === 0 ? (
-                                    <p style={{ textAlign: "center", fontFamily:'Arial, sans-serif', fontWeight:'bold', color: "gray" }}>No followers yet.</p>
+                                    <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray" }}>No followers yet.</p>
                                 ) : (
                                     followersData.map((f) => (
                                         <div key={f.uid} style={followerCardStyle}>
@@ -423,7 +458,7 @@ function Dashboard() {
                             </h2>
                             <div style={followerGridStyle}>
                                 {followingData.length === 0 ? (
-                                    <p style={{ textAlign: 'center',  fontFamily:'Arial, sans-serif', fontWeight:'bold', color: 'gray' }}>You're not following anyone.</p>
+                                    <p style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: 'gray' }}>You're not following anyone.</p>
                                 ) : (
                                     followingData.map((f) => (
                                         <div key={f.uid} style={followerCardStyle}>
@@ -437,7 +472,7 @@ function Dashboard() {
                                             <p style={{ margin: 0, fontSize: "0.8rem", color: "gray" }}>
                                                 Followers: {f.followers} | Following: {f.following}
                                             </p>
-                                            
+
                                             {/* Follow/Unfollow button*/}
                                             {user && (
                                                 <button style={{
@@ -494,6 +529,342 @@ function Dashboard() {
 
                             </div>
                         </>
+                    )}
+                    {/* Edit profile content */}
+                    {activeIndex == 4 && (
+                        <div
+                            style={{
+                                marginTop: '3rem',
+                                backgroundColor: 'white',
+                                minWidth: '300px',
+                                width: '77%',
+                                maxWidth: '700px',
+                                fontFamily: 'Arial, sans-serif',
+                                padding: '2rem',
+                                borderRadius: '15px',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'left',
+                                justifyContent: 'flex-start',
+                                marginLeft: 'auto',
+                                marginRight: '4rem'
+                            }}
+                        >
+                            {/* Profile picture with overlay */}
+                            <div style={{ position: 'relative', width: '100px', height: '100px' }}>
+                                <img
+                                    style={imageStyle}
+                                    src={userStats.profilePicture || 'profile.png'}
+                                    alt="Profile"
+                                    onError={(e) => {
+                                        e.target.src = 'profile.png';
+                                    }}
+                                />
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        borderRadius: '50%',
+                                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        opacity: 0,
+                                        transition: 'opacity 0.3s ease'
+                                    }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.opacity = 1)}
+                                    onMouseLeave={(e) => (e.currentTarget.style.opacity = 0)}
+                                    onClick={() => document.getElementById('profilePictureInput').click()}
+                                >
+                                    <p style={{ color: 'white', fontSize: '12px', textAlign: 'center' }}>
+                                        Change profile pic.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Hidden input for profile picture upload */}
+                            <input
+                                id="profilePictureInput"
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={async (e) => {
+                                    const file = e.target.files[0];
+                                    if (file) {
+                                        try {
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                alert('The maximum size allowed is 5MB.');
+                                                return;
+                                            }
+                                            if (!file.type.startsWith('image/')) {
+                                                alert('Select only image files.');
+                                                return;
+                                            }
+
+                                            const result = await doUpdateProfilePicture(file);
+
+                                            if (result.success) {
+                                                setUserStats((prev) => ({
+                                                    ...prev,
+                                                    profilePicture: result.imageUrl
+                                                }));
+                                                alert('Profile picture changed succesfuly!');
+                                            } else {
+                                                alert('Error: ' + result.message);
+                                            }
+                                        } catch (error) {
+                                            console.error('Error at upload:', error);
+                                            alert('Error: ' + error.message);
+                                        }
+                                    }
+                                }}
+                            />
+
+                            {/* Username input + button */}
+                            <div style={{ marginTop: '1.5rem', textAlign: 'left', width: '100%' }}>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}
+                                >
+                                    <label
+                                        style={{
+                                            color: 'black',
+                                            fontWeight: 'bold',
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        Username:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        style={{
+                                            padding: '0.5rem',
+                                            border: '1px solid #ccc',
+                                            borderRadius: '4px',
+                                            width: '400px'
+                                        }}
+                                    />
+
+
+
+                                </div>
+                                {/* Account type selection */}
+                                <div style={{ marginTop: '1.5rem', textAlign: 'left', width: '100%' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <label
+                                            style={{ color: 'black', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+                                        >
+                                            Account type:
+                                        </label>
+
+                                        <select
+                                            value={accountType}
+                                            onChange={(e) => setAccountType(e.target.value)}
+                                            style={{
+                                                padding: '0.5rem',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                width: '40%',
+                                            }}
+                                        >
+                                            <option value="individual">Individual</option>
+                                            <option value="organization">Organization</option>
+                                        </select>
+
+                                        <select
+                                            style={{
+                                                padding: '0.5rem',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                width: '40%',
+                                            }}
+                                        >
+                                            {roles.map((role) => (
+                                                <option key={role.value} value={role.value}>
+                                                    {role.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                {/* Bio  */}
+                                <div style={{ marginTop: '1.5rem', textAlign: 'left', width: '100%' }}>
+                                    <label
+                                        style={{
+                                            display: 'block',
+                                            marginBottom: '0.5rem',
+                                            color: 'black',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        Bio:
+                                    </label>
+
+                                    <textarea
+                                        maxLength={300}
+                                        rows={5}
+                                        style={{
+                                            width: '80%',
+                                            padding: '0.5rem',
+                                            border: '1px solid #ccc',
+                                            borderRadius: '4px',
+                                            resize: 'vertical',
+                                            fontFamily: 'Arial, sans-serif',
+                                            fontSize: '0.9rem'
+                                        }}
+                                        placeholder="Write something about yourself..."
+                                    />
+                                </div>
+                                {/* Social media links */}
+                                <div style={{ marginTop: '1.5rem', textAlign: 'left', width: '100%' }}>
+                                    <label
+                                        style={{
+                                            display: 'block',
+                                            marginBottom: '0.5rem',
+                                            color: 'black',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        Social media links:
+                                    </label>
+
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '0.8rem',
+                                            width: '80%'
+                                        }}
+                                    >
+                                        <input
+                                            type="text"
+                                            placeholder="Link 1"
+                                            style={{
+                                                padding: '0.5rem',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                width: '100%'
+                                            }}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Link 2"
+                                            style={{
+                                                padding: '0.5rem',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                width: '100%'
+                                            }}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Link 3"
+                                            style={{
+                                                padding: '0.5rem',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                width: '100%'
+                                            }}
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Link 4"
+                                            style={{
+                                                padding: '0.5rem',
+                                                border: '1px solid #ccc',
+                                                borderRadius: '4px',
+                                                width: '100%'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                                {/* Software skills */}
+                                <div style={{ marginTop: '1.5rem', textAlign: 'left', width: '100%' }}>
+                                    <label
+                                        style={{
+                                            display: 'block',
+                                            marginBottom: '0.5rem',
+                                            color: 'black',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        Software skills:
+                                    </label>
+
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            gap: '0.5rem',
+                                            width: '80%'
+                                        }}
+                                    >
+                                        {["Blender", "Cinema4d", "AutoCAD", "ArhiCAD", "Maya", "3ds Max", "ZBrush", "Substance Painter", "Photoshop", "Godot", "Unity", "Unreal Engine"].map((skill) => (
+                                            <div
+                                                key={skill}
+                                                onClick={() => {
+
+                                                    console.log("Clicked:", skill);
+                                                }}
+                                                style={{
+                                                    padding: '0.4rem 0.8rem',
+                                                    border: 'none',
+                                                    color:'black',
+                                                    borderRadius: '15px',
+                                                    cursor: 'pointer',
+                                                    backgroundColor: '#c5c5c5ff',
+                                                    fontSize: '0.85rem',
+                                                    userSelect: 'none'
+                                                }}
+                                            >
+                                                {skill}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                {/* Save button */}
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const result = await updateUsername(username);
+                                            if (result.success) {
+                                                alert('Username updated succesfully!');
+                                            } else {
+                                                alert('Eroare: ' + result.message);
+                                            }
+                                        } catch (error) {
+                                            console.error('Error updating username:', error);
+                                            alert('Error: ' + error.message);
+                                        }
+                                    }}
+                                    style={{
+                                        padding: '1rem 2rem',
+                                        marginTop: '3rem',
+                                        backgroundColor: '#eb8d00ff',
+                                        fontWeight:'bold',
+                                        color: 'white',
+                                        border: 'none',
+                                        display:'flex',
+                                        justifySelf:'center',
+                                        fontSize:'1.25rem',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    SAVE PROFILE
+                                </button>
+                            </div>
+                        </div>
                     )}
                 </section>
 
