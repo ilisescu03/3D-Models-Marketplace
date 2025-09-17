@@ -120,7 +120,13 @@ export const getUserStats = async (userId) => {
       following: (userData.followingList || []).length, // Calculate from array length
       followersList: userData.followersList || [],
       followingList: userData.followingList || [],
-      profilePicture: userData.profilePicture || ""
+       profilePicture: userData.profilePicture || "",
+      username: userData.username || userData.email || "",
+      bio: userData.bio || "",
+      accountType: userData.accountType || "individual",
+      role: userData.role || "other",
+      links: userData.links || ["", "", "", ""],
+      skills: userData.softwareSkills || []
     };
   } catch (error) {
     throw new Error(error.message || 'Failed to get user stats.');
@@ -132,51 +138,32 @@ export const doUpdateProfilePicture = async (file) => {
 
   // Ensure that a user is currently signed in
   if (!auth.currentUser) {
-    throw new Error('No user is currently signed in.');
+    return { success: false, message: 'No user is currently signed in.' };
   }
 
   try {
 
     const userRef = doc(db, "users", auth.currentUser.uid); //Reference the FireStore document for the current user
-    const userSnap = await getDoc(userRef); //Retrieve the current data of the user
+    
+     const storageRef = ref(storage, `profilePictures/${auth.currentUser.uid}`);
 
-    //If the user doesn't exists in Firestore, throw an error
+    
+    const snapshot = await uploadBytes(storageRef, file);
 
-    if (!userSnap.exists()) {
-      throw new Error('User document not found.');
-    }
-    //Get information about the last profile pic to delete it.
-    const currentUserData = userSnap.data();
-    const oldProfilePicture = currentUserData.profilePicture;
+   
+    const downloadURL = await getDownloadURL(snapshot.ref);
 
-    //Create reference to the storage location
-    const storageRef = ref(storage, `profilePictures/${auth.currentUser.uid}`);
-    //Upload file
-     const snapshot = await uploadBytes(storageRef, file);
-     //Get download URL
-     const downloadURL = await getDownloadURL(snapshot.ref);
-    //Update the profile picture field in FireStore
-
+   
     await updateDoc(userRef, {
       profilePicture: downloadURL
     });
-
-    //Delete the image from storage(if exists and it's not the default one)
-     if (oldProfilePicture && 
-        oldProfilePicture !== "profile.png" && 
-        oldProfilePicture.includes("firebasestorage")) {
-      try {
-        const oldImageRef = ref(storage, oldProfilePicture);
-        await deleteObject(oldImageRef);
-      } catch (deleteError) {
-        console.warn("Couldn't delete the old profile picture:", deleteError);
-      }
-    }
+   
+  
     //Succes
     return { success: true, message: 'Profile picture updated successfully.', imageUrl:downloadURL };
   } catch (error) {
     //Fail
-    throw new Error(error.message || 'Failed to update profile picture.');
+     return { success: false, message: error.message || 'Failed to update profile picture.' };
   }
 };
 
@@ -282,7 +269,15 @@ export const listenToUserStats = (userId, callback) => {
         following: (data.followingList || []).length,
         followersList: data.followersList || [],
         followingList: data.followingList || [],
-        profilePicture: data.profilePicture || "",
+        profilePicture: typeof data.profilePicture === "string" && data.profilePicture.length > 0
+          ? data.profilePicture
+          : "profile.png",
+        username: data.username || data.email || "",    
+        bio: data.bio || "",
+        accountType: data.accountType || "individual",
+        role: data.role || "other",
+        links: data.links || ["", "", "", ""],
+        skills: data.softwareSkills || []
       });
     }
   }, (error) => {
@@ -347,8 +342,21 @@ export const updateUsername = async (newUsername) =>{
     await updateDoc(userRef, {
       username: newUsername
     });
-    return {succes: true, message: 'Username updated succesfully.'};
+    return {success: true, message: 'Username updated succesfully.'};
   } catch(error){
     throw new Error(error.message || 'Failed to update username.')
   }
 }
+
+
+
+// Update user data
+export const updateUserData = async (userId, updatedData) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await updateDoc(userRef, updatedData);
+    return { success: true, message: 'User data updated successfully.' };
+  } catch (error) {
+    throw new Error(error.message || 'Failed to update user data.');
+  }
+};

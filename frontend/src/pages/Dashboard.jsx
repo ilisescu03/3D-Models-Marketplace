@@ -6,7 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
-    updateUsername
+    updateUsername, updateUserData
 } from '/backend/users.js';
 
 //Background Style
@@ -131,12 +131,24 @@ function Dashboard() {
         following: 0,
         followersList: [],
         followingList: [],
-        profilePicture: ""
+        profilePicture: "profile.png",
+        username: "",
+        bio: "",
+        accountType: "individual",
+        role: "other",
+        links: ["", "", "", ""],
+        skills: []
     }); //for user stats and profile picture display
     const [loading, setLoading] = useState(true); //loading state for user stats
     const [followersData, setFollowersData] = useState([]); //data for followers
     const [followingData, setFollowingData] = useState([]); //data for following users
+    const [selectedSkills, setSelectedSkills] = useState([]);
 
+    const [availableSkills] = useState([
+        "Blender", "Cinema4d", "AutoCAD", "ArhiCAD", "Maya",
+        "3ds Max", "ZBrush", "Substance Painter", "Photoshop",
+        "Godot", "Unity", "Unreal Engine"
+    ]);
     const navigate = useNavigate();
 
     const [accountType, setAccountType] = useState('individual'); // Account type state
@@ -151,7 +163,7 @@ function Dashboard() {
         { value: 'architect', label: 'Architect' },
         { value: 'scientist', label: 'Scientist' },
     ];
-    
+
     // Organization role options
     const organizationRoles = [
         { value: 'other', label: 'Other' },
@@ -188,7 +200,9 @@ function Dashboard() {
                 //listen to real-time user stats updates
                 const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
                     setUserStats(stats);
-
+                    setUsername(stats.username);
+                    setSelectedSkills(stats.skills||[])
+                    setLoading(false);
                     //fetch followers and following lists
                     const followers = await getFollowers(currentUser.uid);
                     setFollowersData(followers);
@@ -207,8 +221,15 @@ function Dashboard() {
                     following: 0,
                     followersList: [],
                     followingList: [],
-                    profilePicture: ""
+                    profilePicture: "profile.png",
+                    username: "",
+                    bio: "",
+                    accountType: "individual",
+                    role: "other",
+                    links: ["", "", "", ""],
+                    skills: []
                 })
+                setSelectedSkills([]);
                 setLoading(false);
                 navigate('/');
 
@@ -216,18 +237,53 @@ function Dashboard() {
         });
         return () => unsubscribe();
     }, [navigate]);
+    const toggleSkill = (skill) => {
+        setSelectedSkills(prev => {
+            if (prev.includes(skill)) {
+                return prev.filter(s => s !== skill);
+            } else {
+                return [...prev, skill];
+            }
+        });
+    };
+    const handleSaveProfile = async () => {
+        try {
+            if (!user) throw new Error('No user is signed in');
 
+            const updatedData = {
+                username: userStats.username,
+                bio: userStats.bio,
+                accountType: userStats.accountType,
+                role: userStats.role,
+                links: userStats.links,
+                skills: selectedSkills
+            };
+
+            const result = await updateUserData(user.uid, updatedData);
+
+            if (result.success) {
+                alert('Profile updated successfully!');
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            alert('Error: ' + error.message);
+        }
+    };
     return (
         <div style={backgroundStyle}>
             <Header />
             {/* Profile header */}
             <div style={profileContainerStyle}>
                 {/* Profile pic */}
-                <img style={imageStyle} src={userStats.profilePicture || "profile.png"} alt="Profile"
-                    onError={(e) => {
-                        e.target.src = "profile.png";
-                    }}
+                <img
+                    style={imageStyle}
+                    src={userStats.profilePicture}
+                    alt="Profile"
+                    onError={(e) => { e.target.src = "profile.png"; }}
                 />
+
                 {/* Username, edit button, followers/following */}
                 <div style={textContainerStyle}>
                     <p style={usernameStyle}>{username}</p>
@@ -555,12 +611,11 @@ function Dashboard() {
                             <div style={{ position: 'relative', width: '100px', height: '100px' }}>
                                 <img
                                     style={imageStyle}
-                                    src={userStats.profilePicture || 'profile.png'}
+                                    src={userStats.profilePicture}
                                     alt="Profile"
-                                    onError={(e) => {
-                                        e.target.src = 'profile.png';
-                                    }}
+                                    onError={(e) => { e.target.src = "profile.png"; }}
                                 />
+
                                 <div
                                     style={{
                                         position: 'absolute',
@@ -607,14 +662,10 @@ function Dashboard() {
                                             }
 
                                             const result = await doUpdateProfilePicture(file);
-
                                             if (result.success) {
-                                                setUserStats((prev) => ({
-                                                    ...prev,
-                                                    profilePicture: result.imageUrl
-                                                }));
-                                                alert('Profile picture changed succesfuly!');
-                                            } else {
+                                                alert('Profile picture changed successfully!');
+                                            }
+                                            else {
                                                 alert('Error: ' + result.message);
                                             }
                                         } catch (error) {
@@ -645,8 +696,8 @@ function Dashboard() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
+                                        value={userStats.username}
+                                        onChange={(e) => setUserStats(prev => ({ ...prev, username: e.target.value }))}
                                         style={{
                                             padding: '0.5rem',
                                             border: '1px solid #ccc',
@@ -668,8 +719,11 @@ function Dashboard() {
                                         </label>
 
                                         <select
-                                            value={accountType}
-                                            onChange={(e) => setAccountType(e.target.value)}
+                                            value={userStats.accountType}
+                                            onChange={(e) => {
+                                                setUserStats(prev => ({ ...prev, accountType: e.target.value }));
+                                                setAccountType(e.target.value);
+                                            }}
                                             style={{
                                                 padding: '0.5rem',
                                                 border: '1px solid #ccc',
@@ -682,6 +736,8 @@ function Dashboard() {
                                         </select>
 
                                         <select
+                                            value={userStats.role}
+                                            onChange={(e) => setUserStats(prev => ({ ...prev, role: e.target.value }))}
                                             style={{
                                                 padding: '0.5rem',
                                                 border: '1px solid #ccc',
@@ -711,6 +767,8 @@ function Dashboard() {
                                     </label>
 
                                     <textarea
+                                        value={userStats.bio}
+                                        onChange={(e) => setUserStats(prev => ({ ...prev, bio: e.target.value }))}
                                         maxLength={300}
                                         rows={5}
                                         style={{
@@ -738,54 +796,21 @@ function Dashboard() {
                                         Social media links:
                                     </label>
 
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            gap: '0.8rem',
-                                            width: '80%'
-                                        }}
-                                    >
-                                        <input
-                                            type="text"
-                                            placeholder="Link 1"
-                                            style={{
-                                                padding: '0.5rem',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px',
-                                                width: '100%'
-                                            }}
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Link 2"
-                                            style={{
-                                                padding: '0.5rem',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px',
-                                                width: '100%'
-                                            }}
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Link 3"
-                                            style={{
-                                                padding: '0.5rem',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px',
-                                                width: '100%'
-                                            }}
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Link 4"
-                                            style={{
-                                                padding: '0.5rem',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px',
-                                                width: '100%'
-                                            }}
-                                        />
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', width: '80%' }}>
+                                        {userStats.links.map((link, index) => (
+                                            <input
+                                                key={index}
+                                                type="text"
+                                                value={link}
+                                                onChange={(e) => {
+                                                    const newLinks = [...userStats.links];
+                                                    newLinks[index] = e.target.value;
+                                                    setUserStats(prev => ({ ...prev, links: newLinks }));
+                                                }}
+                                                placeholder={`Link ${index + 1}`}
+                                                style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
                                 {/* Software skills */}
@@ -801,28 +826,43 @@ function Dashboard() {
                                         Software skills:
                                     </label>
 
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            gap: '0.5rem',
-                                            width: '80%'
-                                        }}
-                                    >
-                                        {["Blender", "Cinema4d", "AutoCAD", "ArhiCAD", "Maya", "3ds Max", "ZBrush", "Substance Painter", "Photoshop", "Godot", "Unity", "Unreal Engine"].map((skill) => (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '80%' }}>
+                                        {selectedSkills.map((skill) => (
                                             <div
                                                 key={skill}
-                                                onClick={() => {
-
-                                                    console.log("Clicked:", skill);
+                                                onClick={() => toggleSkill(skill)}
+                                                style={{
+                                                    padding: '0.4rem 0.8rem',
+                                                    border: '1px solid #ccc',
+                                                    backgroundColor: 'white',
+                                                    color: 'black',
+                                                    borderRadius: '15px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.85rem',
+                                                    userSelect: 'none'
                                                 }}
+                                            >
+                                                {skill} ×
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Software skills - Available */}
+                                <div style={{ marginTop: '1.5rem', textAlign: 'left', width: '100%' }}>
+                                    
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '80%' }}>
+                                        {availableSkills.filter(skill => !selectedSkills.includes(skill)).map((skill) => (
+                                            <div
+                                                key={skill}
+                                                onClick={() => toggleSkill(skill)}
                                                 style={{
                                                     padding: '0.4rem 0.8rem',
                                                     border: 'none',
-                                                    color:'black',
+                                                    backgroundColor: '#c5c5c5ff',
+                                                    color: 'black',
                                                     borderRadius: '15px',
                                                     cursor: 'pointer',
-                                                    backgroundColor: '#c5c5c5ff',
                                                     fontSize: '0.85rem',
                                                     userSelect: 'none'
                                                 }}
@@ -834,29 +874,17 @@ function Dashboard() {
                                 </div>
                                 {/* Save button */}
                                 <button
-                                    onClick={async () => {
-                                        try {
-                                            const result = await updateUsername(username);
-                                            if (result.success) {
-                                                alert('Username updated succesfully!');
-                                            } else {
-                                                alert('Eroare: ' + result.message);
-                                            }
-                                        } catch (error) {
-                                            console.error('Error updating username:', error);
-                                            alert('Error: ' + error.message);
-                                        }
-                                    }}
+                                    onClick={handleSaveProfile}
                                     style={{
                                         padding: '1rem 2rem',
                                         marginTop: '3rem',
                                         backgroundColor: '#eb8d00ff',
-                                        fontWeight:'bold',
+                                        fontWeight: 'bold',
                                         color: 'white',
                                         border: 'none',
-                                        display:'flex',
-                                        justifySelf:'center',
-                                        fontSize:'1.25rem',
+                                        display: 'flex',
+                                        justifySelf: 'center',
+                                        fontSize: '1.25rem',
                                         borderRadius: '4px',
                                         cursor: 'pointer'
                                     }}
