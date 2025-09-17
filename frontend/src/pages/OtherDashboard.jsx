@@ -530,7 +530,7 @@ function OtherDashboard() {
                                 (!profileUser.links || profileUser.links.every(link => link.trim() === '')) &&
                                 (!profileUser.skills || profileUser.skills.length === 0) && (
                                     <p style={{ color: '#666', fontStyle: 'italic' }}>
-                                        This user hasn't added any information yet.
+                                        This user didn't add any information yet.
                                     </p>
                                 )}
                         </div>

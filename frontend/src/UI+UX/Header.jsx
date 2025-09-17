@@ -4,7 +4,10 @@ import { auth, db } from '/backend/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import SideMenu from './SideMenu.jsx';
-
+import {
+    getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
+    updateUsername, updateUserData
+} from '/backend/users.js';
 //Style for Sign Up
 const buttonStyle = {
     backgroundColor: 'rgba(255, 123, 0, 1)',
@@ -253,11 +256,33 @@ function Header() {
                                             borderRadius: '3px',
                                             boxShadow: ' 2px 4px 4px rgba(0, 0, 0, 0.23)',
                                             display: 'flex',
+                                            flexDirection:'column',
                                             padding: '0px',
                                             minWidth: '150px',
                                             zIndex: 2000
                                         }}
                                     >
+                                        <button
+                                            onClick={()=>window.location.href='/settings'}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                color: 'black',
+                                                cursor: 'pointer',
+                                                padding: '8px 12px',
+                                                width: '100%',
+                                                textAlign: 'center',
+                                                borderRadius: '5px'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.color = 'black';
+                                            }}
+                                        >
+                                            Settings
+                                        </button>
                                         <button
                                             onClick={doSignOut}
                                             style={{

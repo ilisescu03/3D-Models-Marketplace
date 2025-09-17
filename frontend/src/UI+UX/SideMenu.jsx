@@ -331,6 +331,16 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                     </button>
                                 </div>
                                 <div style={{ padding: '10px' }}>
+                                    <button
+                                        onClick={() => window.location.href = '/settings'}
+                                        style={buttonStyle3}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
+                                    >
+                                        Settings
+                                    </button>
+                                </div>
+                                <div style={{ padding: '10px' }}>
                                     <button onClick={handleLogout} style={buttonStyle3}
                                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
