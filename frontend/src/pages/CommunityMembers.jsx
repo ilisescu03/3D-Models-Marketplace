@@ -35,15 +35,15 @@ const usersGridStyle = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
     gap: "1.5rem",
-    width: "100vw",
-    padding: "0 2rem",
+    width: "98vw",
+    padding: "2rem 2rem",
     boxSizing: "border-box",
 };
 // Container style for the main content area
 const containerStyle = {
-    marginTop: '6rem', 
-    padding: '3rem', 
-    fontSize: '1.5rem', 
+    marginTop: '6rem',
+    padding: '3rem',
+    fontSize: '1.5rem',
     fontFamily: 'Manrope, system-ui',
     width: '100%',
     boxSizing: 'border-box',
@@ -66,7 +66,7 @@ function CommunityMembers() {
     const navigate = useNavigate(); // Navigation hook
 
     useEffect(() => {
-         // Fetch all users from the database
+        // Fetch all users from the database
         const fetchUsers = async () => {
             try {
                 const users = await getUsers();
@@ -92,7 +92,7 @@ function CommunityMembers() {
                     // Set up real-time listener for user stats
                     const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
                         setUserStats(stats);
-                         // Fetch followers and following data
+                        // Fetch followers and following data
                         const followers = await getFollowers(currentUser.uid);
                         setFollowersData(followers);
 
@@ -108,7 +108,7 @@ function CommunityMembers() {
                     setLoading(false);
                 }
             } else {
-                 // User is not authenticated
+                // User is not authenticated
                 setUser(null);
                 setUsername("");
                 setUserStats({
@@ -145,26 +145,33 @@ function CommunityMembers() {
             <div style={containerStyle}>
                 <h2 style={{ fontWeight: 'normal', color: 'gray' }}>Users</h2>
                 <div style={usersGridStyle}>
-                     {/* Users display */}
+                    {/* Users display */}
                     {filteredUsers.length === 0 ? (
                         <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray" }}>No other users yet.</p>
                     ) : (
                         filteredUsers.map((f) => (
                             <div key={f.uid} style={userCardStyle}>
                                 <img
-                                    onClick={()=>window.location.href=`/user/${f.username}`}
+                                    onClick={() => window.location.href = `/user/${f.username}`}
                                     src={f.profilePicture}
                                     alt={f.username}
-                                    style={{ width: "80px", height: "80px", cursor:'pointer', borderRadius: "50%", objectFit: "cover" }}
+                                    style={{ width: "80px", height: "80px", cursor: 'pointer', borderRadius: "50%", objectFit: "cover" }}
                                     onError={(e) => (e.target.src = "profile.png")}
                                 />
                                 <h3 style={{ margin: "0.5rem 0" }}>{f.username}</h3>
                                 <p style={{ margin: 0, fontSize: "0.8rem", color: "gray" }}>
                                     Followers: {f.followers} | Following: {f.following}
                                 </p>
-                                 {/* Follow/Unfollow button */}
+                                {/* Follow/Unfollow button */}
                                 <button
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = user && userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = user && userStats.followingList.includes(f.uid) ? "red" : "#575757";
+                                    }}
                                     style={{
+                                        transition:'0.3s ease',
                                         marginTop: "0.5rem",
                                         padding: "0.3rem 0.7rem",
                                         borderRadius: "5px",

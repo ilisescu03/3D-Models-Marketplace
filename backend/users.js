@@ -126,7 +126,7 @@ export const getUserStats = async (userId) => {
       accountType: userData.accountType || "individual",
       role: userData.role || "other",
       links: userData.links || ["", "", "", ""],
-      skills: userData.softwareSkills || []
+      skills: userData.skills || []
     };
   } catch (error) {
     throw new Error(error.message || 'Failed to get user stats.');
@@ -277,7 +277,7 @@ export const listenToUserStats = (userId, callback) => {
         accountType: data.accountType || "individual",
         role: data.role || "other",
         links: data.links || ["", "", "", ""],
-        skills: data.softwareSkills || []
+        skills: data.skills || []
       });
     }
   }, (error) => {

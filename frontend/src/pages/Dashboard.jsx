@@ -9,6 +9,38 @@ import {
     updateUsername, updateUserData
 } from '/backend/users.js';
 
+//Summary container style
+const summaryContainerStyle = {
+    backgroundColor: 'white',
+    padding: '2rem',
+    borderRadius: '10px',
+    marginTop: '2rem',
+    fontFamily: 'Arial, sans-serif',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    width: '70%',
+    maxWidth: '800px',
+    marginLeft: 'auto',
+    marginRight: 'auto'
+};
+//Section title style
+const sectionTitleStyle = {
+    color: '#333',
+    fontSize: '1.2rem',
+    fontWeight: 'bold',
+    marginBottom: '1rem',
+    borderBottom: '2px solid #eb8d00ff',
+    paddingBottom: '0.5rem'
+};
+//Skills labels style
+const skillStyle = {
+    padding: '0.4rem 0.8rem',
+    backgroundColor: '#f0f0f0',
+    color: '#333',
+    borderRadius: '15px',
+    fontSize: '0.85rem',
+    display: 'inline-block',
+    margin: '0.2rem'
+};
 //Background Style
 
 const backgroundStyle = {
@@ -73,6 +105,7 @@ const buttonStyle = {
     backgroundColor: '#575757ff',
     color: 'white',
     fontWeight: 'bold',
+    transition:'0.3s ease',
 };
 
 //Navigation button style
@@ -116,8 +149,8 @@ const followerGridStyle = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
     gap: "1.5rem",
-    width: "100vw",
-    padding: "0 2rem",
+    width: "98vw",
+    padding: "0 4rem",
     boxSizing: "border-box",
 };
 
@@ -125,7 +158,7 @@ function Dashboard() {
 
     const [user, setUser] = useState(null); //for verifying if the user is logged or not
     const [username, setUsername] = useState(""); //for username display
-    const [activeIndex, setActiveIndex] = useState(0); //for navigation buttons
+    const [activeIndex, setActiveIndex] = useState(5); //for navigation buttons
     const [userStats, setUserStats] = useState({
         followers: 0,
         following: 0,
@@ -155,6 +188,9 @@ function Dashboard() {
     // Individual role options
     const individualRoles = [
         { value: 'other', label: 'Other' },
+        { value: 'student', label: 'Student' },
+        { value: 'web-developer', label: 'Web developer' },
+        { value: 'software-engineer', label: 'Software developer' },
         { value: 'game-developer', label: 'Game Developer' },
         { value: 'graphic-designer', label: 'Graphic Designer' },
         { value: '3d-scanning', label: '3D scanning enthusiast' },
@@ -201,7 +237,7 @@ function Dashboard() {
                 const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
                     setUserStats(stats);
                     setUsername(stats.username);
-                    setSelectedSkills(stats.skills||[])
+                    setSelectedSkills(stats.skills || [])
                     setLoading(false);
                     //fetch followers and following lists
                     const followers = await getFollowers(currentUser.uid);
@@ -290,6 +326,12 @@ function Dashboard() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
                         <button
+                            onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = '#2c2c2cff';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = '#575757ff';
+                                                    }}
                             onClick={() => setActiveIndex(4)}
                             style={buttonStyle}>Edit</button>
                         <span onClick={() => setActiveIndex(2)} style={followersStyle}>Followers: {userStats.followers}</span>
@@ -313,6 +355,12 @@ function Dashboard() {
                 >
                     {/* Navigation buttons */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                        <button
+                            onClick={() => setActiveIndex(5)}
+                            style={getTabButtonStyle(activeIndex === 5)}
+                        >
+                            Summary
+                        </button>
                         <button
                             onClick={() => setActiveIndex(0)}
                             style={getTabButtonStyle(activeIndex === 0)}
@@ -447,7 +495,14 @@ function Dashboard() {
                                             {/* Follow/Unfollow button*/}
                                             {user && (
                                                 <button
+                                                onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor =userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor =userStats.followingList.includes(f.uid) ? "red" : "#575757";
+                                                    }}
                                                     style={{
+                                                        transition:'0.3s ease',
                                                         marginTop: "0.5rem",
                                                         padding: "0.3rem 0.7rem",
                                                         borderRadius: "5px",
@@ -531,16 +586,24 @@ function Dashboard() {
 
                                             {/* Follow/Unfollow button*/}
                                             {user && (
-                                                <button style={{
-                                                    marginTop: "0.5rem",
-                                                    padding: "0.3rem 0.7rem",
-                                                    borderRadius: "5px",
-                                                    border: "none",
-                                                    cursor: "pointer",
-                                                    backgroundColor: userStats.followingList.includes(f.uid) ? "red" : "#575757",
-                                                    color: "white",
-                                                    fontWeight: "bold",
-                                                }}
+                                                <button
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor =userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor =userStats.followingList.includes(f.uid) ? "red" : "#575757";
+                                                    }}
+                                                    style={{
+                                                        transition:'0.3s ease',
+                                                        marginTop: "0.5rem",
+                                                        padding: "0.3rem 0.7rem",
+                                                        borderRadius: "5px",
+                                                        border: "none",
+                                                        cursor: "pointer",
+                                                        backgroundColor: userStats.followingList.includes(f.uid) ? "red" : "#575757",
+                                                        color: "white",
+                                                        fontWeight: "bold",
+                                                    }}
                                                     onClick={
                                                         async () => {
                                                             try {
@@ -829,17 +892,25 @@ function Dashboard() {
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '80%' }}>
                                         {selectedSkills.map((skill) => (
                                             <div
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#e2e2e2ff';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = 'white';
+                                                }}
                                                 key={skill}
                                                 onClick={() => toggleSkill(skill)}
                                                 style={{
                                                     padding: '0.4rem 0.8rem',
+
                                                     border: '1px solid #ccc',
                                                     backgroundColor: 'white',
                                                     color: 'black',
                                                     borderRadius: '15px',
                                                     cursor: 'pointer',
                                                     fontSize: '0.85rem',
-                                                    userSelect: 'none'
+                                                    userSelect: 'none',
+                                                    transition: '0.3s ease'
                                                 }}
                                             >
                                                 {skill} ×
@@ -850,12 +921,18 @@ function Dashboard() {
 
                                 {/* Software skills - Available */}
                                 <div style={{ marginTop: '1.5rem', textAlign: 'left', width: '100%' }}>
-                                    
+
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', width: '80%' }}>
                                         {availableSkills.filter(skill => !selectedSkills.includes(skill)).map((skill) => (
                                             <div
                                                 key={skill}
                                                 onClick={() => toggleSkill(skill)}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#7a7a7aff';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#c5c5c5ff';
+                                                }}
                                                 style={{
                                                     padding: '0.4rem 0.8rem',
                                                     border: 'none',
@@ -864,7 +941,8 @@ function Dashboard() {
                                                     borderRadius: '15px',
                                                     cursor: 'pointer',
                                                     fontSize: '0.85rem',
-                                                    userSelect: 'none'
+                                                    userSelect: 'none',
+                                                    transition: '0.3s ease'
                                                 }}
                                             >
                                                 {skill}
@@ -875,6 +953,12 @@ function Dashboard() {
                                 {/* Save button */}
                                 <button
                                     onClick={handleSaveProfile}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#b16a00ff';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#eb8d00ff';
+                                    }}
                                     style={{
                                         padding: '1rem 2rem',
                                         marginTop: '3rem',
@@ -886,12 +970,81 @@ function Dashboard() {
                                         justifySelf: 'center',
                                         fontSize: '1.25rem',
                                         borderRadius: '4px',
-                                        cursor: 'pointer'
+                                        cursor: 'pointer',
+                                        transition: '0.3s ease'
                                     }}
                                 >
                                     SAVE PROFILE
                                 </button>
                             </div>
+                        </div>
+                    )}
+                    {/* Summary tab */}
+                    {activeIndex === 5 && (
+                        <div style={summaryContainerStyle}>
+                            <h2 style={{ color: '#333', marginBottom: '3rem', fontSize: '1.7rem' }}>Summary</h2>
+
+                            {/* Account Type */}
+                            <div style={{ marginBottom: '2rem' }}>
+                                <h3 style={sectionTitleStyle}>Account Type</h3>
+                                <p style={{ margin: 0 }}>
+                                    {userStats.accountType === 'individual' ? 'Individual' : 'Organization'} -
+                                    {roles.find(role => role.value === userStats.role)?.label || 'Other'}
+                                </p>
+                            </div>
+
+                            {/* Bio */}
+                            {userStats.bio && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={sectionTitleStyle}>Bio</h3>
+                                    <p style={{ margin: 0, lineHeight: '1.5' }}>{userStats.bio}</p>
+                                </div>
+                            )}
+
+                            {/* Social Media Links */}
+                            {userStats.links && userStats.links.some(link => link.trim() !== '') && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={sectionTitleStyle}>Social Media Links</h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {userStats.links.map((link, index) => (
+                                            link.trim() !== '' && (
+                                                <a
+                                                    key={index}
+                                                    href={link.startsWith('http') ? link : `https://${link}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{ color: '#eb8d00ff', textDecoration: 'none' }}
+                                                >
+                                                    {link}
+                                                </a>
+                                            )
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Software Skills */}
+                            {userStats.skills && userStats.skills.length > 0 && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={sectionTitleStyle}>Software Skills</h3>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                                        {userStats.skills.map((skill, index) => (
+                                            <span key={index} style={skillStyle}>
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* In the case the user didn't add any info */}
+                            {!userStats.bio &&
+                                (!userStats.links || userStats.links.every(link => link.trim() === '')) &&
+                                (!userStats.skills || userStats.skills.length === 0) && (
+                                    <p style={{ color: '#666', fontStyle: 'italic' }}>
+                                        U didn't add any information yet.
+                                    </p>
+                                )}
                         </div>
                     )}
                 </section>

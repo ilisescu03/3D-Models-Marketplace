@@ -6,6 +6,39 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getUserStats, getFollowers, getFollowing } from '/backend/users.js';
 
+
+//Summary container style
+const summaryContainerStyle = {
+    backgroundColor: 'white',
+    padding: '2rem',
+    borderRadius: '10px',
+    marginTop: '2rem',
+    fontFamily: 'Arial, sans-serif',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    width: '70%',
+    maxWidth: '800px',
+    marginLeft: 'auto',
+    marginRight: 'auto'
+};
+//Section title style
+const sectionTitleStyle = {
+    color: '#333',
+    fontSize: '1.2rem',
+    fontWeight: 'bold',
+    marginBottom: '1rem',
+    borderBottom: '2px solid #eb8d00ff',
+    paddingBottom: '0.5rem'
+};
+//Skill label style
+const skillStyle = {
+    padding: '0.4rem 0.8rem',
+    backgroundColor: '#f0f0f0',
+    color: '#333',
+    borderRadius: '15px',
+    fontSize: '0.85rem',
+    display: 'inline-block',
+    margin: '0.2rem'
+};
 // Background Style
 const backgroundStyle = {
     backgroundImage: `url(/background1.jpg)`,
@@ -96,7 +129,7 @@ const followerGridStyle = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
     gap: "1.5rem",
-    width: "100vw",
+    width: "98vw",
     padding: "0 2rem",
     boxSizing: "border-box",
 };
@@ -106,35 +139,70 @@ function OtherDashboard() {
     const [currentUser, setCurrentUser] = useState(null); // Currently logged in user
     const [profileUser, setProfileUser] = useState(null); // User whose profile is being viewed
     const [profileUserId, setProfileUserId] = useState(null); // User ID of the profile being viewed
-    const [activeIndex, setActiveIndex] = useState(0);
+    const [activeIndex, setActiveIndex] = useState(4);
     const [userStats, setUserStats] = useState({
         followers: 0,
         following: 0,
         followersList: [],
         followingList: [],
-        profilePicture: ""
+        profilePicture: "profile.png",
+        username: "",
+        bio: "",
+        accountType: "individual",
+        role: "other",
+        links: ["", "", "", ""],
+        skills: []
     });
     const [loading, setLoading] = useState(true);
     const [followersData, setFollowersData] = useState([]);
     const [followingData, setFollowingData] = useState([]);
-
-    useEffect(() => {
+    const [accountType, setAccountType] = useState('individual'); // Account type state
+        // Individual role options
+        const individualRoles = [
+            { value: 'other', label: 'Other' },
+            { value: 'student', label: 'Student' },
+            { value: 'web-developer', label: 'Web developer' },
+        { value: 'software-engineer', label: 'Software developer' },
+            { value: 'game-developer', label: 'Game Developer' },
+            { value: 'graphic-designer', label: 'Graphic Designer' },
+            { value: '3d-scanning', label: '3D scanning enthusiast' },
+            { value: '3d-printing', label: '3D printing enthusiast' },
+            { value: 'animator', label: 'Animator' },
+            { value: 'architect', label: 'Architect' },
+            { value: 'scientist', label: 'Scientist' },
+        ];
+    
+        // Organization role options
+        const organizationRoles = [
+            { value: 'other', label: 'Other' },
+            { value: 'school', label: 'School' },
+            { value: '3d-studio', label: '3D Creation Studio' },
+            { value: 'game-studio', label: 'Game Studio' },
+            { value: 'brand', label: 'Brand' },
+            { value: 'non-profit', label: 'Non Profit Organization' },
+            { value: 'university', label: 'University' },
+            { value: 'tech-company', label: 'Tech Company' },
+            { value: 'research-lab', label: 'Research Lab' },
+        ];
+        // Determine which roles to show based on account type
+    useEffect(() => {   
         // Find user by username
         const findUserByUsername = async () => {
             try {
                 const usersRef = collection(db, "users");
                 const q = query(usersRef, where("username", "==", username));
                 const querySnapshot = await getDocs(q);
-                
+
                 if (!querySnapshot.empty) {
                     const userDoc = querySnapshot.docs[0];
                     const userData = userDoc.data();
                     setProfileUser(userData);
                     setProfileUserId(userDoc.id);
-                    
+
                     // Get user stats
                     const stats = await getUserStats(userDoc.id);
                     setUserStats(stats);
+
 
                     // Get followers and following
                     const followers = await getFollowers(userDoc.id);
@@ -225,6 +293,12 @@ function OtherDashboard() {
                     {/* Navigation buttons */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
                         <button
+                            onClick={() => setActiveIndex(4)}
+                            style={getTabButtonStyle(activeIndex === 4)}
+                        >
+                            Summary
+                        </button>
+                        <button
                             onClick={() => setActiveIndex(0)}
                             style={getTabButtonStyle(activeIndex === 0)}
                         >
@@ -267,7 +341,7 @@ function OtherDashboard() {
                                 fontSize: '1.5rem',
                                 textAlign: 'center',
                                 fontWeight: 'normal',
-                                 paddingRight:'1rem',
+                                paddingRight: '1rem',
                             }}
                         >
                             "Their Work" shows all their models.
@@ -279,7 +353,7 @@ function OtherDashboard() {
                                 color: 'gray',
                                 fontSize: '0.9rem',
                                 textAlign: 'center',
-                                paddingRight:'1rem',
+                                paddingRight: '1rem',
                             }}
                         >
                             This user doesn't have models uploaded at the moment.
@@ -337,7 +411,7 @@ function OtherDashboard() {
                             {/* Followers list */}
                             <div style={followerGridStyle}>
                                 {followersData.length === 0 ? (
-                                    <p style={{ textAlign: "center", fontFamily:'Arial, sans-serif', fontWeight:'bold', color: "gray" }}>No followers yet.</p>
+                                    <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray" }}>No followers yet.</p>
                                 ) : (
                                     followersData.map((f) => (
                                         <div key={f.uid} style={followerCardStyle}>
@@ -372,7 +446,7 @@ function OtherDashboard() {
                             </h2>
                             <div style={followerGridStyle}>
                                 {followingData.length === 0 ? (
-                                    <p style={{ textAlign: 'center',  fontFamily:'Arial, sans-serif', fontWeight:'bold', color: 'gray' }}>Not following anyone.</p>
+                                    <p style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: 'gray' }}>Not following anyone.</p>
                                 ) : (
                                     followingData.map((f) => (
                                         <div key={f.uid} style={followerCardStyle}>
@@ -391,6 +465,75 @@ function OtherDashboard() {
                                 )}
                             </div>
                         </>
+                    )}
+                    {/* Summary tab */}
+                    {activeIndex === 4 && (
+                        <div style={summaryContainerStyle}>
+                            <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>About Me</h2>
+
+                            {/* Account Type */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <h3 style={sectionTitleStyle}>Account Type</h3>
+                                <p style={{ margin: 0 }}>
+                                    {profileUser.accountType === 'individual' ? 'Individual' : 'Organization'} -
+                                    {(profileUser.accountType === 'individual' ? individualRoles : organizationRoles)
+                                        .find(role => role.value === profileUser.role)?.label || 'Other'}
+                                </p>
+                            </div>
+
+                            {/* Bio */}
+                            {profileUser.bio && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={sectionTitleStyle}>Bio</h3>
+                                    <p style={{ margin: 0, lineHeight: '1.5' }}>{profileUser.bio}</p>
+                                </div>
+                            )}
+
+                            {/* Social Media Links */}
+                            {profileUser.links && profileUser.links.some(link => link.trim() !== '') && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={sectionTitleStyle}>Social Media Links</h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {profileUser.links.map((link, index) => (
+                                            link.trim() !== '' && (
+                                                <a
+                                                    key={index}
+                                                    href={link.startsWith('http') ? link : `https://${link}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style={{ color: '#eb8d00ff', textDecoration: 'none' }}
+                                                >
+                                                    {link}
+                                                </a>
+                                            )
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Software Skills */}
+                            {profileUser.skills && profileUser.skills.length > 0 && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h3 style={sectionTitleStyle}>Software Skills</h3>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                                        {profileUser.skills.map((skill, index) => (
+                                            <span key={index} style={skillStyle}>
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Message in case the user didn't set his information*/}
+                            {!profileUser.bio &&
+                                (!profileUser.links || profileUser.links.every(link => link.trim() === '')) &&
+                                (!profileUser.skills || profileUser.skills.length === 0) && (
+                                    <p style={{ color: '#666', fontStyle: 'italic' }}>
+                                        This user hasn't added any information yet.
+                                    </p>
+                                )}
+                        </div>
                     )}
                 </section>
             </div>

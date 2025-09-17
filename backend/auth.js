@@ -33,7 +33,8 @@ export const doCreateUserWithEmailAndPassword = async (username, email, password
       profilePicture: "",
       followersList: [],
       followingList: [],
-      accountType: { type: "individual", role: "other" },
+      accountType: "individual", 
+        role: "other" ,
       bio: "",
       links: ["", "", "", ""],
       skills: []
@@ -182,7 +183,8 @@ export const doSignInWithGoogle = async () => {
         profilePicture: user.photoURL || "",
         followersList: [],
         followingList: [],
-        accountType: { type: "individual", role: "other" },
+        accountType: "individual", 
+        role: "other" ,
         bio: "",
         links: ["", "", "", ""],
         skills: []
@@ -230,7 +232,8 @@ export const doSignInWithGitHub = async () => {
         profilePicture: user.photoURL || "",
         followersList: [],
         followingList: [],
-        accountType: { type: "individual", role: "other" },
+        accountType: "individual", 
+        role: "other" ,
         bio: "",
         links: ["", "", "", ""],
         skills: []
