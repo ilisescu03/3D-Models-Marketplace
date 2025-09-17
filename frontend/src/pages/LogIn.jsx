@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import Header from "../UI+UX/Header";
 import validation from "../validations/LogInValidation.jsx";
+import {auth, db} from '/backend/firebase.js';
+import { onAuthStateChanged } from 'firebase/auth';
 import { doSignInWithEmailAndPassword, doSignOut, doSignInWithGitHub, doSignInWithGoogle } from "/backend/auth.js";
 import { useNavigate } from "react-router-dom";
+
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
@@ -78,7 +81,8 @@ const buttonStyle1 = {
     fontWeight: 'bold',
     padding: '7.5px 15px',
     transition: '0.3s ease',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    
 }
 //Style for Sign Up
 const buttonStyle2 = {
@@ -166,38 +170,52 @@ function LogIn() {
         }
     };
 
-    //Google SignIn
-
-    const handleGoogleSignIn = async () => {
-        try {
-            const result = await doSignInWithGoogle();
-            if(!result.succes){
-                setLoginError("This account already exist!");
-                return;
-            } 
+    // Google SignIn
+const handleGoogleSignIn = async () => {
+    try {
+        const result = await doSignInWithGoogle();
+        
+        // Verifică și aici proprietatea 'success'
+        if (result.success) {
             navigate("/");
-        } catch (error) {
-            console.error(error);
-            setLoginError(error.message);
+        } else {
+            setLoginError(result.message || "Google sign-in failed");
         }
+    } catch (error) {
+        console.error(error);
+        setLoginError(error.message);
     }
+}
 
     //GitHub SignIn
-
-    const handleGitHubSignIn = async () => {
-        try {
-            const result = await doSignInWithGitHub();
-             if(!result.succes){
-                setLoginError("This account already exist!");
-                return;
-            } 
-            navigate("/");
-        } catch (error) {
-            console.error(error);
-            setLoginError(error.message);
+const handleGitHubSignIn = async () => {
+  try {
+    setLoginError("");
+    
+    const result = await doSignInWithGitHub();
+    
+    if (result.success) {
+      console.log("GitHub signin successful");
+      
+      // Wait a moment and check if user is still logged in
+      setTimeout(() => {
+        if (auth.currentUser) {
+          console.log("User is authenticated, navigating...");
+          navigate("/");
+        } else {
+          console.log("User was signed out after GitHub sign-in");
+          setLoginError("Authentication failed. Please try again.");
         }
+      }, 1000);
+    } else {
+      console.log("GitHub signin failed:", result.message);
+      setLoginError(result.message || "GitHub sign-in failed"); 
     }
-
+  } catch (error) {
+    console.error(error);
+    setLoginError(error.message);
+  }
+}
     
 
       

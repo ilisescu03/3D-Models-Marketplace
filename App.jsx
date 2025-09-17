@@ -1,8 +1,6 @@
+// App.jsx
 import { useState } from 'react'
-
-//css
 import '/frontend/css/App.css'
-//routes
 import { Routes, Route } from 'react-router-dom';
 import Home from '/frontend/src/pages/Home.jsx';
 import LogIn from '/frontend/src/pages/LogIn.jsx';
@@ -11,9 +9,8 @@ import ForgotPassword from '/frontend/src/pages/ForgotPassword';
 import Dashboard from '/frontend/src/pages/Dashboard';
 import CommunityMembers from '/frontend/src/pages/CommunityMembers';
 import OtherDashboard from '/frontend/src/pages/OtherDashboard';
-function App() {
-  
 
+function App() {
   return (
     <>
       <Routes>

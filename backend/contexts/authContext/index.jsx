@@ -17,12 +17,19 @@ export function AuthProvider({ children }) {
     }, []);
 
     async function initializeUser(user) {
+        console.log("=== AUTH STATE CHANGE ===");
+        console.log("User received in initializeUser:", user);
+        console.log("User uid:", user?.uid);
+        console.log("User email:", user?.email);
+
         if (user) {
             setCurrentUser({ ...user });
             setUserLogedIn(true);
+            console.log("✅ User logged in");
         } else {
             setCurrentUser(null);
             setUserLogedIn(false);
+            console.log("❌ User logged out");
         }
         setLoading(false);
     }

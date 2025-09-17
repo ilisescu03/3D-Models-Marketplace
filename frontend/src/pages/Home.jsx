@@ -1,6 +1,6 @@
-import React from "react";
+import {useEffect} from "react";
 import Header from "../UI+UX/Header";
-
+import { useAuth } from '/backend/contexts/authContext/index.jsx';
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
@@ -15,6 +15,12 @@ const backgroundStyle = {
 };
 
 function Home(){
+    const { currentUser, userLogedIn } = useAuth();
+     useEffect(() => {
+        console.log("=== HOME PAGE AUTH STATE ===");
+        console.log("currentUser:", currentUser);
+        console.log("userLogedIn:", userLogedIn);
+    }, [currentUser, userLogedIn]);
     return(
         <div style={backgroundStyle}>
         <Header />
