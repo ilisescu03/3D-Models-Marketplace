@@ -6,7 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
-    updateUsername, updateUserData
+    updateUsername, doChangePassword, updateUserData, doDeleteUserAccount
 } from '/backend/users.js';
 
 // Profile picture style
@@ -83,18 +83,11 @@ const tabContentStyle = {
     display: 'flex',
     justifyContent: 'center',
 };
- // Style for tabs container that adapts to mobile/desktop
-    const tabsContainerStyle = {
-        display: 'flex',
-        flexDirection: isMobile ? 'row' : 'column',
-        flexWrap: isMobile ? 'wrap' : 'nowrap',
-        width: '100%',
-        maxWidth: isMobile ? '100%' : '250px',
-        justifyContent: isMobile ? 'center' : 'flex-start',
-        gap: '0.5rem',
-    };
 
 function Settings() {
+    const [userProvider, setUserProvider] = useState('password');
+    const [isGoogleUser, setIsGoogleUser] = useState(false);
+    const [isGitHubUser, setIsGitHubUser] = useState(false);
     // State for current authenticated user
     const [user, setUser] = useState(null);
     // State for username
@@ -132,8 +125,21 @@ function Settings() {
     const [passwordSuccess, setPasswordSuccess] = useState("");
     // State to track if device is mobile
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [deletePassword, setDeletePassword] = useState("");
+    const [deleteError, setDeleteError] = useState("");
+    const [deleteSuccess, setDeleteSuccess] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
 
-   
+    // Style for tabs container that adapts to mobile/desktop
+    const tabsContainerStyle = {
+        display: 'flex',
+        flexDirection: isMobile ? 'row' : 'column',
+        flexWrap: isMobile ? 'wrap' : 'nowrap',
+        width: '100%',
+        maxWidth: isMobile ? '100%' : '250px',
+        justifyContent: isMobile ? 'center' : 'flex-start',
+        gap: '0.5rem',
+    };
 
     // Available skills for selection
     const [availableSkills] = useState([
@@ -192,6 +198,10 @@ function Settings() {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
+                const provider = currentUser.providerData[0]?.providerId;
+                setUserProvider(provider);
+                setIsGoogleUser(provider === 'google.com');
+                setIsGitHubUser(provider === 'github.com');
                 try {
                     // Get user document from Firestore
                     const userDocRef = doc(db, "users", currentUser.uid);
@@ -281,31 +291,73 @@ function Settings() {
     };
 
     // Function to handle password change
-    const handlePasswordChange = () => {
+    const handlePasswordChange = async () => {
         setPasswordError("");
         setPasswordSuccess("");
 
+        //Validate empty fields
+        if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+            setPasswordError("All fields are required.");
+            return;
+        }
         // Validate passwords match
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             setPasswordError("New passwords don't match");
             return;
         }
 
-        // Validate password length
-        if (passwordData.newPassword.length < 6) {
-            setPasswordError("Password should be at least 6 characters");
+        try {
+            // Call the backend functin for password change
+            const result = await doChangePassword(passwordData.currentPassword, passwordData.newPassword);
+
+            if (result.success) {
+                setPasswordSuccess(result.message);
+                setPasswordData({
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: ""
+                });
+            } else {
+                setPasswordError(result.message);
+            }
+        } catch (error) {
+            setPasswordError(error.message || "An unexpected error occurred.");
+        }
+
+    };
+    //Delete account
+    const handleDeleteAccount = async () => {
+        setDeleteError("");
+        setDeleteSuccess("");
+        setIsDeleting(true);
+
+        if (!isGitHubUser && !isGoogleUser && !deletePassword) {
+            setDeleteError("Please enter your password to confirm account deletion.");
+            setIsDeleting(false);
             return;
         }
 
-        // This would be connected to your backend password change functionality
-        setPasswordSuccess("Password changed successfully!");
-        setPasswordData({
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: ""
-        });
-    };
+        try {
+            const result = await doDeleteUserAccount(isGoogleUser || isGitHubUser ? null : deletePassword);
 
+            if (result.success) {
+                setDeleteSuccess(result.message);
+                // Succes and redirect to home page
+                setTimeout(() => {
+                    navigate('/');
+                }, 2000);
+            } else {
+                setDeleteError(result.message);
+
+
+
+            }
+        } catch (error) {
+            setDeleteError(error.message || "An unexpected error occurred.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
     return (
         <div style={backgroundStyle}>
             <Header />
@@ -745,8 +797,16 @@ function Settings() {
                                     </div>
 
                                     <button
+
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#b16a00ff';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#eb8d00ff';
+                                        }}
                                         onClick={handlePasswordChange}
                                         style={{
+                                            transition: '0.3s ease',
                                             padding: '0.7rem 1.5rem',
                                             backgroundColor: '#eb8d00ff',
                                             color: 'white',
@@ -872,27 +932,108 @@ function Settings() {
                                         padding: '2rem',
                                         borderRadius: '15px',
                                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                        textAlign: 'center'
                                     }}
                                 >
-                                    <h2 style={{ color: 'red', marginBottom: '1.5rem', fontWeight: 'bold' }}>Delete Account</h2>
-                                    <p style={{ marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                                        Warning: This action is irreversible. All your data, including models,
-                                        favorites, and profile information will be permanently deleted.
+                                    <h2 style={{ color: 'red', marginBottom: '1.5rem', fontWeight: 'bold' }}>
+                                        Delete Account
+                                    </h2>
+                                    {isGoogleUser && (
+                                        <div style={{
+                                            color: '#e65100',
+                                            marginBottom: '1rem',
+                                            padding: '0.5rem',
+                                            backgroundColor: '#fff3e0',
+                                            borderRadius: '4px',
+                                            border: '1px solid #ffb74d'
+                                        }}>
+                                            <strong>Google Account:</strong> You signed in with Google.
+                                            Click the button below to confirm account deletion.
+                                        </div>
+                                    )}
+                                    {isGitHubUser && (
+                                        <div style={{
+                                            color: '#e65100',
+                                            marginBottom: '1rem',
+                                            padding: '0.5rem',
+                                            backgroundColor: '#fff3e0',
+                                            borderRadius: '4px',
+                                            border: '1px solid #ffb74d'
+                                        }}>
+                                            <strong>GitHub Account:</strong> You signed in with GitHub.
+                                            Click the button below to confirm account deletion.
+                                        </div>
+                                    )}
+                                    {deleteError && (
+                                        <div style={{
+                                            color: 'red',
+                                            marginBottom: '1rem',
+                                            padding: '0.5rem',
+                                            backgroundColor: '#ffeeee',
+                                            borderRadius: '4px'
+                                        }}>
+                                            {deleteError}
+                                        </div>
+                                    )}
+
+                                    {deleteSuccess && (
+                                        <div style={{
+                                            color: 'green',
+                                            marginBottom: '1rem',
+                                            padding: '0.5rem',
+                                            backgroundColor: '#eeffee',
+                                            borderRadius: '4px'
+                                        }}>
+                                            {deleteSuccess}
+                                        </div>
+                                    )}
+
+                                    <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', color: '#666' }}>
+                                        <strong style={{ color: 'red' }}>Warning:</strong> This action is irreversible.
+                                        All your data, including models, favorites, and profile information will be permanently deleted.
                                     </p>
+
+                                    {!isGoogleUser && !isGitHubUser && (
+                                        <div style={{ marginBottom: '1.5rem' }}>
+                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                                                Enter your password to confirm:
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={deletePassword}
+                                                onChange={(e) => setDeletePassword(e.target.value)}
+                                                placeholder="Your current password"
+                                                style={{
+                                                    padding: '0.5rem',
+                                                    border: '1px solid #ccc',
+                                                    borderRadius: '4px',
+                                                    width: '100%'
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
                                     <button
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#b10000ff';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'red';
+                                        }}
+                                        onClick={handleDeleteAccount}
+                                        disabled={isDeleting}
                                         style={{
+                                            transition: '0.3s ease',
                                             padding: '0.7rem 1.5rem',
-                                            backgroundColor: 'red',
+                                            backgroundColor: isDeleting ? '#ccc' : 'red',
                                             color: 'white',
                                             border: 'none',
                                             borderRadius: '5px',
-                                            cursor: 'pointer',
+                                            cursor: isDeleting ? 'not-allowed' : 'pointer',
                                             fontWeight: 'bold',
-                                            textDecoration: 'underline'
+                                            width: '100%'
                                         }}
                                     >
-                                        Delete My Account
+                                        {isDeleting ? 'Deleting Account...' : 'Permanently Delete My Account'}
                                     </button>
                                 </div>
                             )}

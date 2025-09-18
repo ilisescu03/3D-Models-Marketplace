@@ -266,7 +266,10 @@ export const doSignOut = async () => {
 //Password Reset & Update
 export const doPasswordReset = async (email) => {
   try {
-    await sendPasswordResetEmail(auth, email);
+     await sendPasswordResetEmail(auth, email, {
+      url: `${window.location.origin}/password-reset`, 
+      handleCodeInApp: true 
+    });
     return { success: true, message: "Password reset email sent." };
   } catch (error) {
     if (error.code === "auth/user-not-found" || error.code === "auth/missing-email") {
@@ -292,3 +295,27 @@ export const doSendEmailVerification = async () => {
   }
   return Promise.reject(new Error('No user is currently signed in.'));
 }
+//Reauth in case it's necessary
+export const doReauthenticate = async (password) => {
+  try {
+    if (!auth.currentUser) {
+      throw new Error('No user is currently signed in.');
+    }
+    
+    const email = auth.currentUser.email;
+    const tempAuth = getAuth();
+    
+    // Reauth
+    await signInWithEmailAndPassword(tempAuth, email, password);
+    
+    // Return to the original user
+    await auth.updateCurrentUser(auth.currentUser);
+    
+    return { success: true, message: 'Reauthentication successful.' };
+  } catch (error) {
+    if (error.code === 'auth/wrong-password') {
+      throw new Error('Password is incorrect.');
+    }
+    throw new Error(error.message || 'Reauthentication failed.');
+  }
+};

@@ -1,6 +1,190 @@
 import { auth, db, storage } from "./firebase.js";
-import { doc, getDoc, getDocs, updateDoc, onSnapshot, collection } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL, deleteObject} from "firebase/storage";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  updatePassword,
+  deleteUser,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  reauthenticateWithPopup,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from "firebase/auth";
+import { doc, getDoc, getDocs, updateDoc, onSnapshot, collection, deleteDoc,  writeBatch  } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+
+
+// Delete user
+export const doDeleteUserAccount = async (password) => {
+  try {
+    console.log("=== STARTING ACCOUNT DELETION ===");
+    
+    if (!auth.currentUser) {
+      console.log("No user is currently signed in");
+      return { success: false, message: 'No user is currently signed in.' };
+    }
+
+    const user = auth.currentUser;
+    const provider = user.providerData[0]?.providerId;
+    const userId = user.uid;
+    const email = user.email;
+
+    console.log("User info:", { userId, email, provider });
+
+    // Reauth by provider
+    if (provider === 'google.com') {
+      console.log("Google user - starting reauthentication");
+      try {
+        const googleProvider = new GoogleAuthProvider();
+        // Add prompt to update function
+        googleProvider.setCustomParameters({
+          prompt: 'select_account'
+        });
+        await reauthenticateWithPopup(user, googleProvider);
+        console.log("Google reauthentication successful");
+      } catch (error) {
+        console.error("Google reauthentication error:", error);
+        if (error.code === 'auth/popup-closed-by-user') {
+          return { success: false, message: 'Reauthentication cancelled.' };
+        }
+        return { success: false, message: 'Google reauthentication failed. Please try again.' };
+      }
+    } else if (provider === 'github.com') {
+      console.log("GitHub user - starting reauthentication");
+      try {
+        const githubProvider = new GithubAuthProvider();
+        await reauthenticateWithPopup(user, githubProvider);
+        console.log("GitHub reauthentication successful");
+      } catch (error) {
+        console.error("GitHub reauthentication error:", error);
+        if (error.code === 'auth/popup-closed-by-user') {
+          return { success: false, message: 'Reauthentication cancelled.' };
+        }
+        return { success: false, message: 'GitHub reauthentication failed. Please try again.' };
+      }
+    } else if (provider === 'password' && password) {
+      console.log("Email/password user - starting reauthentication");
+      try {
+        // For email/password users we use password
+        const credential = EmailAuthProvider.credential(email, password);
+        await reauthenticateWithCredential(user, credential);
+        console.log("Email/password reauthentication successful");
+      } catch (error) {
+        console.error("Email/password reauthentication error:", error);
+        if (error.code === 'auth/wrong-password') {
+          return { success: false, message: 'Password is incorrect.' };
+        } else if (error.code === 'auth/invalid-credential') {
+          return { success: false, message: 'Password is incorrect.' };
+        }
+        return { success: false, message: error.message || 'Reauthentication failed.' };
+      }
+    } else {
+      console.log("Reauthentication required but no valid method available");
+      return { success: false, message: 'Reauthentication required to delete account.' };
+    }
+
+    // Get user's data
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+    
+    if (!userDoc.exists()) {
+      return { success: false, message: 'User document not found.' };
+    }
+    
+    const userData = userDoc.data();
+    const followersList = userData.followersList || [];
+    const followingList = userData.followingList || [];
+
+    console.log("Removing user from other users' lists...");
+
+    // Delete the UID of other users
+    for (const followerId of followersList) {
+      try {
+        const followerRef = doc(db, "users", followerId);
+        const followerDoc = await getDoc(followerRef);
+        
+        if (followerDoc.exists()) {
+          const followerData = followerDoc.data();
+          const updatedFollowingList = (followerData.followingList || []).filter(id => id !== userId);
+          await updateDoc(followerRef, { followingList: updatedFollowingList });
+          console.log(`Removed from follower: ${followerId}`);
+        }
+      } catch (error) {
+        console.error(`Error removing user from followers of ${followerId}:`, error);
+      }
+    }
+
+    for (const followedId of followingList) {
+      try {
+        const followedRef = doc(db, "users", followedId);
+        const followedDoc = await getDoc(followedRef);
+        
+        if (followedDoc.exists()) {
+          const followedData = followedDoc.data();
+          const updatedFollowersList = (followedData.followersList || []).filter(id => id !== userId);
+          await updateDoc(followedRef, { followersList: updatedFollowersList });
+          console.log(`Removed from followed: ${followedId}`);
+        }
+      } catch (error) {
+        console.error(`Error removing user from following of ${followedId}:`, error);
+      }
+    }
+
+    // Delete the user from firestore
+    console.log("Deleting user document from Firestore...");
+    await deleteDoc(userDocRef);
+    console.log("User document deleted from Firestore");
+
+    // Delete the profile pic.
+    try {
+      const profilePictureRef = ref(storage, `profilePictures/${userId}`);
+      // Verify if the image exists before we delete it
+      try {
+        await getDownloadURL(profilePictureRef);
+        await deleteObject(profilePictureRef);
+        console.log("Profile picture deleted from storage");
+      } catch (error) {
+        if (error.code !== 'storage/object-not-found') {
+          console.warn("Error checking profile picture:", error);
+        }
+      }
+    } catch (storageError) {
+      console.warn("Could not delete profile picture:", storageError);
+    }
+
+    // Delete user from Authentication
+    console.log("Deleting user from Authentication...");
+    await deleteUser(user);
+    console.log("User deleted from Authentication");
+    
+    // Log out user after the deletion succeded
+    console.log("Signing out user...");
+    await signOut(auth);
+    console.log("User signed out");
+
+    console.log("=== ACCOUNT DELETION SUCCESSFUL ===");
+    return { success: true, message: 'Account deleted successfully.' };
+    
+  } catch (error) {
+    console.error("=== ACCOUNT DELETION FAILED ===", error);
+    
+    // Return the error message
+    let errorMessage = error.message || 'Failed to delete account.';
+    
+    if (error.code === 'auth/requires-recent-login') {
+      errorMessage = 'Please log in again before deleting your account.';
+    } else if (error.code === 'auth/network-request-failed') {
+      errorMessage = 'Network error. Please check your connection and try again.';
+    }
+    
+    return { 
+      success: false, 
+      message: errorMessage,
+      errorCode: error.code
+    };
+  }
+};
 // Follow a user
 export const doFollowUser = async (targetUserId) => {
   try {
@@ -120,7 +304,7 @@ export const getUserStats = async (userId) => {
       following: (userData.followingList || []).length, // Calculate from array length
       followersList: userData.followersList || [],
       followingList: userData.followingList || [],
-       profilePicture: userData.profilePicture || "",
+      profilePicture: userData.profilePicture || "",
       username: userData.username || userData.email || "",
       bio: userData.bio || "",
       accountType: userData.accountType || "individual",
@@ -144,26 +328,26 @@ export const doUpdateProfilePicture = async (file) => {
   try {
 
     const userRef = doc(db, "users", auth.currentUser.uid); //Reference the FireStore document for the current user
-    
-     const storageRef = ref(storage, `profilePictures/${auth.currentUser.uid}`);
 
-    
+    const storageRef = ref(storage, `profilePictures/${auth.currentUser.uid}`);
+
+
     const snapshot = await uploadBytes(storageRef, file);
 
-   
+
     const downloadURL = await getDownloadURL(snapshot.ref);
 
-   
+
     await updateDoc(userRef, {
       profilePicture: downloadURL
     });
-   
-  
+
+
     //Succes
-    return { success: true, message: 'Profile picture updated successfully.', imageUrl:downloadURL };
+    return { success: true, message: 'Profile picture updated successfully.', imageUrl: downloadURL };
   } catch (error) {
     //Fail
-     return { success: false, message: error.message || 'Failed to update profile picture.' };
+    return { success: false, message: error.message || 'Failed to update profile picture.' };
   }
 };
 
@@ -272,7 +456,7 @@ export const listenToUserStats = (userId, callback) => {
         profilePicture: typeof data.profilePicture === "string" && data.profilePicture.length > 0
           ? data.profilePicture
           : "profile.png",
-        username: data.username || data.email || "",    
+        username: data.username || data.email || "",
         bio: data.bio || "",
         accountType: data.accountType || "individual",
         role: data.role || "other",
@@ -315,7 +499,7 @@ export const getUsers = async () => {
         following: (data.followingList || []).length,
       };
 
-      
+
     })
 
 
@@ -328,9 +512,9 @@ export const getUsers = async () => {
 
 //Update username 
 
-export const updateUsername = async (newUsername) =>{
-  try{
-    if(!auth.currentUser) {
+export const updateUsername = async (newUsername) => {
+  try {
+    if (!auth.currentUser) {
       throw new Error('No user is currently signed in.');
     }
     const userRef = doc(db, "users", auth.currentUser.uid);
@@ -342,8 +526,8 @@ export const updateUsername = async (newUsername) =>{
     await updateDoc(userRef, {
       username: newUsername
     });
-    return {success: true, message: 'Username updated succesfully.'};
-  } catch(error){
+    return { success: true, message: 'Username updated succesfully.' };
+  } catch (error) {
     throw new Error(error.message || 'Failed to update username.')
   }
 }
@@ -358,5 +542,45 @@ export const updateUserData = async (userId, updatedData) => {
     return { success: true, message: 'User data updated successfully.' };
   } catch (error) {
     throw new Error(error.message || 'Failed to update user data.');
+  }
+};
+
+
+// Change user password
+export const doChangePassword = async (currentPassword, newPassword) => {
+  try {
+    if (!auth.currentUser) {
+      return { success: false, message: 'No user is currently signed in.' };
+    }
+
+    // Reauth to verify the current password
+    const email = auth.currentUser.email;
+
+    // Create temporary user for verify
+    const tempAuth = getAuth();
+
+    try {
+      // Try authentification with the current password
+      await signInWithEmailAndPassword(tempAuth, email, currentPassword);
+
+      // If succes, the password is correct and we are returning to the previous user
+      await auth.updateCurrentUser(auth.currentUser);
+
+      // Update password
+      await updatePassword(auth.currentUser, newPassword);
+
+      return { success: true, message: 'Password changed successfully.' };
+    } catch (error) {
+      if (error.code === 'auth/wrong-password') {
+        return { success: false, message: 'Current password is incorrect.' };
+      } else if (error.code === 'auth/too-many-requests') {
+        return { success: false, message: 'Too many attempts. Please try again later.' };
+      } else {
+        return { success: false, message: error.message || 'Failed to verify current password.' };
+      }
+    }
+  } catch (error) {
+    console.error("Error in doChangePassword:", error);
+    return { success: false, message: error.message || 'Failed to change password.' };
   }
 };
