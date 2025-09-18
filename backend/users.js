@@ -461,7 +461,8 @@ export const listenToUserStats = (userId, callback) => {
         accountType: data.accountType || "individual",
         role: data.role || "other",
         links: data.links || ["", "", "", ""],
-        skills: data.skills || []
+        skills: data.skills || [],
+        createdAt: data.createdAt || null
       });
     }
   }, (error) => {

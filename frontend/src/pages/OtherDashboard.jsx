@@ -151,7 +151,7 @@ function OtherDashboard() {
         accountType: "individual",
         role: "other",
         links: ["", "", "", ""],
-        skills: []
+        skills: [],
     });
     const [loading, setLoading] = useState(true);
     const [followersData, setFollowersData] = useState([]);
@@ -184,6 +184,41 @@ function OtherDashboard() {
             { value: 'tech-company', label: 'Tech Company' },
             { value: 'research-lab', label: 'Research Lab' },
         ];
+        const formatFirebaseTimestamp = (timestamp) => {
+        try {
+            // If timestamp is a firebase object in seconds
+            if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
+                return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            // If timestamp is a Date object with numeric value
+            else if (timestamp instanceof Date || typeof timestamp === 'number') {
+                return new Date(timestamp).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            //If timestamp is a string that can be converted to data
+            else if (typeof timestamp === 'string') {
+                const date = new Date(timestamp);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+            }
+            return 'Unknown';
+        } catch (error) {
+            console.error('Error formatting timestamp:', error, timestamp);
+            return 'Unknown';
+        }
+    };
         // Determine which roles to show based on account type
     useEffect(() => {   
         // Find user by username
@@ -225,6 +260,7 @@ function OtherDashboard() {
         // Listen for auth state changes for current user
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user);
+            
         });
 
         if (username) {
@@ -470,7 +506,10 @@ function OtherDashboard() {
                     {activeIndex === 4 && (
                         <div style={summaryContainerStyle}>
                             <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>About Me</h2>
-
+                            {/* The time when this account was created*/}
+                            <div style={{ marginBottom: '3rem' }}>
+                                <strong>Member since:</strong> {profileUser.createdAt ? formatFirebaseTimestamp(profileUser.createdAt) : 'Unknown'}
+                            </div>
                             {/* Account Type */}
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={sectionTitleStyle}>Account Type</h3>

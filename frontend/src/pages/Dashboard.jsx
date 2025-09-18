@@ -105,7 +105,7 @@ const buttonStyle = {
     backgroundColor: '#575757ff',
     color: 'white',
     fontWeight: 'bold',
-    transition:'0.3s ease',
+    transition: '0.3s ease',
 };
 
 //Navigation button style
@@ -214,7 +214,41 @@ function Dashboard() {
     ];
     // Determine which roles to show based on account type
     const roles = accountType === 'individual' ? individualRoles : organizationRoles;
-
+    const formatFirebaseTimestamp = (timestamp) => {
+        try {
+            // If timestamp is a firebase object in seconds
+            if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
+                return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            // If timestamp is a Date object with numeric value
+            else if (timestamp instanceof Date || typeof timestamp === 'number') {
+                return new Date(timestamp).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            //If timestamp is a string that can be converted to data
+            else if (typeof timestamp === 'string') {
+                const date = new Date(timestamp);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+            }
+            return 'Unknown';
+        } catch (error) {
+            console.error('Error formatting timestamp:', error, timestamp);
+            return 'Unknown';
+        }
+    };
     //Effect for check authentification and fetch user data
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -273,7 +307,7 @@ function Dashboard() {
         });
         return () => unsubscribe();
     }, [navigate]);
-    
+
     return (
         <div style={backgroundStyle}>
             <Header />
@@ -294,12 +328,12 @@ function Dashboard() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
                         <button
                             onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = '#2c2c2cff';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = '#575757ff';
-                                                    }}
-                            onClick={() => window.location.href="/settings"}
+                                e.currentTarget.style.backgroundColor = '#2c2c2cff';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = '#575757ff';
+                            }}
+                            onClick={() => window.location.href = "/settings"}
                             style={buttonStyle}>Edit</button>
                         <span onClick={() => setActiveIndex(2)} style={followersStyle}>Followers: {userStats.followers}</span>
                         <span onClick={() => setActiveIndex(3)} style={followersStyle}>Following: {userStats.following}</span>
@@ -462,14 +496,14 @@ function Dashboard() {
                                             {/* Follow/Unfollow button*/}
                                             {user && (
                                                 <button
-                                                onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor =userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
                                                     }}
                                                     onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor =userStats.followingList.includes(f.uid) ? "red" : "#575757";
+                                                        e.currentTarget.style.backgroundColor = userStats.followingList.includes(f.uid) ? "red" : "#575757";
                                                     }}
                                                     style={{
-                                                        transition:'0.3s ease',
+                                                        transition: '0.3s ease',
                                                         marginTop: "0.5rem",
                                                         padding: "0.3rem 0.7rem",
                                                         borderRadius: "5px",
@@ -555,13 +589,13 @@ function Dashboard() {
                                             {user && (
                                                 <button
                                                     onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor =userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
+                                                        e.currentTarget.style.backgroundColor = userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
                                                     }}
                                                     onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor =userStats.followingList.includes(f.uid) ? "red" : "#575757";
+                                                        e.currentTarget.style.backgroundColor = userStats.followingList.includes(f.uid) ? "red" : "#575757";
                                                     }}
                                                     style={{
-                                                        transition:'0.3s ease',
+                                                        transition: '0.3s ease',
                                                         marginTop: "0.5rem",
                                                         padding: "0.3rem 0.7rem",
                                                         borderRadius: "5px",
@@ -616,12 +650,15 @@ function Dashboard() {
                             </div>
                         </>
                     )}
-                   
+
                     {/* Summary tab */}
                     {activeIndex === 5 && (
                         <div style={summaryContainerStyle}>
                             <h2 style={{ color: '#333', marginBottom: '3rem', fontSize: '1.7rem' }}>Summary</h2>
-
+                            {/* The time when this account was created*/}
+                            <div style={{ marginBottom: '3rem' }}>
+                                <strong>Member since:</strong> {userStats.createdAt ? formatFirebaseTimestamp(userStats.createdAt) : 'Unknown'}
+                            </div>
                             {/* Account Type */}
                             <div style={{ marginBottom: '2rem' }}>
                                 <h3 style={sectionTitleStyle}>Account Type</h3>

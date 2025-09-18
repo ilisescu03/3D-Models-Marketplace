@@ -41,7 +41,20 @@ const getTabButtonStyle = (isActive) => ({
     textAlign: 'left',
     padding: '0 1rem',
 });
-
+const getDeleteTabButtonStyle = (isActive) => ({
+    height: '35px',
+    minWidth: '100px',
+    cursor: 'pointer',
+    borderRadius: '5px',
+    border: 'none',
+    backgroundColor: isActive ? '#e70000ff' : 'transparent',
+    color: isActive ? 'white' : 'black',
+    fontWeight: 'bold',
+    margin: '0.5rem 0',
+    width: '100%',
+    textAlign: 'left',
+    padding: '0 1rem',
+});
 // Main container style
 const containerStyle = {
     width: '100%',
@@ -249,7 +262,41 @@ function Settings() {
         });
         return () => unsubscribe();
     }, [navigate]);
-
+    const formatFirebaseTimestamp = (timestamp) => {
+        try {
+            // If timestamp is a firebase object in seconds
+            if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
+                return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            // If timestamp is a Date object with numeric value
+            else if (timestamp instanceof Date || typeof timestamp === 'number') {
+                return new Date(timestamp).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+            //If timestamp is a string that can be converted to data
+            else if (typeof timestamp === 'string') {
+                const date = new Date(timestamp);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+            }
+            return 'Unknown';
+        } catch (error) {
+            console.error('Error formatting timestamp:', error, timestamp);
+            return 'Unknown';
+        }
+    };
     // Function to toggle skill selection
     const toggleSkill = (skill) => {
         setSelectedSkills(prev => {
@@ -404,7 +451,7 @@ function Settings() {
                             </button>
                             <button
                                 onClick={() => setActiveTab('delete')}
-                                style={getTabButtonStyle(activeTab === 'delete')}
+                                style={getDeleteTabButtonStyle(activeTab === 'delete')}
                             >
                                 Delete Account
                             </button>
@@ -875,8 +922,8 @@ function Settings() {
                                     <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
                                         <strong>Email:</strong> {user?.email || 'Not available'}
                                     </div>
-                                    <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '##f9f9f9', borderRadius: '4px' }}>
-                                        <strong>Member since:</strong> {userStats.createdAt ? new Date(userStats.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}
+                                    <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+                                        <strong>Member since:</strong> {userStats.createdAt ? formatFirebaseTimestamp(userStats.createdAt) : 'Unknown'}
                                     </div>
                                     <p style={{ color: '#666', fontStyle: 'italic' }}>
                                         This is your account information. You can view your email address and
