@@ -3,7 +3,7 @@ import Header from "../UI+UX/Header";
 import validation from "../validations/LogInValidation.jsx";
 import {auth, db} from '/backend/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doSignInWithEmailAndPassword, doSignOut, doSignInWithGitHub, doSignInWithGoogle } from "/backend/auth.js";
+import { doSignInWithEmailAndPassword, doSignOut,  doSignInWithGoogle } from "/backend/auth.js";
 import { useNavigate } from "react-router-dom";
 import CookiesBanner from '../UI+UX/CookiesBanner';
 
@@ -188,35 +188,7 @@ const handleGoogleSignIn = async () => {
     }
 }
 
-    //GitHub SignIn
-const handleGitHubSignIn = async () => {
-  try {
-    setLoginError("");
-    
-    const result = await doSignInWithGitHub();
-    
-    if (result.success) {
-      console.log("GitHub signin successful");
-      
-      // Wait a moment and check if user is still logged in
-      setTimeout(() => {
-        if (auth.currentUser) {
-          console.log("User is authenticated, navigating...");
-          navigate("/");
-        } else {
-          console.log("User was signed out after GitHub sign-in");
-          setLoginError("Authentication failed. Please try again.");
-        }
-      }, 1000);
-    } else {
-      console.log("GitHub signin failed:", result.message);
-      setLoginError(result.message || "GitHub sign-in failed"); 
-    }
-  } catch (error) {
-    console.error(error);
-    setLoginError(error.message);
-  }
-}
+  
     
 
       
@@ -371,27 +343,7 @@ const handleGitHubSignIn = async () => {
                         bottom: '5px', color: 'rgba(19, 19, 19, 1)'
                     }}>Continue with Google</span>
                 </button>
-
-                <button style={buttonStyle}
-
-                    onClick={handleGitHubSignIn}
-                    type="button"
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
-
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0)';
-
-                    }}
-                >
-                    <img src="./gitHubIcon.png" alt="Github" style={{ height: '20px' }} />
-                    <span style={{
-                        marginLeft: '10px', fontSize: '0.7rem',
-                        position: 'relative',
-                        bottom: '5px', color: 'rgba(19, 19, 19, 1)'
-                    }}>Continue with Github</span>
-                </button>
+               
             </form>
         </div>
     )

@@ -6,7 +6,6 @@ import {
   updatePassword,
   deleteUser,
   GoogleAuthProvider,
-  GithubAuthProvider,
   reauthenticateWithPopup,
   reauthenticateWithCredential,
   EmailAuthProvider,
@@ -50,19 +49,7 @@ export const doDeleteUserAccount = async (password) => {
         }
         return { success: false, message: 'Google reauthentication failed. Please try again.' };
       }
-    } else if (provider === 'github.com') {
-      console.log("GitHub user - starting reauthentication");
-      try {
-        const githubProvider = new GithubAuthProvider();
-        await reauthenticateWithPopup(user, githubProvider);
-        console.log("GitHub reauthentication successful");
-      } catch (error) {
-        console.error("GitHub reauthentication error:", error);
-        if (error.code === 'auth/popup-closed-by-user') {
-          return { success: false, message: 'Reauthentication cancelled.' };
-        }
-        return { success: false, message: 'GitHub reauthentication failed. Please try again.' };
-      }
+    
     } else if (provider === 'password' && password) {
       console.log("Email/password user - starting reauthentication");
       try {

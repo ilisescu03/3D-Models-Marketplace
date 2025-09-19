@@ -4,7 +4,7 @@ import Header from "../UI+UX/Header";
 import validation from "../validations/SignUpValidation.jsx";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from 'firebase/auth';
-import { doCreateUserWithEmailAndPassword, doSignInWithGoogle, doSignInWithGitHub } from "/backend/auth.js";
+import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from "/backend/auth.js";
 import CookiesBanner from '../UI+UX/CookiesBanner';
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
@@ -193,21 +193,7 @@ function SignUp() {
         }
     }
 
-    //GitHub SignIn
-
-    const handleGitHubSignIn = async () => {
-        try {
-            const result = await doSignInWithGitHub();
-            if (result.success) {
-                navigate("/");
-            } else {
-                setBackendError(result.message || "GitHub sign-in failed");
-            }
-        } catch (error) {
-            console.error(error);
-            setBackendError(error.message);
-        }
-    }
+   
 
     const renderRule = (condition, text) => (
         <li style={{
@@ -223,7 +209,7 @@ function SignUp() {
     return (
         <div style={backgroundStyle}>
             <Header />
-            <CookiesBanner/>
+            <CookiesBanner />
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
                 <h2 style={{ fontSize: '2rem', marginBottom: '10px' }}>Sign Up</h2>
 
@@ -355,7 +341,7 @@ function SignUp() {
                 >
                     {isLoading ? "Creating Account..." : "Sign Up"}
                 </button>
-                {isLoading && (<div style={{position:'absolute', backgroundColor:'rgba(0, 0, 0, 0.37)', width:'120vw', height:'120vh', zIndex:9999}}>
+                {isLoading && (<div style={{ position: 'absolute', backgroundColor: 'rgba(0, 0, 0, 0.37)', width: '120vw', height: '120vh', zIndex: 9999 }}>
 
                 </div>)}
                 <p style={{ fontSize: "0.9rem", fontWeight: "bold", margin: "0" }}>or</p>
@@ -390,23 +376,7 @@ function SignUp() {
                         Continue with Google
                     </span>
                 </button>
-
-                <button
-                    style={buttonStyle}
-                    type="button"
-                    onClick={handleGitHubSignIn}
-                    onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                >
-                    <img src="./gitHubIcon.png" alt="Github" style={{ height: '20px' }} />
-                    <span style={{ marginLeft: '10px', fontSize: '0.7rem' }}>
-                        Continue with Github
-                    </span>
-                </button>
+                
             </form>
         </div>
     )
