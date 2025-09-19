@@ -6,9 +6,10 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getUserStats, getFollowers, getFollowing } from '/backend/users.js';
 import CookiesBanner from '../UI+UX/CookiesBanner';
+import '/frontend/css/App.css';
 
 
-//Summary container style
+// Summary container style
 const summaryContainerStyle = {
     backgroundColor: 'white',
     padding: '2rem',
@@ -21,7 +22,8 @@ const summaryContainerStyle = {
     marginLeft: 'auto',
     marginRight: 'auto'
 };
-//Section title style
+
+// Section title style
 const sectionTitleStyle = {
     color: '#333',
     fontSize: '1.2rem',
@@ -30,7 +32,8 @@ const sectionTitleStyle = {
     borderBottom: '2px solid #eb8d00ff',
     paddingBottom: '0.5rem'
 };
-//Skill label style
+
+// Skill label style
 const skillStyle = {
     padding: '0.4rem 0.8rem',
     backgroundColor: '#f0f0f0',
@@ -40,6 +43,7 @@ const skillStyle = {
     display: 'inline-block',
     margin: '0.2rem'
 };
+
 // Background Style
 const backgroundStyle = {
     backgroundImage: `url(/background1.jpg)`,
@@ -59,6 +63,7 @@ const profileContainerStyle = {
     marginTop: '8rem',
     width: '100%',
     paddingLeft: '1.2rem',
+    flexWrap: 'wrap'
 };
 
 // Text container style (username, followers, following)
@@ -110,31 +115,6 @@ const followersStyle = {
     cursor: 'pointer',
 };
 
-// Style for the users cards
-const followerCardStyle = {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "1px solid #ccc",
-    borderRadius: "10px",
-    padding: "1rem",
-    width: "200px",
-    fontFamily: 'Arial, sans-serif',
-    backgroundColor: "white",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-};
-
-// Style for grid display of users
-const followerGridStyle = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-    gap: "1.5rem",
-    width: "98vw",
-    padding: "0 2rem",
-    boxSizing: "border-box",
-};
-
 function OtherDashboard() {
     const { username } = useParams(); // Get username from URL params
     const [currentUser, setCurrentUser] = useState(null); // Currently logged in user
@@ -158,34 +138,36 @@ function OtherDashboard() {
     const [followersData, setFollowersData] = useState([]);
     const [followingData, setFollowingData] = useState([]);
     const [accountType, setAccountType] = useState('individual'); // Account type state
-        // Individual role options
-        const individualRoles = [
-            { value: 'other', label: 'Other' },
-            { value: 'student', label: 'Student' },
-            { value: 'web-developer', label: 'Web developer' },
-        { value: 'software-engineer', label: 'Software developer' },
-            { value: 'game-developer', label: 'Game Developer' },
-            { value: 'graphic-designer', label: 'Graphic Designer' },
-            { value: '3d-scanning', label: '3D scanning enthusiast' },
-            { value: '3d-printing', label: '3D printing enthusiast' },
-            { value: 'animator', label: 'Animator' },
-            { value: 'architect', label: 'Architect' },
-            { value: 'scientist', label: 'Scientist' },
-        ];
     
-        // Organization role options
-        const organizationRoles = [
-            { value: 'other', label: 'Other' },
-            { value: 'school', label: 'School' },
-            { value: '3d-studio', label: '3D Creation Studio' },
-            { value: 'game-studio', label: 'Game Studio' },
-            { value: 'brand', label: 'Brand' },
-            { value: 'non-profit', label: 'Non Profit Organization' },
-            { value: 'university', label: 'University' },
-            { value: 'tech-company', label: 'Tech Company' },
-            { value: 'research-lab', label: 'Research Lab' },
-        ];
-        const formatFirebaseTimestamp = (timestamp) => {
+    // Individual role options
+    const individualRoles = [
+        { value: 'other', label: 'Other' },
+        { value: 'student', label: 'Student' },
+        { value: 'web-developer', label: 'Web developer' },
+        { value: 'software-engineer', label: 'Software developer' },
+        { value: 'game-developer', label: 'Game Developer' },
+        { value: 'graphic-designer', label: 'Graphic Designer' },
+        { value: '3d-scanning', label: '3D scanning enthusiast' },
+        { value: '3d-printing', label: '3D printing enthusiast' },
+        { value: 'animator', label: 'Animator' },
+        { value: 'architect', label: 'Architect' },
+        { value: 'scientist', label: 'Scientist' },
+    ];
+
+    // Organization role options
+    const organizationRoles = [
+        { value: 'other', label: 'Other' },
+        { value: 'school', label: 'School' },
+        { value: '3d-studio', label: '3D Creation Studio' },
+        { value: 'game-studio', label: 'Game Studio' },
+        { value: 'brand', label: 'Brand' },
+        { value: 'non-profit', label: 'Non Profit Organization' },
+        { value: 'university', label: 'University' },
+        { value: 'tech-company', label: 'Tech Company' },
+        { value: 'research-lab', label: 'Research Lab' },
+    ];
+    
+    const formatFirebaseTimestamp = (timestamp) => {
         try {
             // If timestamp is a firebase object in seconds
             if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
@@ -203,7 +185,7 @@ function OtherDashboard() {
                     day: 'numeric'
                 });
             }
-            //If timestamp is a string that can be converted to data
+            // If timestamp is a string that can be converted to date
             else if (typeof timestamp === 'string') {
                 const date = new Date(timestamp);
                 if (!isNaN(date.getTime())) {
@@ -220,7 +202,10 @@ function OtherDashboard() {
             return 'Unknown';
         }
     };
-        // Determine which roles to show based on account type
+    
+    // Determine which roles to show based on account type
+    const roles = accountType === 'individual' ? individualRoles : organizationRoles;
+    
     useEffect(() => {   
         // Find user by username
         const findUserByUsername = async () => {
@@ -238,7 +223,6 @@ function OtherDashboard() {
                     // Get user stats
                     const stats = await getUserStats(userDoc.id);
                     setUserStats(stats);
-
 
                     // Get followers and following
                     const followers = await getFollowers(userDoc.id);
@@ -261,7 +245,6 @@ function OtherDashboard() {
         // Listen for auth state changes for current user
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user);
-            
         });
 
         if (username) {
@@ -297,6 +280,7 @@ function OtherDashboard() {
         <div style={backgroundStyle}>
             <Header />
             <CookiesBanner/>
+            
             {/* Profile header */}
             <div style={profileContainerStyle}>
                 {/* Profile pic */}
@@ -305,11 +289,12 @@ function OtherDashboard() {
                         e.target.src = "/profile.png";
                     }}
                 />
+                
                 {/* Username, followers/following */}
                 <div style={textContainerStyle}>
                     <p style={usernameStyle}>{profileUser.username || profileUser.email}</p>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                         <span onClick={() => setActiveIndex(2)} style={followersStyle}>Followers: {userStats.followers}</span>
                         <span onClick={() => setActiveIndex(3)} style={followersStyle}>Following: {userStats.following}</span>
                     </div>
@@ -318,18 +303,9 @@ function OtherDashboard() {
 
             {/* Dashboard content */}
             <div style={{ marginTop: '2rem', width: '100%' }}>
-                <section
-                    style={{
-                        padding: '1rem',
-                        width: '100%',
-                        minHeight: '100vh',
-                        backgroundColor: 'rgba(241, 241, 241, 1)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                    }}
-                >
+                <section className="responsive-container" style={{backgroundColor:'#f1f1f1ff', minHeight:'1000px'}}>
                     {/* Navigation buttons */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
                             onClick={() => setActiveIndex(4)}
                             style={getTabButtonStyle(activeIndex === 4)}
@@ -350,84 +326,72 @@ function OtherDashboard() {
                         </button>
                     </div>
 
-                    {/* Tab content 1*/}
+                    {/* Tab content 1 - Their Work*/}
                     {activeIndex === 0 && (<>
-                        <h2
-                            style={{
-                                fontFamily: "Arial, sans-serif",
-                                color: 'gray',
-                                fontSize: '1.5rem',
-                                textAlign: 'center',
-                                fontWeight: 'normal',
-                            }}
-                        >
+                        <h2 style={{
+                            fontFamily: "Arial, sans-serif",
+                            color: 'gray',
+                            fontSize: '1.5rem',
+                            textAlign: 'center',
+                            fontWeight: 'normal',
+                        }}>
                             Models:0
                         </h2>
                         <img src="/3d-model.png"
                             style={{
                                 width: '150px',
-                                marginTop: '7rem',
+                                marginTop: '3rem',
                                 display: 'flex',
-                                alignSelf: 'center',
+                                justifySelf: 'center',
                                 filter: 'invert(1) brightness(50%)'
                             }}
                         />
-                        <h2
-                            style={{
-                                fontFamily: "Arial, sans-serif",
-                                color: 'gray',
-                                fontSize: '1.5rem',
-                                textAlign: 'center',
-                                fontWeight: 'normal',
-                                paddingRight: '1rem',
-                            }}
-                        >
+                        <h2 style={{
+                            fontFamily: "Arial, sans-serif",
+                            color: 'gray',
+                            fontSize: '1.5rem',
+                            textAlign: 'center',
+                            fontWeight: 'normal',
+                        }}>
                             "Their Work" shows all their models.
                         </h2>
-                        <h2
-                            style={{
-                                fontFamily: "Arial, sans-serif",
-                                marginTop: '0rem',
-                                color: 'gray',
-                                fontSize: '0.9rem',
-                                textAlign: 'center',
-                                paddingRight: '1rem',
-                            }}
-                        >
+                        <h2 style={{
+                            fontFamily: "Arial, sans-serif",
+                            marginTop: '0rem',
+                            color: 'gray',
+                            fontSize: '0.9rem',
+                            textAlign: 'center',
+                        }}>
                             This user doesn't have models uploaded at the moment.
                         </h2>
                     </>)}
 
-                    {/* Tab content 2*/}
+                    {/* Tab content 2 - Favourites*/}
                     {activeIndex === 1 && (<>
                         <img src="/bookmark-star_2.png"
                             style={{
                                 width: '150px',
-                                marginTop: '7rem',
+                                marginTop: '3rem',
                                 display: 'flex',
-                                alignSelf: 'center',
+                                justifySelf: 'center',
                                 filter: 'invert(1) brightness(50%)'
                             }}
                         />
-                        <h2
-                            style={{
-                                fontFamily: "Arial, sans-serif",
-                                color: 'gray',
-                                fontSize: '1.5rem',
-                                textAlign: 'center',
-                                fontWeight: 'normal',
-                            }}
-                        >
+                        <h2 style={{
+                            fontFamily: "Arial, sans-serif",
+                            color: 'gray',
+                            fontSize: '1.5rem',
+                            textAlign: 'center',
+                            fontWeight: 'normal',
+                        }}>
                             "Favourites" shows the models they added to their favourite list.
                         </h2>
-                        <h2
-                            style={{
-                                fontFamily: "Arial, sans-serif",
-                                color: 'gray',
-                                fontSize: '0.9rem',
-                                textAlign: 'center',
-                            }}
-                        >
+                        <h2 style={{
+                            fontFamily: "Arial, sans-serif",
+                            color: 'gray',
+                            fontSize: '0.9rem',
+                            textAlign: 'center',
+                        }}>
                             This user doesn't have models at favourites at the moment.
                         </h2>
                     </>)}
@@ -435,34 +399,30 @@ function OtherDashboard() {
                     {/* Followers content*/}
                     {activeIndex === 2 && (
                         <>
-                            <h2
-                                style={{
-                                    fontFamily: "Arial, sans-serif",
-                                    color: 'gray',
-                                    fontSize: '1.5rem',
-                                    textAlign: 'center',
-                                    fontWeight: 'normal',
-                                }}
-                            >
+                            <h2 style={{
+                                fontFamily: "Arial, sans-serif",
+                                color: 'gray',
+                                fontSize: '1.5rem',
+                                textAlign: 'center',
+                                fontWeight: 'normal',
+                            }}>
                                 Followers:
                             </h2>
+                            
                             {/* Followers list */}
-                            <div style={followerGridStyle}>
+                            <div className="responsive-grid">
                                 {followersData.length === 0 ? (
-                                    <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray" }}>No followers yet.</p>
+                                    <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray", gridColumn: "1 / -1" }}>No followers yet.</p>
                                 ) : (
                                     followersData.map((f) => (
-                                        <div key={f.uid} style={followerCardStyle}>
+                                        <div key={f.uid} className="user-card">
                                             <img
                                                 src={f.profilePicture}
                                                 alt={f.username}
-                                                style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover" }}
                                                 onError={(e) => (e.target.src = "/profile.png")}
                                             />
-                                            <h3 style={{ margin: "0.5rem 0" }}>{f.username}</h3>
-                                            <p style={{ margin: 0, fontSize: "0.8rem", color: "gray" }}>
-                                                Followers: {f.followers} | Following: {f.following}
-                                            </p>
+                                            <h3>{f.username}</h3>
+                                            <p>Followers: {f.followers} | Following: {f.following}</p>
                                         </div>
                                     ))
                                 )}
@@ -482,43 +442,43 @@ function OtherDashboard() {
                             }}>
                                 Followed users:
                             </h2>
-                            <div style={followerGridStyle}>
+                            
+                            <div className="responsive-grid">
                                 {followingData.length === 0 ? (
-                                    <p style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: 'gray' }}>Not following anyone.</p>
+                                    <p style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: 'gray', gridColumn: "1 / -1" }}>Not following anyone.</p>
                                 ) : (
                                     followingData.map((f) => (
-                                        <div key={f.uid} style={followerCardStyle}>
+                                        <div key={f.uid} className="user-card">
                                             <img
                                                 src={f.profilePicture}
                                                 alt={f.username}
-                                                style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover" }}
                                                 onError={(e) => (e.target.src = "/profile.png")}
                                             />
-                                            <h3 style={{ margin: "0.5rem 0" }}>{f.username}</h3>
-                                            <p style={{ margin: 0, fontSize: "0.8rem", color: "gray" }}>
-                                                Followers: {f.followers} | Following: {f.following}
-                                            </p>
+                                            <h3>{f.username}</h3>
+                                            <p>Followers: {f.followers} | Following: {f.following}</p>
                                         </div>
                                     ))
                                 )}
                             </div>
                         </>
                     )}
+
                     {/* Summary tab */}
                     {activeIndex === 4 && (
                         <div style={summaryContainerStyle}>
                             <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>About Me</h2>
+                            
                             {/* The time when this account was created*/}
                             <div style={{ marginBottom: '3rem' }}>
                                 <strong>Member since:</strong> {profileUser.createdAt ? formatFirebaseTimestamp(profileUser.createdAt) : 'Unknown'}
                             </div>
+                            
                             {/* Account Type */}
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <h3 style={sectionTitleStyle}>Account Type</h3>
                                 <p style={{ margin: 0 }}>
                                     {profileUser.accountType === 'individual' ? 'Individual' : 'Organization'} -
-                                    {(profileUser.accountType === 'individual' ? individualRoles : organizationRoles)
-                                        .find(role => role.value === profileUser.role)?.label || 'Other'}
+                                    {roles.find(role => role.value === profileUser.role)?.label || 'Other'}
                                 </p>
                             </div>
 

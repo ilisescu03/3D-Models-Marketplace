@@ -48,3 +48,135 @@ header {
     align-items: center;
     justify-content: center;
 }
+/* Responsive.css */
+.responsive-container {
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 0;
+}
+
+.user-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 1rem;
+    font-family: Arial, sans-serif;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.user-card:hover {
+    transform: translateY(-5px);
+}
+
+.user-card img {
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-card h3 {
+    margin: 0.5rem 0;
+    text-align: center;
+}
+
+.user-card p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: gray;
+    text-align: center;
+}
+
+.follow-button {
+    transition: 0.3s ease;
+    margin-top: 0.5rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+}
+
+.follow-button.follow {
+    background-color: #575757;
+}
+
+.follow-button.follow:hover {
+    background-color: #2b2b2b;
+}
+
+.follow-button.unfollow {
+    background-color: red;
+}
+
+.follow-button.unfollow:hover {
+    background-color: #a70000;
+}
+
+
+@media (max-width: 768px) {
+    .responsive-container {
+        padding: 0.5rem;
+    }
+    
+    .responsive-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        padding: 0.5rem 0;
+    }
+    
+    .user-card {
+        padding: 0.8rem;
+    }
+    
+    .user-card img {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .user-card h3 {
+        font-size: 0.9rem;
+    }
+    
+    .follow-button {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .responsive-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.8rem;
+    }
+    
+    .user-card {
+        padding: 0.6rem;
+    }
+    
+    .user-card img {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .user-card h3 {
+        font-size: 0.8rem;
+    }
+}

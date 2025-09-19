@@ -5,12 +5,14 @@ import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import '/frontend/css/App.css'
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
     updateUsername, updateUserData
 } from '/backend/users.js';
+import '/frontend/css/App.css'; 
 
-//Summary container style
+// Summary container style
 const summaryContainerStyle = {
     backgroundColor: 'white',
     padding: '2rem',
@@ -23,7 +25,8 @@ const summaryContainerStyle = {
     marginLeft: 'auto',
     marginRight: 'auto'
 };
-//Section title style
+
+// Section title style
 const sectionTitleStyle = {
     color: '#333',
     fontSize: '1.2rem',
@@ -32,7 +35,8 @@ const sectionTitleStyle = {
     borderBottom: '2px solid #eb8d00ff',
     paddingBottom: '0.5rem'
 };
-//Skills labels style
+
+// Skills labels style
 const skillStyle = {
     padding: '0.4rem 0.8rem',
     backgroundColor: '#f0f0f0',
@@ -42,11 +46,10 @@ const skillStyle = {
     display: 'inline-block',
     margin: '0.2rem'
 };
-//Background Style
 
+// Background Style
 const backgroundStyle = {
     backgroundImage: `url(/background1.jpg)`,
-
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     backgroundSize: "cover",
@@ -54,21 +57,19 @@ const backgroundStyle = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
-
 };
 
-//Profile container style
-
+// Profile container style
 const profileContainerStyle = {
     display: 'flex',
     alignItems: 'flex-start',
     marginTop: '8rem',
     width: '100%',
     paddingLeft: '1.2rem',
+    flexWrap: 'wrap'
 };
 
-//Text container style (username, followers, following)
-
+// Text container style (username, followers, following)
 const textContainerStyle = {
     display: 'flex',
     flexDirection: 'column',
@@ -77,7 +78,7 @@ const textContainerStyle = {
     alignItems: 'flex-start',
 };
 
-//Profile picture style
+// Profile picture style
 const imageStyle = {
     width: '100px',
     height: '100px',
@@ -85,7 +86,7 @@ const imageStyle = {
     objectFit: 'cover',
 };
 
-//Username style
+// Username style
 const usernameStyle = {
     color: 'white',
     fontWeight: 'bold',
@@ -94,8 +95,7 @@ const usernameStyle = {
     margin: 0,
 };
 
-//Edit button style
-
+// Edit button style
 const buttonStyle = {
     height: '30px',
     width: '70px',
@@ -109,8 +109,7 @@ const buttonStyle = {
     transition: '0.3s ease',
 };
 
-//Navigation button style
-
+// Navigation button style
 const getTabButtonStyle = (isActive) => ({
     height: '35px',
     minWidth: '100px',
@@ -122,7 +121,8 @@ const getTabButtonStyle = (isActive) => ({
     color: isActive ? 'white' : 'black',
     fontWeight: 'bold',
 });
-//Style for followers and following texts
+
+// Style for followers and following texts
 const followersStyle = {
     color: 'white',
     fontWeight: 'bold',
@@ -131,35 +131,11 @@ const followersStyle = {
     marginTop: '0.5rem',
     cursor: 'pointer',
 };
-//Style for the users cards
-const followerCardStyle = {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "1px solid #ccc",
-    borderRadius: "10px",
-    padding: "1rem",
-    width: "200px",
-    fontFamily: 'Arial, sans-serif',
-    backgroundColor: "white",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-};
-//Style for grid display of users
-const followerGridStyle = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-    gap: "1.5rem",
-    width: "98vw",
-    padding: "0 4rem",
-    boxSizing: "border-box",
-};
 
 function Dashboard() {
-
-    const [user, setUser] = useState(null); //for verifying if the user is logged or not
-    const [username, setUsername] = useState(""); //for username display
-    const [activeIndex, setActiveIndex] = useState(5); //for navigation buttons
+    const [user, setUser] = useState(null);
+    const [username, setUsername] = useState("");
+    const [activeIndex, setActiveIndex] = useState(5);
     const [userStats, setUserStats] = useState({
         followers: 0,
         following: 0,
@@ -172,10 +148,10 @@ function Dashboard() {
         role: "other",
         links: ["", "", "", ""],
         skills: []
-    }); //for user stats and profile picture display
-    const [loading, setLoading] = useState(true); //loading state for user stats
-    const [followersData, setFollowersData] = useState([]); //data for followers
-    const [followingData, setFollowingData] = useState([]); //data for following users
+    });
+    const [loading, setLoading] = useState(true);
+    const [followersData, setFollowersData] = useState([]);
+    const [followingData, setFollowingData] = useState([]);
     const [selectedSkills, setSelectedSkills] = useState([]);
 
     const [availableSkills] = useState([
@@ -185,7 +161,8 @@ function Dashboard() {
     ]);
     const navigate = useNavigate();
 
-    const [accountType, setAccountType] = useState('individual'); // Account type state
+    const [accountType, setAccountType] = useState('individual');
+    
     // Individual role options
     const individualRoles = [
         { value: 'other', label: 'Other' },
@@ -213,8 +190,10 @@ function Dashboard() {
         { value: 'tech-company', label: 'Tech Company' },
         { value: 'research-lab', label: 'Research Lab' },
     ];
+    
     // Determine which roles to show based on account type
     const roles = accountType === 'individual' ? individualRoles : organizationRoles;
+    
     const formatFirebaseTimestamp = (timestamp) => {
         try {
             // If timestamp is a firebase object in seconds
@@ -233,7 +212,7 @@ function Dashboard() {
                     day: 'numeric'
                 });
             }
-            //If timestamp is a string that can be converted to data
+            // If timestamp is a string that can be converted to date
             else if (typeof timestamp === 'string') {
                 const date = new Date(timestamp);
                 if (!isNaN(date.getTime())) {
@@ -250,11 +229,12 @@ function Dashboard() {
             return 'Unknown';
         }
     };
-    //Effect for check authentification and fetch user data
+    
+    // Effect for check authentication and fetch user data
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                //user logged in
+                // User logged in
                 setUser(currentUser);
                 try {
                     const userDocRef = doc(db, "users", currentUser.uid);
@@ -268,23 +248,25 @@ function Dashboard() {
                     console.error("Error getting user data:", error);
                 }
 
-                //listen to real-time user stats updates
+                // Listen to real-time user stats updates
                 const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
                     setUserStats(stats);
                     setUsername(stats.username);
                     setSelectedSkills(stats.skills || [])
                     setLoading(false);
-                    //fetch followers and following lists
+                    
+                    // Fetch followers and following lists
                     const followers = await getFollowers(currentUser.uid);
                     setFollowersData(followers);
 
                     const followings = await getFollowing(currentUser.uid);
                     setFollowingData(followings);
                 });
-                //Clean up listener on unmount
+                
+                // Clean up listener on unmount
                 return () => stopListening();
             } else {
-                //user logged out
+                // User logged out
                 setUser(null);
                 setUsername("");
                 setUserStats({
@@ -303,7 +285,6 @@ function Dashboard() {
                 setSelectedSkills([]);
                 setLoading(false);
                 navigate('/');
-
             }
         });
         return () => unsubscribe();
@@ -313,6 +294,7 @@ function Dashboard() {
         <div style={backgroundStyle}>
             <Header />
             <CookiesBanner/>
+            
             {/* Profile header */}
             <div style={profileContainerStyle}>
                 {/* Profile pic */}
@@ -327,7 +309,7 @@ function Dashboard() {
                 <div style={textContainerStyle}>
                     <p style={usernameStyle}>{username}</p>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                         <button
                             onMouseEnter={(e) => {
                                 e.currentTarget.style.backgroundColor = '#2c2c2cff';
@@ -345,19 +327,9 @@ function Dashboard() {
 
             {/* Dashboard content */}
             <div style={{ marginTop: '2rem', width: '100%' }}>
-                <section
-                    style={{
-                        padding: '1rem',
-                        width: '100%',
-                        minHeight: '100vh',
-                        backgroundColor: 'rgba(241, 241, 241, 1)',
-                        display: 'flex',
-                        flexDirection: 'column',
-
-                    }}
-                >
+                <section className="responsive-container" style={{backgroundColor:'#f1f1f1ff', minHeight:'1000px'}}>
                     {/* Navigation buttons */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
                             onClick={() => setActiveIndex(5)}
                             style={getTabButtonStyle(activeIndex === 5)}
@@ -379,142 +351,107 @@ function Dashboard() {
                     </div>
 
                     {/* Tab content 1 - Your Work*/}
-                    {activeIndex == 0 && (<h2
-                        style={{
+                    {activeIndex === 0 && (<>
+                        <h2 style={{
                             fontFamily: "Arial, sans-serif",
-
                             color: 'gray',
                             fontSize: '1.5rem',
                             textAlign: 'center',
                             fontWeight: 'normal',
-                        }}
-                    >
-                        Models:0
-                    </h2>)}
-                    {activeIndex == 0 && (<img src="3d-model.png"
-                        style={{
-                            width: '150px',
-                            marginTop: '7rem',
-                            display: 'flex',
-                            alignSelf: 'center',
-                            filter: 'invert(1) brightness(50%)'
-
-                        }}
-                    />
-
-                    )}
-                    {activeIndex == 0 && (<h2
-                        style={{
+                        }}>
+                            Models:0
+                        </h2>
+                        <img src="3d-model.png"
+                            style={{
+                                width: '150px',
+                                marginTop: '3rem',
+                                display: 'flex',
+                                justifySelf: 'center',
+                                filter: 'invert(1) brightness(50%)'
+                            }}
+                        />
+                        <h2 style={{
                             fontFamily: "Arial, sans-serif",
-
                             color: 'gray',
                             fontSize: '1.5rem',
                             textAlign: 'center',
                             fontWeight: 'normal',
-                        }}
-                    >
-                        "Your Work" will show you all your models.
-                    </h2>)}
-                    {activeIndex == 0 && (<h2
-                        style={{
+                        }}>
+                            "Your Work" will show you all your models.
+                        </h2>
+                        <h2 style={{
                             fontFamily: "Arial, sans-serif",
                             marginTop: '0rem',
                             color: 'gray',
                             fontSize: '0.9rem',
                             textAlign: 'center',
-                        }}
-                    >
-                        You don't have models uploaded at the moment.
-                    </h2>)}
+                        }}>
+                            You don't have models uploaded at the moment.
+                        </h2>
+                    </>)}
 
-                    {/* Tab content 2- Favourites*/}
-                    {activeIndex == 1 && (<img src="bookmark-star_2.png"
-                        style={{
-                            width: '150px',
-                            marginTop: '7rem',
-                            display: 'flex',
-                            alignSelf: 'center',
-                            filter: 'invert(1) brightness(50%)'
-
-                        }}
-                    />
-
-                    )}
-                    {activeIndex == 1 && (<h2
-                        style={{
+                    {/* Tab content 2 - Favourites*/}
+                    {activeIndex === 1 && (<>
+                        <img src="bookmark-star_2.png"
+                            style={{
+                                width: '150px',
+                                marginTop: '3rem',
+                                display: 'flex',
+                                justifySelf: 'center',
+                                filter: 'invert(1) brightness(50%)'
+                            }}
+                        />
+                        <h2 style={{
                             fontFamily: "Arial, sans-serif",
-
                             color: 'gray',
                             fontSize: '1.5rem',
                             textAlign: 'center',
                             fontWeight: 'normal',
-                        }}
-                    >
-                        "Favourites" will show you the models added to the favourite list.
-                    </h2>)}
-                    {activeIndex == 1 && (<h2
-                        style={{
+                        }}>
+                            "Favourites" will show you the models added to the favourite list.
+                        </h2>
+                        <h2 style={{
                             fontFamily: "Arial, sans-serif",
-
                             color: 'gray',
                             fontSize: '0.9rem',
                             textAlign: 'center',
-                        }}
-                    >
-                        You don't have models at favourites at the moment.
-                    </h2>)}
+                        }}>
+                            You don't have models at favourites at the moment.
+                        </h2>
+                    </>)}
+
                     {/* Followers content*/}
                     {activeIndex === 2 && (
                         <>
-                            <h2
-                                style={{
-                                    fontFamily: "Arial, sans-serif",
-                                    color: 'gray',
-                                    fontSize: '1.5rem',
-                                    textAlign: 'center',
-                                    fontWeight: 'normal',
-                                }}
-                            >
+                            <h2 style={{
+                                fontFamily: "Arial, sans-serif",
+                                color: 'gray',
+                                fontSize: '1.5rem',
+                                textAlign: 'center',
+                                fontWeight: 'normal',
+                            }}>
                                 Followers:
                             </h2>
+                            
                             {/* Followers list */}
-                            <div style={followerGridStyle}>
+                            <div className="responsive-grid">
                                 {followersData.length === 0 ? (
-                                    <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray" }}>No followers yet.</p>
+                                    <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray", gridColumn: "1 / -1" }}>No followers yet.</p>
                                 ) : (
                                     followersData.map((f) => (
-                                        <div key={f.uid} style={followerCardStyle}>
+                                        <div key={f.uid} className="user-card">
                                             <img
                                                 src={f.profilePicture}
                                                 alt={f.username}
-                                                style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover" }}
                                                 onError={(e) => (e.target.src = "profile.png")}
                                             />
-                                            <h3 style={{ margin: "0.5rem 0" }}>{f.username}</h3>
-                                            <p style={{ margin: 0, fontSize: "0.8rem", color: "gray" }}>
-                                                Followers: {f.followers} | Following: {f.following}
-                                            </p>
+                                            <h3>{f.username}</h3>
+                                            <p>Followers: {f.followers} | Following: {f.following}</p>
 
                                             {/* Follow/Unfollow button*/}
                                             {user && (
                                                 <button
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = userStats.followingList.includes(f.uid) ? "red" : "#575757";
-                                                    }}
-                                                    style={{
-                                                        transition: '0.3s ease',
-                                                        marginTop: "0.5rem",
-                                                        padding: "0.3rem 0.7rem",
-                                                        borderRadius: "5px",
-                                                        border: "none",
-                                                        cursor: "pointer",
-                                                        backgroundColor: userStats.followingList.includes(f.uid) ? "red" : "#575757",
-                                                        color: "white",
-                                                        fontWeight: "bold",
-                                                    }}
+                                                    className={`follow-button ${userStats.followingList.includes(f.uid) ? 'unfollow' : 'follow'}`}
                                                     onClick={async () => {
                                                         try {
                                                             let result;
@@ -523,8 +460,8 @@ function Dashboard() {
                                                             } else {
                                                                 result = await doFollowUser(f.uid);
                                                             }
-                                                            if (result.succes) {
-                                                                //Update following list
+                                                            if (result.success) {
+                                                                // Update following list
                                                                 if (userStats.followingList.includes(f.uid)) {
                                                                     setUserStats((prev) => ({
                                                                         ...prev,
@@ -543,7 +480,6 @@ function Dashboard() {
                                                             } else {
                                                                 console.log(result.message);
                                                             }
-
                                                         } catch (err) {
                                                             console.error(err);
                                                         }
@@ -558,6 +494,7 @@ function Dashboard() {
                             </div>
                         </>
                     )}
+
                     {/* Following content */}
                     {activeIndex === 3 && (
                         <>
@@ -570,77 +507,56 @@ function Dashboard() {
                             }}>
                                 Followed users:
                             </h2>
-                            <div style={followerGridStyle}>
+                            
+                            <div className="responsive-grid">
                                 {followingData.length === 0 ? (
-                                    <p style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: 'gray' }}>You're not following anyone.</p>
+                                    <p style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: 'gray', gridColumn: "1 / -1" }}>You're not following anyone.</p>
                                 ) : (
                                     followingData.map((f) => (
-                                        <div key={f.uid} style={followerCardStyle}>
+                                        <div key={f.uid} className="user-card">
                                             <img
                                                 src={f.profilePicture}
                                                 alt={f.username}
-                                                style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover" }}
                                                 onError={(e) => (e.target.src = "profile.png")}
                                             />
-                                            <h3 style={{ margin: "0.5rem 0" }}>{f.username}</h3>
-                                            <p style={{ margin: 0, fontSize: "0.8rem", color: "gray" }}>
-                                                Followers: {f.followers} | Following: {f.following}
-                                            </p>
+                                            <h3>{f.username}</h3>
+                                            <p>Followers: {f.followers} | Following: {f.following}</p>
 
                                             {/* Follow/Unfollow button*/}
                                             {user && (
                                                 <button
-                                                    onMouseEnter={(e) => {
-                                                        e.currentTarget.style.backgroundColor = userStats.followingList.includes(f.uid) ? "#a70000ff" : "#2b2b2bff";
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.currentTarget.style.backgroundColor = userStats.followingList.includes(f.uid) ? "red" : "#575757";
-                                                    }}
-                                                    style={{
-                                                        transition: '0.3s ease',
-                                                        marginTop: "0.5rem",
-                                                        padding: "0.3rem 0.7rem",
-                                                        borderRadius: "5px",
-                                                        border: "none",
-                                                        cursor: "pointer",
-                                                        backgroundColor: userStats.followingList.includes(f.uid) ? "red" : "#575757",
-                                                        color: "white",
-                                                        fontWeight: "bold",
-                                                    }}
-                                                    onClick={
-                                                        async () => {
-                                                            try {
-                                                                let result;
-                                                                if (userStats.followingList.includes(f.uid)) {
-                                                                    result = await doUnfollowUser(f.uid);
-                                                                } else {
-                                                                    result = await doFollowUser(f.uid);
-                                                                }
-                                                                if (result.succes) {
-                                                                    if (userStats.followingList.includes(f.uid)) {
-                                                                        setUserStats((prev) => ({
-                                                                            ...prev,
-                                                                            followingList: prev.followingList.filter((id) => id !== f.uid),
-                                                                            following: prev.following - 1
-                                                                        }));
-                                                                    } else {
-                                                                        setUserStats((prev) => ({
-                                                                            ...prev,
-                                                                            followingList: [...prev.followingList, f.uid],
-                                                                            following: prev.following + 1
-                                                                        }));
-                                                                    }
-                                                                    const followers = await getFollowers(user.uid)
-                                                                    setFollowersData(followers);
-                                                                } else {
-                                                                    console.log(result.message);
-                                                                }
-
-                                                            } catch (err) {
-                                                                console.error(err);
+                                                    className={`follow-button ${userStats.followingList.includes(f.uid) ? 'unfollow' : 'follow'}`}
+                                                    onClick={async () => {
+                                                        try {
+                                                            let result;
+                                                            if (userStats.followingList.includes(f.uid)) {
+                                                                result = await doUnfollowUser(f.uid);
+                                                            } else {
+                                                                result = await doFollowUser(f.uid);
                                                             }
+                                                            if (result.success) {
+                                                                if (userStats.followingList.includes(f.uid)) {
+                                                                    setUserStats((prev) => ({
+                                                                        ...prev,
+                                                                        followingList: prev.followingList.filter((id) => id !== f.uid),
+                                                                        following: prev.following - 1
+                                                                    }));
+                                                                } else {
+                                                                    setUserStats((prev) => ({
+                                                                        ...prev,
+                                                                        followingList: [...prev.followingList, f.uid],
+                                                                        following: prev.following + 1
+                                                                    }));
+                                                                }
+                                                                const followers = await getFollowers(user.uid)
+                                                                setFollowersData(followers);
+                                                            } else {
+                                                                console.log(result.message);
+                                                            }
+                                                        } catch (err) {
+                                                            console.error(err);
                                                         }
-                                                    }
+                                                    }}
                                                 >
                                                     {userStats.followingList.includes(f.uid) ? "Unfollow" : "Follow"}
                                                 </button>
@@ -648,7 +564,6 @@ function Dashboard() {
                                         </div>
                                     ))
                                 )}
-
                             </div>
                         </>
                     )}
@@ -657,10 +572,12 @@ function Dashboard() {
                     {activeIndex === 5 && (
                         <div style={summaryContainerStyle}>
                             <h2 style={{ color: '#333', marginBottom: '3rem', fontSize: '1.7rem' }}>Summary</h2>
+                            
                             {/* The time when this account was created*/}
                             <div style={{ marginBottom: '3rem' }}>
                                 <strong>Member since:</strong> {userStats.createdAt ? formatFirebaseTimestamp(userStats.createdAt) : 'Unknown'}
                             </div>
+                            
                             {/* Account Type */}
                             <div style={{ marginBottom: '2rem' }}>
                                 <h3 style={sectionTitleStyle}>Account Type</h3>
@@ -725,12 +642,8 @@ function Dashboard() {
                         </div>
                     )}
                 </section>
-
             </div>
-            
         </div>
-
-
     );
 }
 
