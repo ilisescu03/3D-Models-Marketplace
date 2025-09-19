@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getUserStats, getFollowers, getFollowing } from '/backend/users.js';
+import CookiesBanner from '../UI+UX/CookiesBanner';
 
 
 //Summary container style
@@ -295,6 +296,7 @@ function OtherDashboard() {
     return (
         <div style={backgroundStyle}>
             <Header />
+            <CookiesBanner/>
             {/* Profile header */}
             <div style={profileContainerStyle}>
                 {/* Profile pic */}

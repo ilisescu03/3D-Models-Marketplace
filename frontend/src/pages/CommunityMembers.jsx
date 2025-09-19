@@ -1,4 +1,5 @@
 import Header from '../UI+UX/Header.jsx';
+import CookiesBanner from '../UI+UX/CookiesBanner';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
@@ -142,6 +143,7 @@ function CommunityMembers() {
     return (
         <div style={backgroundStyle}>
             <Header />
+            <CookiesBanner />
             <div style={containerStyle}>
                 <h2 style={{ fontWeight: 'normal', color: 'gray' }}>Users</h2>
                 <div style={usersGridStyle}>
@@ -221,6 +223,7 @@ function CommunityMembers() {
                     )}
                 </div>
             </div>
+            
         </div>
     );
 }

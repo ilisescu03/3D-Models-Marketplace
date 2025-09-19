@@ -5,7 +5,7 @@ import validation from "../validations/SignUpValidation.jsx";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from 'firebase/auth';
 import { doCreateUserWithEmailAndPassword, doSignInWithGoogle, doSignInWithGitHub } from "/backend/auth.js";
-
+import CookiesBanner from '../UI+UX/CookiesBanner';
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
@@ -223,6 +223,7 @@ function SignUp() {
     return (
         <div style={backgroundStyle}>
             <Header />
+            <CookiesBanner/>
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
                 <h2 style={{ fontSize: '2rem', marginBottom: '10px' }}>Sign Up</h2>
 

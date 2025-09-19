@@ -2,6 +2,7 @@ import {useState} from 'react';
 import Header from "../UI+UX/Header";
 import { doPasswordReset } from "/backend/auth.js";
 import { useNavigate } from "react-router-dom";
+import CookiesBanner from '../UI+UX/CookiesBanner';
 // Background style for the entire page
 
 const backgroundStyle = {
@@ -116,6 +117,7 @@ function ForgotPassword() {
     return (
         <div style={backgroundStyle}>
             <Header />
+            <CookiesBanner/>
             {/* Forgot password form */}
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
                 <h2 style={{ textAlign: 'center' }}>Forgot Password</h2>
@@ -170,7 +172,7 @@ function ForgotPassword() {
             </button>
 
         </form>
-
+        
         </div >
     )
 }

@@ -1,6 +1,7 @@
 import {useEffect} from "react";
 import Header from "../UI+UX/Header";
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
+import CookiesBanner from '../UI+UX/CookiesBanner';
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
@@ -24,6 +25,7 @@ function Home(){
     return(
         <div style={backgroundStyle}>
         <Header />
+        <CookiesBanner/>
         
         </div>
     )

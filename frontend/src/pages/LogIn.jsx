@@ -5,6 +5,7 @@ import {auth, db} from '/backend/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doSignInWithEmailAndPassword, doSignOut, doSignInWithGitHub, doSignInWithGoogle } from "/backend/auth.js";
 import { useNavigate } from "react-router-dom";
+import CookiesBanner from '../UI+UX/CookiesBanner';
 
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
@@ -222,6 +223,7 @@ const handleGitHubSignIn = async () => {
     return (
         <div style={backgroundStyle}>
             <Header />
+            <CookiesBanner/>
 
             {/* Log In Form */}
 

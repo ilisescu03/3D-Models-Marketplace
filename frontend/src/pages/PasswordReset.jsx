@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import { auth } from '/backend/firebase.js';
+import CookiesBanner from '../UI+UX/CookiesBanner';
 // Background style for the entire page
 
 const backgroundStyle = {
@@ -134,7 +135,7 @@ function PasswordReset() {
 
     return (
         <div style={backgroundStyle}>
-
+            <CookiesBanner></CookiesBanner>
             <form onSubmit={handleSubmit} style={formStyle}>
                 <h2>Set New Password </h2>
                 <div >

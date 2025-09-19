@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
+import { CookieService } from '/backend/cookies.js';
 import { doc, getDoc } from 'firebase/firestore';
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
     updateUsername, doChangePassword, updateUserData, doDeleteUserAccount
 } from '/backend/users.js';
+import CookiesBanner from '../UI+UX/CookiesBanner';
 
 // Profile picture style
 const imageStyle = {
@@ -408,6 +410,7 @@ function Settings() {
     return (
         <div style={backgroundStyle}>
             <Header />
+            <CookiesBanner />
             <div style={containerStyle}>
                 <h1 style={{ fontFamily: 'Arial, sans-serif', color: '#333', marginBottom: '2rem' }}>
                     Settings
@@ -943,16 +946,41 @@ function Settings() {
                                         padding: '2rem',
                                         borderRadius: '15px',
                                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                        textAlign: 'center'
                                     }}
                                 >
                                     <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>Cookie Management</h2>
-                                    <p style={{ marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                                        This is where you can manage your cookie preferences.
-                                        In the future, you'll be able to customize which types of cookies
-                                        we can use to improve your experience on our platform.
-                                    </p>
+
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <h3 style={{ color: '#555', marginBottom: '1rem' }}>Current Cookie Preferences</h3>
+
+                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                                            <strong>Necessary Cookies:</strong> Always active
+                                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#6c757d' }}>
+                                                Required for the website to function properly. Cannot be disabled.
+                                            </p>
+                                        </div>
+
+                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                                            <strong>Analytics Cookies:</strong> {CookieService.isAllowed('analytics') ? 'Active' : 'Inactive'}
+                                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#6c757d' }}>
+                                                Help us understand how visitors interact with our website.
+                                            </p>
+                                        </div>
+
+                                        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                                            <strong>Marketing Cookies:</strong> {CookieService.isAllowed('marketing') ? 'Active' : 'Inactive'}
+                                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#6c757d' }}>
+                                                Used to track visitors across websites for advertising purposes.
+                                            </p>
+                                        </div>
+                                    </div>
+
                                     <button
+                                        onClick={() => {
+                                            // Reset consent to display again the banner
+                                            localStorage.removeItem('cookieConsent');
+                                            window.location.reload();
+                                        }}
                                         style={{
                                             padding: '0.7rem 1.5rem',
                                             backgroundColor: '#575757',
@@ -963,8 +991,16 @@ function Settings() {
                                             fontWeight: 'bold'
                                         }}
                                     >
-                                        Manage Cookies
+                                        Change Cookie Preferences
                                     </button>
+
+                                    <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#e9ecef', borderRadius: '4px' }}>
+                                        <h4 style={{ color: '#495057', marginBottom: '0.5rem' }}>About Our Cookies</h4>
+                                        <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', lineHeight: '1.5' }}>
+                                            We use different types of cookies to optimize your experience on our platform.
+                                            You can learn more about each category and change your preferences at any time.
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 

@@ -1,5 +1,6 @@
 import Header from '../UI+UX/Header.jsx';
 import { useNavigate } from 'react-router-dom';
+import CookiesBanner from '../UI+UX/CookiesBanner';
 import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -311,6 +312,7 @@ function Dashboard() {
     return (
         <div style={backgroundStyle}>
             <Header />
+            <CookiesBanner/>
             {/* Profile header */}
             <div style={profileContainerStyle}>
                 {/* Profile pic */}
@@ -725,6 +727,7 @@ function Dashboard() {
                 </section>
 
             </div>
+            
         </div>
 
 
