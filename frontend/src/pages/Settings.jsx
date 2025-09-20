@@ -102,7 +102,7 @@ const tabContentStyle = {
 function Settings() {
     const [userProvider, setUserProvider] = useState('password');
     const [isGoogleUser, setIsGoogleUser] = useState(false);
-    const [isGitHubUser, setIsGitHubUser] = useState(false);
+
     // State for current authenticated user
     const [user, setUser] = useState(null);
     // State for username
@@ -216,7 +216,7 @@ function Settings() {
                 const provider = currentUser.providerData[0]?.providerId;
                 setUserProvider(provider);
                 setIsGoogleUser(provider === 'google.com');
-                setIsGitHubUser(provider === 'github.com');
+
                 try {
                     // Get user document from Firestore
                     const userDocRef = doc(db, "users", currentUser.uid);
@@ -380,14 +380,14 @@ function Settings() {
         setDeleteSuccess("");
         setIsDeleting(true);
 
-        if (!isGitHubUser && !isGoogleUser && !deletePassword) {
+        if (!isGoogleUser && !deletePassword) {
             setDeleteError("Please enter your password to confirm account deletion.");
             setIsDeleting(false);
             return;
         }
 
         try {
-            const result = await doDeleteUserAccount(isGoogleUser || isGitHubUser ? null : deletePassword);
+            const result = await doDeleteUserAccount(isGoogleUser ? null : deletePassword);
 
             if (result.success) {
                 setDeleteSuccess(result.message);
@@ -936,71 +936,100 @@ function Settings() {
                             )}
 
                             {/* Cookies Tab */}
+                           
                             {activeTab === 'cookies' && (
-                                <div
-                                    style={{
-                                        backgroundColor: 'white',
-                                        width: '100%',
-                                        maxWidth: '500px',
-                                        fontFamily: 'Arial, sans-serif',
-                                        padding: '2rem',
-                                        borderRadius: '15px',
-                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                    }}
-                                >
-                                    <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>Cookie Management</h2>
+                                <div style={{
+                                    backgroundColor: 'white',
+                                    width: '100%',
+                                    maxWidth: '600px',
+                                    fontFamily: 'Arial, sans-serif',
+                                    padding: '2rem',
+                                    borderRadius: '15px',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                }}>
+                                    <h2 style={{ color: '#333', marginBottom: '1.5rem', fontSize:'1.7rem' }}> Cookie Management</h2>
 
-                                    <div style={{ marginBottom: '1.5rem' }}>
+                                    <div style={{ marginBottom: '2rem' }}>
                                         <h3 style={{ color: '#555', marginBottom: '1rem' }}>Current Cookie Preferences</h3>
 
-                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                                            <strong>Necessary Cookies:</strong> Always active
-                                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#6c757d' }}>
-                                                Required for the website to function properly. Cannot be disabled.
+                                        {/* Necessary Cookies */}
+                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                <span style={{ fontWeight: 'bold', color: '#27ae60', marginRight: '0.5rem' }}>🍪</span>
+                                                <strong>Necessary Cookies:</strong>
+                                                <span style={{ color: '#27ae60', marginLeft: '0.5rem' }}>Always active</span>
+                                            </div>
+                                            <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', paddingLeft: '1.8rem' }}>
+                                                Required for the website to function properly. Includes session management, security, and basic functionality.
                                             </p>
                                         </div>
 
-                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                                            <strong>Analytics Cookies:</strong> {CookieService.isAllowed('analytics') ? 'Active' : 'Inactive'}
-                                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#6c757d' }}>
-                                                Help us understand how visitors interact with our website.
+                                        {/* Performance Cookies */}
+                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                <span style={{ fontWeight: 'bold', color: '#e67e22', marginRight: '0.5rem' }}>⚡</span>
+                                                <strong>Performance Cookies:</strong>
+                                                <span style={{ color: CookieService.isAllowed('performance') ? '#27ae60' : '#e74c3c', marginLeft: '0.5rem' }}>
+                                                    {CookieService.isAllowed('performance') ? 'Active' : 'Inactive'}
+                                                </span>
+                                            </div>
+                                            <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', paddingLeft: '1.8rem' }}>
+                                                Help us improve website speed and optimize your experience. Tracks page load times and browser capabilities.
                                             </p>
                                         </div>
 
-                                        <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                                            <strong>Marketing Cookies:</strong> {CookieService.isAllowed('marketing') ? 'Active' : 'Inactive'}
-                                            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#6c757d' }}>
-                                                Used to track visitors across websites for advertising purposes.
+                                        {/* Analytics Cookies */}
+                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                <span style={{ fontWeight: 'bold', color: '#3498db', marginRight: '0.5rem' }}>📊</span>
+                                                <strong>Analytics Cookies:</strong>
+                                                <span style={{ color: CookieService.isAllowed('analytics') ? '#27ae60' : '#e74c3c', marginLeft: '0.5rem' }}>
+                                                    {CookieService.isAllowed('analytics') ? 'Active' : 'Inactive'}
+                                                </span>
+                                            </div>
+                                            <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', paddingLeft: '1.8rem' }}>
+                                                Help us understand how visitors interact with our website. Tracks visits, page views, and user behavior.
                                             </p>
                                         </div>
+
+                                      
+
+                                       
                                     </div>
 
                                     <button
+                                        onMouseEnter={(e) => { e.target.style.backgroundColor = '#2c3e50'; }}
+                                        onMouseLeave={(e) => { e.target.style.backgroundColor = '#34495e'; }}
                                         onClick={() => {
-                                            // Reset consent to display again the banner
                                             localStorage.removeItem('cookieConsent');
                                             window.location.reload();
                                         }}
                                         style={{
-                                            padding: '0.7rem 1.5rem',
-                                            backgroundColor: '#575757',
+                                            padding: '0.8rem 1.5rem',
+                                            backgroundColor: '#34495e',
                                             color: 'white',
                                             border: 'none',
-                                            borderRadius: '5px',
+                                            borderRadius: '6px',
                                             cursor: 'pointer',
-                                            fontWeight: 'bold'
+                                            transition: '0.3s ease',
+                                            fontWeight: 'bold',
+                                            width: '100%'
                                         }}
                                     >
-                                        Change Cookie Preferences
+                                        Manage cookies
                                     </button>
 
-                                    <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#e9ecef', borderRadius: '4px' }}>
-                                        <h4 style={{ color: '#495057', marginBottom: '0.5rem' }}>About Our Cookies</h4>
-                                        <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', lineHeight: '1.5' }}>
-                                            We use different types of cookies to optimize your experience on our platform.
-                                            You can learn more about each category and change your preferences at any time.
-                                        </p>
-                                    </div>
+                                    {/* Analytics Data Preview */}
+                                    {CookieService.isAllowed('analytics') && (
+                                        <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#e8f4fd', borderRadius: '8px' }}>
+                                            <h4 style={{ color: '#2980b9', marginBottom: '0.5rem' }}>📈 Your Analytics Data</h4>
+                                            <div style={{ fontSize: '0.9rem', color: '#2c3e50' }}>
+                                                <p>Visits: {CookieService.getAnalyticsData().visitCount} (how many days you visited this website)</p>
+                                                <p>Page Views: {CookieService.getAnalyticsData().pageViews}</p>
+                                                <p>Time spent today: {Math.round(CookieService.getAnalyticsData().totalTimeSpent / 60000)} minutes</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -1033,19 +1062,7 @@ function Settings() {
                                             Click the button below to confirm account deletion.
                                         </div>
                                     )}
-                                    {isGitHubUser && (
-                                        <div style={{
-                                            color: '#e65100',
-                                            marginBottom: '1rem',
-                                            padding: '0.5rem',
-                                            backgroundColor: '#fff3e0',
-                                            borderRadius: '4px',
-                                            border: '1px solid #ffb74d'
-                                        }}>
-                                            <strong>GitHub Account:</strong> You signed in with GitHub.
-                                            Click the button below to confirm account deletion.
-                                        </div>
-                                    )}
+
                                     {deleteError && (
                                         <div style={{
                                             color: 'red',
@@ -1075,7 +1092,7 @@ function Settings() {
                                         All your data, including models, favorites, and profile information will be permanently deleted.
                                     </p>
 
-                                    {!isGoogleUser && !isGitHubUser && (
+                                    {!isGoogleUser && (
                                         <div style={{ marginBottom: '1.5rem' }}>
                                             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
                                                 Enter your password to confirm:

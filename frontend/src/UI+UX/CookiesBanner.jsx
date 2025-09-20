@@ -38,7 +38,7 @@ function CookiesBanner() {
     const [preferences, setPreferences] = useState({
         necessary: true,
         analytics: false,
-        marketing: false
+        performance: false
     });
 
     useEffect(() => {
@@ -52,7 +52,7 @@ function CookiesBanner() {
         CookieService.setConsent(true, {
             necessary: true,
             analytics: true,
-            marketing: true
+            performance: true
         });
         setShowBanner(false);
     };
@@ -61,7 +61,7 @@ function CookiesBanner() {
         CookieService.setConsent(true, {
             necessary: true,
             analytics: false,
-            marketing: false
+            performance: false
         });
         setShowBanner(false);
     };
@@ -149,11 +149,11 @@ function CookiesBanner() {
                             <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
                                 <input
                                     type="checkbox"
-                                    checked={preferences.marketing}
-                                    onChange={() => togglePreference('marketing')}
+                                    checked={preferences.performance}
+                                    onChange={() => togglePreference('performance')}
                                     style={{marginRight: '0.5rem'}}
                                 />
-                                Marketing Cookies
+                                Performance Cookies
                                 <span style={{marginLeft: '0.5rem', fontSize: '0.8rem', color: '#6c757d'}}>
                                     (Used for personalized advertising)
                                 </span>

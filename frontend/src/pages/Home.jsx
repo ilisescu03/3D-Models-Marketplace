@@ -25,7 +25,7 @@ function Home(){
     return(
         <div style={backgroundStyle}>
         <Header />
-        <CookiesBanner/>
+        <CookiesBanner />
         
         </div>
     )
