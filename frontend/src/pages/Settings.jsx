@@ -936,7 +936,7 @@ function Settings() {
                             )}
 
                             {/* Cookies Tab */}
-                           
+
                             {activeTab === 'cookies' && (
                                 <div style={{
                                     backgroundColor: 'white',
@@ -947,7 +947,7 @@ function Settings() {
                                     borderRadius: '15px',
                                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                                 }}>
-                                    <h2 style={{ color: '#333', marginBottom: '1.5rem', fontSize:'1.7rem' }}> Cookie Management</h2>
+                                    <h2 style={{ color: '#333', marginBottom: '1.5rem', fontSize: '1.7rem' }}> Cookie Management</h2>
 
                                     <div style={{ marginBottom: '2rem' }}>
                                         <h3 style={{ color: '#555', marginBottom: '1rem' }}>Current Cookie Preferences</h3>
@@ -963,7 +963,20 @@ function Settings() {
                                                 Required for the website to function properly. Includes session management, security, and basic functionality.
                                             </p>
                                         </div>
-
+                                        {/* Functional Cookies */}
+                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                <span style={{ fontWeight: 'bold', color: '#e67e22', marginRight: '0.5rem' }}>⚙️</span>
+                                                <strong>Functional Cookies:</strong>
+                                                <span style={{ color: CookieService.isAllowed('functional') ? '#27ae60' : '#e74c3c', marginLeft: '0.5rem' }}>
+                                                    {CookieService.isAllowed('functional') ? 'Active' : 'Inactive'}
+                                                </span>
+                                            </div>
+                                            <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', paddingLeft: '1.8rem' }}>
+                                                Remember your preferences and settings to provide
+                                                a more personalized experience on our website.
+                                            </p>
+                                        </div>
                                         {/* Performance Cookies */}
                                         <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -992,9 +1005,9 @@ function Settings() {
                                             </p>
                                         </div>
 
-                                      
 
-                                       
+
+
                                     </div>
 
                                     <button
@@ -1025,8 +1038,8 @@ function Settings() {
                                             <h4 style={{ color: '#2980b9', marginBottom: '0.5rem' }}>📈 Your Analytics Data</h4>
                                             <div style={{ fontSize: '0.9rem', color: '#2c3e50' }}>
                                                 <p>Visits: {CookieService.getAnalyticsData().visitCount} (how many days you visited this website)</p>
-                                                <p>Page Views: {CookieService.getAnalyticsData().pageViews}</p>
-                                                <p>Time spent today: {Math.round(CookieService.getAnalyticsData().totalTimeSpent / 60000)} minutes</p>
+                                                <p>Page views today: {CookieService.getAnalyticsData().pageViews}</p>
+                                                <p>Time spent today: {CookieService.getAnalyticsData().formattedTimeSpent}</p>
                                             </div>
                                         </div>
                                     )}

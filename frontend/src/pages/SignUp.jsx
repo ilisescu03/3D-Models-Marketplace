@@ -1,11 +1,14 @@
 // SignUp.jsx
-import { useState } from "react";
+// SignUp.jsx
+import { useState, useEffect } from "react";
 import Header from "../UI+UX/Header";
 import validation from "../validations/SignUpValidation.jsx";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from 'firebase/auth';
 import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from "/backend/auth.js";
+import { auth } from '/backend/firebase.js';
 import CookiesBanner from '../UI+UX/CookiesBanner';
+
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
@@ -128,10 +131,32 @@ function SignUp() {
     const [errors, setErrors] = useState({});
     const [backendError, setBackendError] = useState("");
     const [passwordFocused, setPasswordFocused] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false); //auth state
+    const [isAuthLoading, setIsAuthLoading] = useState(true); //loading state for auth check
+    const [isSubmitting, setIsSubmitting] = useState(false); //loading state for signup process
     const navigate = useNavigate();
 
     const rules = checkPasswordRules(values.password);
+
+    // Check authentication state on component mount
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user && user.emailVerified) {
+                setIsLoggedIn(true);
+                setIsAuthLoading(false);
+                // Redirect to home if user is already authenticated and not currently submitting
+                if (!isSubmitting) {
+                    navigate('/');
+                }
+            } else {
+                setIsLoggedIn(false);
+                setIsAuthLoading(false);
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, [navigate, isSubmitting]);
 
     const handleChange = (e) => {
         const { name, type, value, checked } = e.target;
@@ -145,7 +170,7 @@ function SignUp() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
+        setIsSubmitting(true); //prevent redirect during signup process
         setBackendError("");
 
         const validationErrors = validation(values);
@@ -153,7 +178,7 @@ function SignUp() {
 
         if (hasErrors) {
             setErrors(validationErrors);
-            setIsLoading(false);
+            setIsSubmitting(false);
             return;
         }
 
@@ -171,29 +196,30 @@ function SignUp() {
         } catch (error) {
             console.error("Signup error:", error);
             setBackendError(error.message);
-        } finally {
-            setIsLoading(false);
+            setIsSubmitting(false);
         }
     };
 
     // Google SignIn
     const handleGoogleSignIn = async () => {
+        setIsSubmitting(true); //prevent redirect during Google sign-in process
+        
         try {
             const result = await doSignInWithGoogle();
 
-            // Verifică și aici proprietatea 'success'
+            // VerificÄƒ È™i aici proprietatea 'success'
             if (result.success) {
                 navigate("/");
             } else {
-                setLoginError(result.message || "Google sign-in failed");
+                setBackendError(result.message || "Google sign-in failed");
+                setIsSubmitting(false);
             }
         } catch (error) {
             console.error(error);
-            setLoginError(error.message);
+            setBackendError(error.message);
+            setIsSubmitting(false);
         }
     }
-
-   
 
     const renderRule = (condition, text) => (
         <li style={{
@@ -202,10 +228,50 @@ function SignUp() {
             listStyle: "none",
             marginBottom: "5px"
         }}>
-            {condition ? "✔️ " : "○ "} {text}
+            {condition ? "✅ " : "○ "} {text}
         </li>
     );
 
+    // Show loading while checking authentication state
+    if (isAuthLoading) {
+        return (
+            <div style={{
+                ...backgroundStyle,
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <div style={{
+                    color: 'white',
+                    fontSize: '1.5rem',
+                    fontFamily: 'RaleWay, sans-serif'
+                }}>
+                    Loading...
+                </div>
+            </div>
+        );
+    }
+
+    // Don't render the form if user is already logged in
+    if (isLoggedIn && !isSubmitting) {
+        return null; // Component will unmount as navigate('/') is called in useEffect
+    }
+    if (isSubmitting) {
+        return (
+            <div style={{
+                ...backgroundStyle,
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <div style={{
+                    color: 'white',
+                    fontSize: '1.5rem',
+                    fontFamily: 'RaleWay, sans-serif'
+                }}>
+                    Loading...
+                </div>
+            </div>
+        );
+    }
     return (
         <div style={backgroundStyle}>
             <Header />
@@ -330,20 +396,28 @@ function SignUp() {
 
                 <button
                     type="submit"
+                    disabled={isSubmitting}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
+                        if (!isSubmitting) {
+                            e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
+                        }
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)';
+                        if (!isSubmitting) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)';
+                        }
                     }}
-                    style={buttonStyle2}
-                    disabled={isLoading}
+                    style={{
+                        ...buttonStyle2,
+                        backgroundColor: isSubmitting ? 'rgba(255, 200, 150, 1)' : 'rgba(255, 123, 0, 1)',
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                    }}
                 >
-                    {isLoading ? "Creating Account..." : "Sign Up"}
+                    {isSubmitting ? "Creating Account..." : "Sign Up"}
                 </button>
-                {isLoading && (<div style={{ position: 'absolute', backgroundColor: 'rgba(0, 0, 0, 0.37)', width: '120vw', height: '120vh', zIndex: 9999 }}>
-
-                </div>)}
+                
+                
+                
                 <p style={{ fontSize: "0.9rem", fontWeight: "bold", margin: "0" }}>or</p>
 
                 <button
@@ -364,11 +438,16 @@ function SignUp() {
                     style={buttonStyle}
                     type="button"
                     onClick={handleGoogleSignIn}
+                    disabled={isSubmitting}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
+                        if (!isSubmitting) {
+                            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
+                        }
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
+                        if (!isSubmitting) {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                        }
                     }}
                 >
                     <img src="./googleIcon.png" alt="Google" style={{ height: '20px' }} />

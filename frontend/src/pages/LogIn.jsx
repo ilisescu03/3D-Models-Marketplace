@@ -98,14 +98,37 @@ const buttonStyle2 = {
     transition: '0.3s ease',
     cursor: 'pointer'
 }
+
 function LogIn() {
     const [values, setValues] = useState({ email: "", password: "" }); //form values
     const [errors, setErrors] = useState({}); //form errors
     const [loginError, setLoginError] = useState(""); //login error from firebase
+    const [isLoggedIn, setIsLoggedIn] = useState(false); //auth state
+    const [isLoading, setIsLoading] = useState(true); //loading state for auth check
+    const [isSubmitting, setIsSubmitting] = useState(false); //loading state for login process
     const navigate = useNavigate(); //navigation hook
+    
+    // Check authentication state on component mount
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user && user.emailVerified) {
+                setIsLoggedIn(true);
+                setIsLoading(false);
+                // Redirect to home if user is already authenticated and not currently submitting
+                if (!isSubmitting) {
+                    navigate('/');
+                }
+            } else {
+                setIsLoggedIn(false);
+                setIsLoading(false);
+            }
+        });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    }, [navigate, isSubmitting]);
 
     //Input change handler
-
     const handleChange = (e) => {
         setValues({ ...values, [e.target.name]: e.target.value });
         setErrors({ ...errors, [e.target.name]: "" });
@@ -113,23 +136,20 @@ function LogIn() {
     };
 
     //Form submit handler
-
     const handleSubmit = async (e) => {
         e.preventDefault(); //prevent default form submission behavior
+        setIsSubmitting(true); //prevent redirect during login process
+        
         const validationErrors = validation(values); //validate form values
 
         //If there are validation errors, set them in state
-
         if (validationErrors.email || validationErrors.password) {
             setErrors(validationErrors);
+            setIsSubmitting(false);
         } else {
-
             //If no validation errors, proceed with Firebase authentication
-
             try {
-
                 // Attempt to sign in the user
-
                 const userCredential = await doSignInWithEmailAndPassword(values.email, values.password);
                 const user = userCredential.user;
 
@@ -137,16 +157,14 @@ function LogIn() {
                 await user.reload();
 
                 // Check if email is verified
-
                 if (!user.emailVerified) {
                     await doSignOut();
                     setLoginError("You have to verify your email before logging in.");
+                    setIsSubmitting(false);
                     return;
                 }
 
-
                 // If sign-in is successful and email is verified, navigate to home page
-
                 navigate('/');
                 console.log("Login successful", user);
                 setValues({ email: "", password: "" }); // Clear form values
@@ -167,43 +185,82 @@ function LogIn() {
                 else {
                     setLoginError(err.message || "Authentification error.");
                 }
+                setIsSubmitting(false);
             }
         }
     };
 
     // Google SignIn
-const handleGoogleSignIn = async () => {
-    try {
-        const result = await doSignInWithGoogle();
+    const handleGoogleSignIn = async () => {
+        setIsSubmitting(true); //prevent redirect during Google sign-in process
         
-        // Verifică și aici proprietatea 'success'
-        if (result.success) {
-            navigate("/");
-        } else {
-            setLoginError(result.message || "Google sign-in failed");
+        try {
+            const result = await doSignInWithGoogle();
+            
+            // VerificÄƒ È™i aici proprietatea 'success'
+            if (result.success) {
+                navigate("/");
+            } else {
+                setLoginError(result.message || "Google sign-in failed");
+                setIsSubmitting(false);
+            }
+        } catch (error) {
+            console.error(error);
+            setLoginError(error.message);
+            setIsSubmitting(false);
         }
-    } catch (error) {
-        console.error(error);
-        setLoginError(error.message);
     }
-}
 
-  
-    
+    // Show loading while checking authentication state
+    if (isLoading) {
+        return (
+            <div style={{
+                ...backgroundStyle,
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <div style={{
+                    color: 'white',
+                    fontSize: '1.5rem',
+                    fontFamily: 'RaleWay, sans-serif'
+                }}>
+                    Loading...
+                </div>
+            </div>
+        );
+    }
 
-      
+    // Don't render the form if user is already logged in
+    if (isLoggedIn && !isSubmitting) {
+        return null; // Component will unmount as navigate('/') is called in useEffect
+    }
+    if (isSubmitting) {
+        return (
+            <div style={{
+                ...backgroundStyle,
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <div style={{
+                    color: 'white',
+                    fontSize: '1.5rem',
+                    fontFamily: 'RaleWay, sans-serif'
+                }}>
+                    Loading...
+                </div>
+            </div>
+        );
+    }
     return (
         <div style={backgroundStyle}>
             <Header />
             <CookiesBanner/>
 
             {/* Log In Form */}
-
             <form onSubmit={handleSubmit} style={formStyle} noValidate>
                 <h2 style={{ fontSize: '2rem' }}>Log In</h2>
 
                 {/* Display login error if any */}
-
                 {loginError && (
                     <p style={{
                         color: "red",
@@ -219,9 +276,8 @@ const handleGoogleSignIn = async () => {
                         {loginError}
                     </p>
                 )}
-
+                
                 {/* Email Field */}
-
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Email:</p>
                     <div style={{ flex: 1 }}>
@@ -245,7 +301,6 @@ const handleGoogleSignIn = async () => {
                 </div>
 
                 {/* Password Field */}
-
                 <div style={formRowStyle}>
                     <p style={labelStyle}>Password:</p>
                     <div style={{ flex: 1 }}>
@@ -269,23 +324,28 @@ const handleGoogleSignIn = async () => {
                 </div>
 
                 {/* Submit Button */}
-
                 <button
                     type="submit"
+                    disabled={isSubmitting}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
-
+                        if (!isSubmitting) {
+                            e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
+                        }
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)';
-
+                        if (!isSubmitting) {
+                            e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)';
+                        }
                     }}
-                    style={buttonStyle1} >
-                    Log In
+                    style={{
+                        ...buttonStyle1,
+                        backgroundColor: isSubmitting ? 'rgba(200, 200, 200, 1)' : 'rgba(151, 151, 151, 1)',
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer'
+                    }} >
+                    {isSubmitting ? 'Logging In...' : 'Log In'}
                 </button>
 
                 {/* Forgot password */}
-
                 <a href="/forgot-password" 
                 style={{
                     fontSize: '0.75rem',
@@ -304,36 +364,33 @@ const handleGoogleSignIn = async () => {
                 }}>or</p>
 
                 {/* Navigate to Sign Up Page */}
-
                 <button
                     type="button"
                     onClick={() => window.location.href = '/signup'}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
-
                     }}
                     onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)';
-
                     }}
-
                     style={buttonStyle2} >
                     Sign Up
                 </button>
 
                 {/* OAuth Buttons */}
-
                 <button style={buttonStyle}
-
                     onClick={handleGoogleSignIn}
                     type="button"
+                    disabled={isSubmitting}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
-
+                        if (!isSubmitting) {
+                            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
+                        }
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0)';
-
+                        if (!isSubmitting) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0)';
+                        }
                     }}
                 >
                     <img src="./googleIcon.png" alt="Google" style={{ height: '20px' }} />

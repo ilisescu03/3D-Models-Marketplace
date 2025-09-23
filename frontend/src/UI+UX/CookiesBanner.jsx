@@ -37,6 +37,7 @@ function CookiesBanner() {
     const [showPreferences, setShowPreferences] = useState(false);
     const [preferences, setPreferences] = useState({
         necessary: true,
+        functional: false,
         analytics: false,
         performance: false
     });
@@ -52,6 +53,7 @@ function CookiesBanner() {
         CookieService.setConsent(true, {
             necessary: true,
             analytics: true,
+            functional: true,
             performance: true
         });
         setShowBanner(false);
@@ -61,16 +63,31 @@ function CookiesBanner() {
         CookieService.setConsent(true, {
             necessary: true,
             analytics: false,
+            functional: false,
             performance: false
         });
+        CookieService.disableNonEssentialCookies();
         setShowBanner(false);
     };
 
     const handleSavePreferences = () => {
+
         CookieService.setConsent(true, preferences);
+
+        if (!preferences.functional) {
+            CookieService.disableCategoryCookies('functional');
+        }
+        if (!preferences.analytics) {
+            CookieService.disableCategoryCookies('analytics');
+        }
+        if (!preferences.performance) {
+            CookieService.disableCategoryCookies('performance');
+        }
+
         setShowBanner(false);
         setShowPreferences(false);
     };
+
 
     const togglePreference = (preference) => {
         setPreferences(prev => ({
@@ -88,24 +105,25 @@ function CookiesBanner() {
                 <p>
                     We use cookies to improve your experience, analyze traffic, and personalize content.
                     By accepting, you agree to our use of cookies in accordance with our Cookie Policy.
+
                 </p>
-                
+
                 {!showPreferences ? (
                     <div>
-                        <button 
-                            style={{...buttonStyle, backgroundColor: '#ff7b00ff', color: 'white'}}
+                        <button
+                            style={{ ...buttonStyle, backgroundColor: '#ff7b00ff', color: 'white' }}
                             onClick={handleAcceptAll}
                         >
                             Accept All
                         </button>
-                        <button 
-                            style={{...buttonStyle, backgroundColor: '#6c757d', color: 'white'}}
+                        <button
+                            style={{ ...buttonStyle, backgroundColor: '#6c757d', color: 'white' }}
                             onClick={handleAcceptNecessary}
                         >
                             Necessary Only
                         </button>
-                        <button 
-                            style={{...buttonStyle, backgroundColor: 'transparent', border: '1px solid #ff9900ff', color: '#ff9900ff'}}
+                        <button
+                            style={{ ...buttonStyle, backgroundColor: 'transparent', border: '1px solid #ff9900ff', color: '#ff9900ff' }}
                             onClick={() => setShowPreferences(true)}
                         >
                             Customize Preferences
@@ -114,61 +132,74 @@ function CookiesBanner() {
                 ) : (
                     <div style={preferencesStyle}>
                         <h4>Cookie Preferences</h4>
-                        
-                        <div style={{marginBottom: '1rem'}}>
-                            <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                 <input
                                     type="checkbox"
                                     checked={preferences.necessary}
                                     disabled
-                                    style={{marginRight: '0.5rem'}}
+                                    style={{ marginRight: '0.5rem' }}
                                 />
                                 Necessary Cookies
-                                <span style={{marginLeft: '0.5rem', fontSize: '0.8rem', color: '#6c757d'}}>
+                                <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#6c757d' }}>
                                     (Required for the website to function)
                                 </span>
                             </label>
                         </div>
-                        
-                        <div style={{marginBottom: '1rem'}}>
-                            <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={preferences.functional}
+                                    onChange={() => togglePreference('functional')}
+                                    style={{ marginRight: '0.5rem' }}
+                                />
+                                Functional Cookies
+                                <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#6c757d' }}>
+                                    (Improving the user's experience)
+                                </span>
+                            </label>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                 <input
                                     type="checkbox"
                                     checked={preferences.analytics}
                                     onChange={() => togglePreference('analytics')}
-                                    style={{marginRight: '0.5rem'}}
+                                    style={{ marginRight: '0.5rem' }}
                                 />
                                 Analytics Cookies
-                                <span style={{marginLeft: '0.5rem', fontSize: '0.8rem', color: '#6c757d'}}>
+                                <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#6c757d' }}>
                                     (Help us improve our website)
                                 </span>
                             </label>
                         </div>
-                        
-                        <div style={{marginBottom: '1rem'}}>
-                            <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                 <input
                                     type="checkbox"
                                     checked={preferences.performance}
                                     onChange={() => togglePreference('performance')}
-                                    style={{marginRight: '0.5rem'}}
+                                    style={{ marginRight: '0.5rem' }}
                                 />
                                 Performance Cookies
-                                <span style={{marginLeft: '0.5rem', fontSize: '0.8rem', color: '#6c757d'}}>
+                                <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#6c757d' }}>
                                     (Used for personalized advertising)
                                 </span>
                             </label>
                         </div>
-                        
-                        <button 
-                            style={{...buttonStyle, backgroundColor: '#ffa600ff', color: 'white'}}
+
+                        <button
+                            style={{ ...buttonStyle, backgroundColor: '#ffa600ff', color: 'white' }}
                             onClick={handleSavePreferences}
                         >
                             Save Preferences
                         </button>
-                        
-                        <button 
-                            style={{...buttonStyle, backgroundColor: 'transparent', border: '1px solid #6c757d', color: '#6c757d'}}
+
+                        <button
+                            style={{ ...buttonStyle, backgroundColor: 'transparent', border: '1px solid #6c757d', color: '#6c757d' }}
                             onClick={() => setShowPreferences(false)}
                         >
                             Cancel

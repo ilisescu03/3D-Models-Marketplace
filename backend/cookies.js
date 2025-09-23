@@ -1,5 +1,12 @@
 // cookies.js
 export const CookieService = {
+    // Tracking state pentru a preveni multiple sesiuni
+    _trackingState: {
+        isTracking: false,
+        startTime: null,
+        cleanup: null
+    },
+
     // Verify if the user gave his consent
     hasConsent: () => {
         const consentData = localStorage.getItem('cookieConsent');
@@ -8,16 +15,17 @@ export const CookieService = {
 
     // Save the user's consent
     setConsent: (consent, preferences = {}) => {
+        const oldPreferences = CookieService.getPreferences();
         const consentData = {
             consented: consent,
             date: new Date().toISOString(),
             preferences: {
-                necessary: true, // Always true
-                analytics: preferences.analytics || false,
-
-                performance: preferences.performance || false,
-
+                necessary: true,
+                functional: preferences.functional === true,
+                analytics: preferences.analytics === true,
+                performance: preferences.performance === true,
             }
+
         };
 
         localStorage.setItem('cookieConsent', JSON.stringify(consentData));
@@ -26,10 +34,13 @@ export const CookieService = {
         if (consent) {
             // Activate cookies based on preferences
             CookieService.enableNecessaryCookies();
+            if (preferences.functional) CookieService.enableFunctionalCookies();
             if (preferences.analytics) CookieService.enableAnalyticsCookies();
-
             if (preferences.performance) CookieService.enablePerformanceCookies();
 
+            if (!preferences.functional) CookieService.disableCategoryCookies('functional');
+            if (!preferences.analytics) CookieService.disableCategoryCookies('analytics');
+            if (!preferences.performance) CookieService.disableCategoryCookies('performance');
         } else {
             CookieService.disableNonEssentialCookies();
         }
@@ -41,7 +52,7 @@ export const CookieService = {
         return consentData ? JSON.parse(consentData).preferences : null;
     },
 
-    //  NECESSARY COOKIES (always active) ===
+    //  NECESSARY COOKIES (always active)
     enableNecessaryCookies: () => {
         // Session cookie for authentication
         document.cookie = 'session_id=active; path=/; samesite=strict';
@@ -50,16 +61,19 @@ export const CookieService = {
         const csrfToken = Math.random().toString(36).substring(2);
         document.cookie = `csrf_token=${csrfToken}; path=/; samesite=strict`;
 
-        // Language preference
-        const language = navigator.language || 'en';
-        document.cookie = `user_language=${language}; max-age=${365 * 24 * 60 * 60}; path=/; samesite=lax`;
 
         // Shopping cart functionality
         document.cookie = 'cart_session=active; path=/; samesite=lax';
 
         console.log('Necessary cookies enabled');
     },
+    //FUNCTIONAL COOKIES
+    enableFunctionalCookies: () => {
+        if (!CookieService.isAllowed('functional')) return;
+        const language = navigator.language || 'en';
+        document.cookie = `user_language=${language}; max-age=${365 * 24 * 60 * 60}; path=/; samesite=lax`;
 
+    },
     //  PERFORMANCE COOKIES 
     enablePerformanceCookies: () => {
         // Page load performance tracking
@@ -85,7 +99,33 @@ export const CookieService = {
         // Start performance monitoring
         CookieService.monitorPerformance();
     },
+    //Disable cookies by category
+    disableCategoryCookies: (category) => {
+        let cookiesToDelete = [];
+        switch (category) {
+            case 'functional':
+                cookiesToDelete = ['user_language'];
+                break;
+            case 'analytics':
+                cookiesToDelete = [
+                    'visit_count', 'first_visit', 'page_views',
+                    'last_referrer', 'total_time_spent', 'last_visit_date', 'last_referrer'
+                ];
+                break;
+            case 'performance':
+                cookiesToDelete = [
+                    'perf_load_time', 'browser_info', 'perf_optimized',
+                    'lcp_time', 'cls_score'
+                ];
+                break;
+            default:
+                return;
+        }
 
+        cookiesToDelete.forEach(cookie => {
+            document.cookie = `${cookie}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        });
+    },
     // Performance monitoring function
     monitorPerformance: () => {
         if (typeof window === 'undefined') return;
@@ -112,14 +152,22 @@ export const CookieService = {
             document.cookie = `cls_score=${clsValue}; max-age=${3600}; path=/; samesite=lax`;
         }).observe({ type: 'layout-shift', buffered: true });
     },
+
     initializeTracking: () => {
+        if (CookieService.isAllowed('functional')) {
+            console.log('🔧 Functional cookies active');
+            CookieService.enableFunctionalCookies();
+        }
         if (CookieService.isAllowed('analytics')) {
             console.log('📊 Analytics cookies active');
             CookieService.enableAnalyticsCookies();
             const analyticsData = CookieService.getAnalyticsData();
+
             console.log(`👤 Visits: ${analyticsData.visitCount}`);
             console.log(`📄 Page Views: ${analyticsData.pageViews}`);
-            console.log(`⏰ Total time spent: ${analyticsData.totalTimeSpentMinutes} minutes`);
+            console.log(`⏰ Total time spent: ${analyticsData.formattedTimeSpent}`);
+            const cleanup = CookieService.trackAnalytics();
+            return cleanup;
         }
 
         if (CookieService.isAllowed('performance')) {
@@ -132,20 +180,22 @@ export const CookieService = {
                 console.log('📈 App loaded in:', loadTime.toFixed(2), 'ms');
             }
         }
+        return null;
     },
+
     //ANALYTICS COOKIES
     enableAnalyticsCookies: () => {
         const today = new Date().toDateString();
-        // User visit tracking 
-       
         const lastVisitDate = CookieService.getCookie('last_visit_date');
+
         if (lastVisitDate !== today) {
             const visitCount = parseInt(CookieService.getCookie('visit_count') || '0') + 1;
             document.cookie = `visit_count=${visitCount}; max-age=${365 * 24 * 60 * 60}; path=/; samesite=lax`;
+            document.cookie = `total_time_spent=0; max-age=${30 * 24 * 60 * 60}; path=/; samesite=lax`;
+            document.cookie = `page_views=0; max-age=${30 * 24 * 60 * 60}; path=/; samesite=lax`;
             console.log('New visit today. Total visits:', visitCount);
 
             document.cookie = `last_visit_date=${today}; max-age=${24 * 60 * 60}; path=/; samesite=lax`;
-
         }
 
         //  Page view tracking 
@@ -163,37 +213,94 @@ export const CookieService = {
         return CookieService.trackAnalytics();
     },
 
-    // Analytics tracking function
+    // Analytics tracking function - VERSIUNEA CORECTATĂ FINAL
     trackAnalytics: () => {
-        const today = new Date().toDateString();
-        const lastVisitDate = CookieService.getCookie('last_visit_date');
-        if(lastVisitDate!=today){
-            timeSpent=0;
+        // Previne multiple sesiuni de tracking
+        if (CookieService._trackingState.isTracking) {
+            console.log('⚠️ Tracking already active, skipping...');
+            return CookieService._trackingState.cleanup;
         }
-        let startTime = Date.now();
-        
-        const handleBeforeUnload = () => {
-            const timeSpent = Date.now() - startTime;
-            const currentTime = parseInt(CookieService.getCookie('total_time_spent') || '0');
-            const newTotalTime = currentTime + timeSpent;
 
-            document.cookie = `total_time_spent=${newTotalTime}; max-age=${30 * 24 * 60 * 60}; path=/; samesite=lax`;
+
+
+
+
+
+        // Set the tracking state
+        CookieService._trackingState.isTracking = true;
+        CookieService._trackingState.startTime = Date.now();
+
+        // Time save function
+        const saveTime = () => {
+            if (!CookieService._trackingState.isTracking) return;
+
+            const currentTime = Date.now();
+            const sessionTime = currentTime - CookieService._trackingState.startTime;
+
+            // Time limit for safety (24h) - per session (if the tracking is functioning properly it's no need for that)
+            const maxSessionTime = 24 * 60 * 60 * 1000; // 24h in ms
+            const validSessionTime = Math.min(sessionTime, maxSessionTime);
+
+            const currentTotalTime = parseInt(CookieService.getCookie('total_time_spent') || '0');
+            const newTotalTime = currentTotalTime + validSessionTime;
+
+            //Time limit for safety(24h)- daily
+            const maxDailyTime = 24 * 60 * 60 * 1000;
+            const finalTime = Math.min(newTotalTime, maxDailyTime);
+
+            document.cookie = `total_time_spent=${finalTime}; max-age=${30 * 24 * 60 * 60}; path=/; samesite=lax`;
 
             console.log('⏱️ Time tracking:');
-            console.log('- Current session:', timeSpent, 'ms');
-            console.log('- Total time spent:', newTotalTime, 'ms');
-            console.log('- Total minutes:', Math.round(newTotalTime / 60000));
+            console.log('- Session time:', Math.round(validSessionTime / 1000), 'seconds');
+            console.log('- Total time today:', Math.round(finalTime / 60000), 'minutes');
+
+            // Reset start time for next session
+            CookieService._trackingState.startTime = currentTime;
         };
 
+        // Handler for leaving the page
+        const handleBeforeUnload = () => {
+            saveTime();
+            CookieService._trackingState.isTracking = false;
+        };
+
+        // Handler for changing visibility
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                // Page is hidden - save time
+                saveTime();
+            } else {
+                // The page is again visible - reset time
+                CookieService._trackingState.startTime = Date.now();
+            }
+        };
+
+        // Event listeners
         window.addEventListener('beforeunload', handleBeforeUnload);
+        window.addEventListener('pagehide', handleBeforeUnload);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
 
+        // Save the time for a period of 30 seconds
+        const saveInterval = setInterval(() => {
+            if (CookieService._trackingState.isTracking && !document.hidden) {
+                saveTime();
+            }
+        }, 30000);
 
-        return () => {
+        // Cleanup function
+        const cleanup = () => {
+            if (saveInterval) clearInterval(saveInterval);
             window.removeEventListener('beforeunload', handleBeforeUnload);
+            window.removeEventListener('pagehide', handleBeforeUnload);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            CookieService._trackingState.isTracking = false;
+            CookieService._trackingState.startTime = null;
+            CookieService._trackingState.cleanup = null;
         };
+
+        CookieService._trackingState.cleanup = cleanup;
+        return cleanup;
     },
-
-
 
     // UTILITY FUNCTIONS
     getCookie: (name) => {
@@ -210,8 +317,8 @@ export const CookieService = {
             'ga_enabled', 'marketing_enabled', 'performance_enabled',
             'social_enabled', 'visit_count', 'first_visit', 'page_views',
             'last_referrer', 'perf_load_time', 'browser_info', 'perf_optimized',
-            'lcp_time', 'cls_score', 'total_time_spent', 'social_shares',
-            'social_prefs', 'share_tracking'
+            'lcp_time', 'cls_score', 'total_time_spent', 'social_shares', 'language',
+            'social_prefs', 'share_tracking', 'user_language', 'last_visit_date'
         ];
 
         cookiesToDelete.forEach(cookie => {
@@ -225,9 +332,8 @@ export const CookieService = {
 
         switch (cookieType) {
             case 'analytics': return preferences.analytics;
-
+            case 'functional': return preferences.functional;
             case 'performance': return preferences.performance;
-
             case 'necessary': return true;
             default: return false;
         }
@@ -235,17 +341,54 @@ export const CookieService = {
 
     // Get analytics data for dashboard
     getAnalyticsData: () => {
+        const today = new Date().toDateString();
+        const lastVisitDate = CookieService.getCookie('last_visit_date');
+
+        // Verify and reset for the next day
+        if (lastVisitDate && lastVisitDate !== today) {
+            document.cookie = `total_time_spent=0; max-age=${30 * 24 * 60 * 60}; path=/; samesite=lax`;
+            document.cookie = `last_visit_date=${today}; max-age=${24 * 60 * 60}; path=/; samesite=lax`;
+
+        }
+
+        const totalTimeMs = parseInt(CookieService.getCookie('total_time_spent') || '0');
+
+        // Safety limit - 24h per day
+        const maxDailyTime = 24 * 60 * 60 * 1000;
+        const validTotalTime = Math.min(totalTimeMs, maxDailyTime);
+
         return {
             visitCount: parseInt(CookieService.getCookie('visit_count') || '0'),
             firstVisit: CookieService.getCookie('first_visit'),
             pageViews: parseInt(CookieService.getCookie('page_views') || '0'),
-            totalTimeSpent: parseInt(CookieService.getCookie('total_time_spent') || '0'),
+            totalTimeSpent: validTotalTime,
             lastReferrer: CookieService.getCookie('last_referrer'),
-
-            totalTimeSpentMinutes: Math.round(parseInt(CookieService.getCookie('total_time_spent') || '0') / 60000),
-            totalTimeSpentSeconds: Math.round(parseInt(CookieService.getCookie('total_time_spent') || '0') / 1000)
-
+            totalTimeSpentMinutes: Math.round(validTotalTime / 60000),
+            totalTimeSpentSeconds: Math.round(validTotalTime / 1000),
+            formattedTimeSpent: CookieService.formatTime(validTotalTime)
         };
+    },
+
+    formatTime: (milliseconds) => {
+        const seconds = Math.floor(milliseconds / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (hours > 0) {
+            return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${seconds % 60}s`;
+        } else {
+            return `${seconds}s`;
+        }
+    },
+
+    // Manual function for time reset(for debugging)
+    resetDailyTime: () => {
+        document.cookie = `total_time_spent=0; max-age=${30 * 24 * 60 * 60}; path=/; samesite=lax`;
+        const today = new Date().toDateString();
+        document.cookie = `last_visit_date=${today}; max-age=${24 * 60 * 60}; path=/; samesite=lax`;
+        console.log('🔄 Timer resetat manual');
     },
 
     // Get performance data
