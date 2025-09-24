@@ -59,7 +59,7 @@ const buttonStyle3 = {
 };
 // Style for expandable menu buttons
 const expandableButtonStyle = {
-    marginTop: '50px',
+    marginTop: '10px',
     width: '100%',
     padding: '6px 2px',
     border: 'none',
@@ -251,6 +251,23 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                     {!loading && (user ? (
                          // User is logged in
                         <>
+                            <button
+                                    onClick={() => window.location.href = '/upload'}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(170, 99, 6, 1)'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 145, 0, 1)'; }}
+                                    style={{...buttonStyle, marginTop:'50px'}}
+                                >
+                                    <img src="/UploadButton.png"
+                                    style={{
+                                        width:'15px',
+                                        right:'5px',
+                                        position:'relative',
+                                        top:'2px',
+                                        filter: 'invert(1)',
+                                        padding:'0',
+                                    }}/>
+                                    Upload
+                                </button>
                             <button
                                 onClick={() => toggleSubmenu('profile')}
                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}

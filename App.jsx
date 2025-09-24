@@ -12,6 +12,7 @@ import OtherDashboard from '/frontend/src/pages/OtherDashboard';
 import Settings from '/frontend/src/pages/Settings';
 import PasswordReset from '/frontend/src/pages/PasswordReset'
 import { CookieService } from '/backend/cookies.js';
+import UploadModel  from '/frontend/src/pages/UploadModel.jsx';
 
 function App() {
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -42,6 +43,7 @@ function App() {
         <Route path="/user/:username" element={<OtherDashboard />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/password-reset" element={<PasswordReset />} />
+        <Route path="/upload" element={<UploadModel/>} />
       </Routes>
     </>
   )

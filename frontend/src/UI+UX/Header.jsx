@@ -31,8 +31,23 @@ const buttonStyle1 = {
     transition: '0.3s ease',
     cursor: 'pointer'
 }
-
+const buttonStyle2 = {
+    backgroundColor: 'rgba(255, 145, 0, 1)',
+    color: 'white',
+    border: 'none',
+    
+    marginRight: '0px',
+    borderRadius: '5px',
+    fontWeight: 'bold',
+    padding: '7.5px 15px',
+    marginBottom:'2rem',
+    transition: '0.3s ease',
+    cursor: 'pointer'
+}
 const imageButtonStyle = {
+    position:'relative',
+    top:'1rem',
+    marginRight:'2rem',
     border: 'none',
     backgroundColor: 'transparent',
     cursor: 'pointer',
@@ -61,7 +76,7 @@ function Header() {
                     setLoading(false);
                     return;
                 }
-                
+
                 const userDoc = await getDoc(doc(db, "users", currentUser.uid));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
@@ -70,7 +85,7 @@ function Header() {
                         email: currentUser.email,
                         username: userData.username
                     });
-                    
+
                     // Set profile picture if available
                     if (userData.profilePicture) {
                         setProfilePicture(userData.profilePicture);
@@ -113,7 +128,7 @@ function Header() {
                     <button onClick={() => setMenuOpen(true)} style={imageButtonStyle}>
                         <img src='/menu.png' alt='Menu' style={{ height: '35px' }} />
                     </button>
-                     {/* Logo button */}
+                    {/* Logo button */}
                     <button style={imageButtonStyle1}
                         onClick={() => window.location.href = '/'}
                     >
@@ -175,7 +190,7 @@ function Header() {
                                 setExploreMenuOpen(false);
                             }}
                         >Explore  ▼</button>
-                         {/* Explore dropdown menu */}
+                        {/* Explore dropdown menu */}
                         {exploreMenuOpen && (
                             <div
                                 onMouseEnter={(e) => {
@@ -225,88 +240,110 @@ function Header() {
                     {/* User authentication section */}
                     {!loading && (
                         user ? (
-                             // User is logged in - show profile picture and dropdown
-                            <div
-                                style={{ position: 'relative', display: 'inline-block' }}
-                                onMouseEnter={() => setMenuOpen(true)}
-                                onMouseLeave={() => setMenuOpen(false)}
-                            >
-                                <button
-                                    onClick={() => (window.location.href = '/dashboard')}
-                                    style={imageButtonStyle}
+                            // User is logged in - show profile picture, dropdown and upload button
+                            <div>
+
+                                <div
+                                    style={{ position: 'relative', display: 'inline-block' }}
+                                    onMouseEnter={() => setMenuOpen(true)}
+                                    onMouseLeave={() => setMenuOpen(false)}
                                 >
-                                    <img
-                                        src={profilePicture}
-                                        alt={user.username}
-                                        style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}
-                                        onError={(e) => {
-                                            e.target.src = "/profile.png";
-                                            setProfilePicture("/profile.png");
-                                        }}
-                                    />
-                                </button>
-                                {/* User dropdown menu */}
-                                {menuOpen && (
-                                    <div
-                                        style={{
-                                            position: 'absolute',
-                                            top: '50px',
-                                            right: 0,
-                                            backgroundColor: 'rgba(255, 255, 255, 1)',
-                                            borderRadius: '3px',
-                                            boxShadow: ' 2px 4px 4px rgba(0, 0, 0, 0.23)',
-                                            display: 'flex',
-                                            flexDirection:'column',
-                                            padding: '0px',
-                                            minWidth: '150px',
-                                            zIndex: 2000
-                                        }}
+                                    <button
+                                        onClick={() => (window.location.href = '/dashboard')}
+                                        style={imageButtonStyle}
                                     >
-                                        <button
-                                            onClick={()=>window.location.href='/settings'}
+                                        <img
+                                            src={profilePicture}
+                                            alt={user.username}
+                                            style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}
+                                            onError={(e) => {
+                                                e.target.src = "/profile.png";
+                                                setProfilePicture("/profile.png");
+                                            }}
+                                        />
+                                    </button>
+                                    {/* User dropdown menu */}
+                                    {menuOpen && (
+                                        <div
                                             style={{
-                                                background: 'transparent',
-                                                border: 'none',
-                                                color: 'black',
-                                                cursor: 'pointer',
-                                                padding: '8px 12px',
-                                                width: '100%',
-                                                textAlign: 'center',
-                                                borderRadius: '5px'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.color = 'black';
+                                                position: 'absolute',
+                                                top: '60px',
+                                                right: 0,
+                                                backgroundColor: 'rgba(255, 255, 255, 1)',
+                                                borderRadius: '3px',
+                                                boxShadow: ' 2px 4px 4px rgba(0, 0, 0, 0.23)',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                padding: '0px',
+                                                minWidth: '150px',
+                                                zIndex: 2000
                                             }}
                                         >
-                                            Settings
-                                        </button>
-                                        <button
-                                            onClick={doSignOut}
-                                            style={{
-                                                background: 'transparent',
-                                                border: 'none',
-                                                color: 'black',
-                                                cursor: 'pointer',
-                                                padding: '8px 12px',
-                                                width: '100%',
-                                                textAlign: 'center',
-                                                borderRadius: '5px'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.color = 'black';
-                                            }}
-                                        >
-                                            Log Out
-                                        </button>
-                                    </div>
-                                )}
+                                            <button
+                                                onClick={() => window.location.href = '/settings'}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'black',
+                                                    cursor: 'pointer',
+                                                    padding: '8px 12px',
+                                                    width: '100%',
+                                                    textAlign: 'center',
+                                                    borderRadius: '5px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.color = 'black';
+                                                }}
+                                            >
+                                                Settings
+                                            </button>
+                                            <button
+                                                onClick={doSignOut}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'black',
+                                                    cursor: 'pointer',
+                                                    padding: '8px 12px',
+                                                    width: '100%',
+                                                    textAlign: 'center',
+                                                    borderRadius: '5px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.color = 'black';
+                                                }}
+                                            >
+                                                Log Out
+                                            </button>
+                                        </div>
+                                    )}
+
+                                </div>
+                                <button
+                                    onClick={() => window.location.href = '/upload'}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(170, 99, 6, 1)'; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 145, 0, 1)'; }}
+                                    style={buttonStyle2}
+                                >
+                                    <img src="/UploadButton.png"
+                                    style={{
+                                        width:'15px',
+                                        right:'5px',
+                                        position:'relative',
+                                        top:'2px',
+                                        filter: 'invert(1)',
+                                        padding:'0',
+                                    }}/>
+                                    Upload
+                                </button>
                             </div>
+
                         ) : (
                             <div>
                                 {/* If the user is not logged in the login and sign up buttons are displayed*/}
