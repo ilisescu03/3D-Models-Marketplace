@@ -126,7 +126,7 @@ function Header() {
                 >
                     {/* Menu button */}
                     <button onClick={() => setMenuOpen(true)} style={imageButtonStyle}>
-                        <img src='/menu.png' alt='Menu' style={{ height: '35px' }} />
+                        <img src='/menu.png' alt='Menu' style={{ height: '35px', marginBottom:'40px' }} />
                     </button>
                     {/* Logo button */}
                     <button style={imageButtonStyle1}
@@ -136,7 +136,7 @@ function Header() {
                     </button>
                     {/* Search button */}
                     <button style={imageButtonStyle}>
-                        <img src='/SearchBtn.png' alt='Search' style={{ height: '40px' }} />
+                        <img src='/SearchBtn.png' alt='Search' style={{ height: '40px', marginBottom:'40px' }} />
                     </button>
 
                 </nav>

@@ -271,6 +271,135 @@ export const uploadModel = async (modelData, files, previewImages) => {
   }
 };
 
+// Get models with pagination and filters for display
+export const getModels = async (filters = {}, lastDoc = null, limitCount = 12) => {
+  try {
+    console.log("=== FETCHING MODELS ===");
+    console.log("Filters:", filters);
+    console.log("Limit:", limitCount);
+
+    const { collection, query, where, orderBy, limit, getDocs, startAfter, doc, getDoc } = await import('firebase/firestore');
+
+    let q = collection(db, "models");
+    
+    // Apply filters
+    if (filters.category) {
+      q = query(q, where("category", "==", filters.category));
+    }
+    if (filters.software) {
+      q = query(q, where("software", "array-contains", filters.software));
+    }
+    if (filters.creatorUID) {
+      q = query(q, where("creatorUID", "==", filters.creatorUID));
+    }
+    if (filters.isPublic !== undefined) {
+      q = query(q, where("isPublic", "==", filters.isPublic));
+    } else {
+      // Default to only public models
+      q = query(q, where("isPublic", "==", true));
+    }
+
+    // Order by
+    const orderField = filters.orderBy || 'createdAt';
+    const orderDirection = filters.orderDirection || 'desc';
+    q = query(q, orderBy(orderField, orderDirection));
+
+    // Pagination
+    if (lastDoc) {
+      q = query(q, startAfter(lastDoc));
+    }
+    q = query(q, limit(limitCount));
+
+    const snapshot = await getDocs(q);
+    const models = [];
+    
+    console.log(`Found ${snapshot.docs.length} models`);
+
+    // Get all models first
+    snapshot.forEach((docSnapshot) => {
+      models.push({ id: docSnapshot.id, ...docSnapshot.data() });
+    });
+
+    // Fetch creator usernames for all models
+    const modelsWithCreators = await Promise.all(
+      models.map(async (model) => {
+        try {
+          const creatorRef = doc(db, "users", model.creatorUID);
+          const creatorSnap = await getDoc(creatorRef);
+          
+          if (creatorSnap.exists()) {
+            const creatorData = creatorSnap.data();
+            return {
+              ...model,
+              creatorUsername: creatorData.username || creatorData.email || 'Unknown'
+            };
+          }
+          
+          return { ...model, creatorUsername: 'Unknown' };
+        } catch (error) {
+          console.error(`Error fetching creator for model ${model.id}:`, error);
+          return { ...model, creatorUsername: 'Unknown' };
+        }
+      })
+    );
+
+    console.log("Models with creators:", modelsWithCreators.length);
+
+    return {
+      success: true,
+      models: modelsWithCreators,
+      lastDoc: snapshot.docs[snapshot.docs.length - 1] || null,
+      hasMore: snapshot.docs.length === limitCount
+    };
+  } catch (error) {
+    console.error("Error fetching models:", error);
+    return { success: false, message: error.message, models: [] };
+  }
+};
+
+// Get single model by ID
+export const getModelById = async (modelId) => {
+  try {
+    console.log("=== FETCHING MODEL BY ID ===");
+    console.log("Model ID:", modelId);
+
+    const { doc, getDoc } = await import('firebase/firestore');
+    
+    const modelRef = doc(db, "models", modelId);
+    const modelSnap = await getDoc(modelRef);
+
+    if (!modelSnap.exists()) {
+      return { success: false, message: 'Model not found' };
+    }
+
+    const modelData = { id: modelSnap.id, ...modelSnap.data() };
+
+    // Fetch creator info
+    try {
+      const creatorRef = doc(db, "users", modelData.creatorUID);
+      const creatorSnap = await getDoc(creatorRef);
+      
+      if (creatorSnap.exists()) {
+        const creatorData = creatorSnap.data();
+        modelData.creatorUsername = creatorData.username || creatorData.email || 'Unknown';
+        modelData.creatorProfilePicture = creatorData.profilePicture || '';
+      } else {
+        modelData.creatorUsername = 'Unknown';
+        modelData.creatorProfilePicture = '';
+      }
+    } catch (error) {
+      console.error('Error fetching creator info:', error);
+      modelData.creatorUsername = 'Unknown';
+      modelData.creatorProfilePicture = '';
+    }
+
+    console.log("Model found:", modelData.title);
+    return { success: true, model: modelData };
+  } catch (error) {
+    console.error("Error fetching model:", error);
+    return { success: false, message: error.message };
+  }
+};
 
 // Get supported extensions (utility function)
 export const getSupportedExtensions = () => {

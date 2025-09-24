@@ -13,7 +13,7 @@ import Settings from '/frontend/src/pages/Settings';
 import PasswordReset from '/frontend/src/pages/PasswordReset'
 import { CookieService } from '/backend/cookies.js';
 import UploadModel  from '/frontend/src/pages/UploadModel.jsx';
-
+import ModelDetails from '/frontend/src/pages/ModelDetails';
 function App() {
   const [hasInitialized, setHasInitialized] = useState(false);
   useEffect(() => {
@@ -44,6 +44,7 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/password-reset" element={<PasswordReset />} />
         <Route path="/upload" element={<UploadModel/>} />
+        <Route path="/model/:modelId" element={<ModelDetails />} />
       </Routes>
     </>
   )

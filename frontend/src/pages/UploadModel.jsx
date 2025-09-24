@@ -140,22 +140,26 @@ const removeButtonStyle = {
 
 const previewGridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 120px))',
     gap: '15px',
-    marginTop: '15px'
+    marginTop: '15px',
+    justifyContent:'start'
 };
 
 const previewItemStyle = {
     position: 'relative',
     borderRadius: '8px',
     overflow: 'hidden',
-    backgroundColor: '#f0f0f0'
+    backgroundColor: '#f0f0f0',
+    width: '120px', 
+    height: '120px'
 };
 
 const previewImageStyle = {
     width: '100%',
     height: '120px',
-    objectFit: 'cover'
+    objectFit: 'cover',
+    aspectRatio: '1/1'
 };
 
 const removePreviewStyle = {
