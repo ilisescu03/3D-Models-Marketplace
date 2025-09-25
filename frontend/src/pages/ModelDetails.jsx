@@ -1,4 +1,4 @@
-
+import { toggleFavoriteModel, isModelFavorited } from '/backend/models.js';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../UI+UX/Header";
@@ -77,7 +77,7 @@ const previewImageStyle = {
     height: '400px',
     objectFit: 'cover',
     display: 'block',
-    cursor:'pointer'
+    cursor: 'pointer'
 };
 //Style for the no peview case (if the upload works properly it's not the case)
 const previewPlaceholderStyle = {
@@ -105,7 +105,7 @@ const thumbnailStyle = {
     borderRadius: '8px',
     cursor: 'pointer',
     border: '2px solid',
-    borderColor:'transparent',
+    borderColor: 'transparent',
     transition: 'border-color 0.3s ease'
 };
 //Border style that show which image is active
@@ -221,7 +221,7 @@ const specItemStyle = {
 };
 //Spec label style(ex. Category)
 const specLabelStyle = {
-    marginTop:'1rem',
+    marginTop: '1rem',
     fontSize: '0.9rem',
     color: '#666',
     fontWeight: '500'
@@ -446,6 +446,8 @@ const useScreenSize = () => {
     return isLargeScreen;
 };
 function ModelDetails() {
+    const [isFavorited, setIsFavorited] = useState(false);//Favourite state
+    const [favoriteLoading, setFavoriteLoading] = useState(false);//State for favourite add/remove
     const { modelId } = useParams(); // To identify the model that should be displayed
     const { currentUser, userLogedIn } = useAuth(); //To identify the user
     const [username, setUsername] = useState(""); //To identify the username of the user
@@ -488,7 +490,17 @@ function ModelDetails() {
             );
         }
     };
+    //Use effect to check if the model is favorited or not
+    useEffect(() => {
+        const checkFavoriteStatus = async () => {
+            if (model && currentUser) {
+                const favorited = await isModelFavorited(model.id);
+                setIsFavorited(favorited);
+            }
+        };
 
+        checkFavoriteStatus();
+    }, [model, currentUser]);
     // Use effect for setting the username
     useEffect(() => {
         console.log("=== SETTING AUTHENTICATED USER USERNAME ===");
@@ -500,7 +512,7 @@ function ModelDetails() {
                 try {
                     // Firestore imports
                     const { doc, getDoc } = await import('firebase/firestore');
-                    const { db } = await import('/backend/firebase.js'); 
+                    const { db } = await import('/backend/firebase.js');
                     // Get firestore doc
                     const userDocRef = doc(db, "users", currentUser.uid);
                     const userDoc = await getDoc(userDocRef);
@@ -574,12 +586,40 @@ function ModelDetails() {
         alert('Download functionality will be implemented soon!');
     };
 
-    
+
     //ADD TO FAVOURITES
-    const handleFavorite = () => {
-        console.log("Add to favorites:", modelId);
-        // TODO: Implement favorite functionality
-        alert('Favorite functionality will be implemented soon!');
+    const handleFavorite = async () => {
+        if (!currentUser) {
+            alert('Please log in to favorite models');
+            return;
+        }
+
+        if (favoriteLoading) return;
+
+        try {
+            setFavoriteLoading(true);
+            console.log('Toggling favorite for model:', modelId);
+
+            const result = await toggleFavoriteModel(modelId);
+
+            if (result.success) {
+                setIsFavorited(result.isFavorite);
+                // Update model's favorites count in local state
+                setModel(prev => ({
+                    ...prev,
+                    favorites: result.action === 'added'
+                        ? (prev.favorites || 0) + 1
+                        : Math.max((prev.favorites || 1) - 1, 0)
+                }));
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            alert('Failed to update favorite status');
+        } finally {
+            setFavoriteLoading(false);
+        }
     };
 
     const handleShare = () => {
@@ -647,7 +687,7 @@ function ModelDetails() {
         );
     }
 
-    
+
     return (
         <div style={{ ...backgroundStyle, ...responsiveFixStyle }}>
             <Header />
@@ -733,7 +773,7 @@ function ModelDetails() {
                                     <span style={statLabelStyle}>Likes</span>
                                 </div>
                             </div>
-                            
+
                             {/* Description */}
                             {model.description && (
                                 <div style={descriptionStyle}>
@@ -832,8 +872,14 @@ function ModelDetails() {
                                         }
                                     }}
                                     onClick={handleFavorite}
+                                    disabled={favoriteLoading}
                                 >
-                                    ❤️ Add to Favorites
+                                    {favoriteLoading
+                                        ? '⏳ Processing...'
+                                        : isFavorited
+                                            ? '💔 Remove from Favorites'
+                                            : '❤️ Add to Favorites'
+                                    }
                                 </button>
                                 <button
                                     style={actionButtonStyle}

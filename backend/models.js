@@ -410,3 +410,160 @@ export const getSupportedExtensions = () => {
 export const getSoftwareOptions = () => {
   return Object.keys(SUPPORTED_EXTENSIONS);
 };
+
+// În backend/models.js - adaugă această funcție:
+
+// Toggle favorite model (add/remove from favorites)
+export const toggleFavoriteModel = async (modelId) => {
+  try {
+    console.log("=== TOGGLING FAVORITE ===");
+    console.log("Model ID:", modelId);
+
+    if (!auth.currentUser) {
+      return { success: false, message: 'User not authenticated' };
+    }
+
+    const userId = auth.currentUser.uid;
+    const { doc, getDoc, updateDoc, arrayUnion, arrayRemove, increment } = await import('firebase/firestore');
+    
+    const modelRef = doc(db, "models", modelId);
+    const userRef = doc(db, "users", userId);
+
+    // Check if model exists
+    const modelDoc = await getDoc(modelRef);
+    if (!modelDoc.exists()) {
+      return { success: false, message: 'Model not found' };
+    }
+
+    // Get user's current favorites
+    const userDoc = await getDoc(userRef);
+    const userData = userDoc.data();
+    const favorites = userData.favourites || [];
+    const isFavorite = favorites.includes(modelId);
+
+    if (isFavorite) {
+      // Remove from favorites
+      console.log("Removing from favorites");
+      await updateDoc(modelRef, { 
+        favorites: increment(-1) 
+      });
+      await updateDoc(userRef, { 
+        favourites: arrayRemove(modelId) 
+      });
+      return { 
+        success: true, 
+        message: 'Removed from favorites', 
+        action: 'removed',
+        isFavorite: false 
+      };
+    } else {
+      // Add to favorites
+      console.log("Adding to favorites");
+      await updateDoc(modelRef, { 
+        favorites: increment(1) 
+      });
+      await updateDoc(userRef, { 
+        favourites: arrayUnion(modelId) 
+      });
+      return { 
+        success: true, 
+        message: 'Added to favorites', 
+        action: 'added',
+        isFavorite: true 
+      };
+    }
+  } catch (error) {
+    console.error("Error toggling favorite:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+// Check if model is favorited by current user
+export const isModelFavorited = async (modelId) => {
+  try {
+    if (!auth.currentUser) {
+      return false;
+    }
+
+    const { doc, getDoc } = await import('firebase/firestore');
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      return false;
+    }
+
+    const userData = userDoc.data();
+    const favorites = userData.favourites || [];
+    return favorites.includes(modelId);
+  } catch (error) {
+    console.error("Error checking favorite status:", error);
+    return false;
+  }
+};
+
+// Get user's favorite models
+export const getUserFavoriteModels = async (userId) => {
+  try {
+    console.log("=== FETCHING USER FAVORITES ===");
+    console.log("User ID:", userId);
+
+    const { doc, getDoc } = await import('firebase/firestore');
+    
+    // Get user's favorites list
+    const userRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      return { success: false, message: 'User not found', models: [] };
+    }
+
+    const userData = userDoc.data();
+    const favoriteIds = userData.favourites || [];
+    console.log("Favorite IDs:", favoriteIds);
+
+    if (favoriteIds.length === 0) {
+      return { success: true, models: [] };
+    }
+
+    // Fetch all favorited models
+    const favoriteModels = [];
+    
+    for (const modelId of favoriteIds) {
+      try {
+        const modelRef = doc(db, "models", modelId);
+        const modelDoc = await getDoc(modelRef);
+        
+        if (modelDoc.exists()) {
+          const modelData = { id: modelDoc.id, ...modelDoc.data() };
+          
+          // Fetch creator info
+          try {
+            const creatorRef = doc(db, "users", modelData.creatorUID);
+            const creatorSnap = await getDoc(creatorRef);
+            
+            if (creatorSnap.exists()) {
+              const creatorData = creatorSnap.data();
+              modelData.creatorUsername = creatorData.username || creatorData.email || 'Unknown';
+            } else {
+              modelData.creatorUsername = 'Unknown';
+            }
+          } catch (error) {
+            console.error('Error fetching creator info:', error);
+            modelData.creatorUsername = 'Unknown';
+          }
+          
+          favoriteModels.push(modelData);
+        }
+      } catch (error) {
+        console.error(`Error fetching model ${modelId}:`, error);
+      }
+    }
+
+    console.log("Favorite models found:", favoriteModels.length);
+    return { success: true, models: favoriteModels };
+  } catch (error) {
+    console.error("Error fetching favorite models:", error);
+    return { success: false, message: error.message, models: [] };
+  }
+};

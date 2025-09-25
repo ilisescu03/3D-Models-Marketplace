@@ -297,7 +297,8 @@ export const getUserStats = async (userId) => {
       accountType: userData.accountType || "individual",
       role: userData.role || "other",
       links: userData.links || ["", "", "", ""],
-      skills: userData.skills || []
+      skills: userData.skills || [],
+      favourites: userData.favourites || [],
     };
   } catch (error) {
     throw new Error(error.message || 'Failed to get user stats.');

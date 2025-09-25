@@ -5,12 +5,13 @@ import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { getUserFavoriteModels } from '/backend/models.js';
 import '/frontend/css/App.css'
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
     updateUsername, updateUserData
 } from '/backend/users.js';
-import '/frontend/css/App.css'; 
+import '/frontend/css/App.css';
 
 // Summary container style
 const summaryContainerStyle = {
@@ -132,10 +133,117 @@ const followersStyle = {
     cursor: 'pointer',
 };
 
+// Base model card styling
+const modelCardStyle = {
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)',
+    transition: 'all 0.3s ease',
+    cursor: 'pointer',
+    border: '1px solid rgba(0, 0, 0, 0.05)',
+    width: '280px', 
+    fontFamily:'Arial, sans-serif',
+    display: 'flex',
+    flexDirection: 'column'
+};
+// Compatible software section styling
+const compatibleSoftwaresStyle = {
+    marginTop: '8px',
+    paddingTop: '8px',
+    borderTop: '1px solid #f0f0f0'
+};
+// Software list container styling
+const softwaresListStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '3px',
+    marginTop: '4px'
+};
+// Individual software badge styling
+const softwareBadgeStyle = {
+    display: 'inline-block',
+    backgroundColor: '#fdf0e8ff',
+    color: '#cc4b00ff',
+    padding: '1px 6px',
+    borderRadius: '6px',
+    fontSize: '0.6rem',
+    fontWeight: '500'
+};
+// Hover state for model card
+const modelCardHoverStyle = {
+    ...modelCardStyle,
+    transform: 'translateY(-5px)',
+    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)'
+};
+// Model image styling
+const modelImageStyle = {
+    width: '100%',
+    height: '300px',
+    objectFit: 'cover',
+    transition: 'transform 0.3s ease',
+    aspectRatio: '1/1'
+};
+
+// Hover state for model image
+const modelImageHoverStyle = {
+    ...modelImageStyle,
+    transform: 'scale(1.05)'
+};
+
+// Content area inside model card
+const modelContentStyle = {
+    padding: '15px',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    gap:'8px',
+};
+// Model title styling
+const modelTitleStyle = {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: '8px',
+    lineHeight: '1.3',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden'
+};
+
+// Model metadata styling
+const modelMetaStyle = {
+    fontSize: '0.7rem',
+    color: '#666',
+    marginBottom: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px'
+};
+
+// Category badge styling
+const categoryBadgeStyle = {
+    display: 'inline-block',
+    backgroundColor: '#ff7b00',
+    color: 'white',
+    padding: '3px 8px',
+    borderRadius: '10px',
+    fontSize: '0.8rem',
+    width: '25%',
+    textAlign: 'center',
+    fontWeight: '500',
+    marginTop: '8px'
+};
 function Dashboard() {
+    const [favoriteModels, setFavoriteModels] = useState([]);
+    const [favoritesLoading, setFavoritesLoading] = useState(false);
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState("");
     const [activeIndex, setActiveIndex] = useState(5);
+     // Track which card is hovered
+        const [hoveredCard, setHoveredCard] = useState(null);
     const [userStats, setUserStats] = useState({
         followers: 0,
         following: 0,
@@ -162,7 +270,7 @@ function Dashboard() {
     const navigate = useNavigate();
 
     const [accountType, setAccountType] = useState('individual');
-    
+
     // Individual role options
     const individualRoles = [
         { value: 'other', label: 'Other' },
@@ -190,10 +298,14 @@ function Dashboard() {
         { value: 'tech-company', label: 'Tech Company' },
         { value: 'research-lab', label: 'Research Lab' },
     ];
-    
+
     // Determine which roles to show based on account type
     const roles = accountType === 'individual' ? individualRoles : organizationRoles;
-    
+    // Handle click on model card to navigate to model details
+    const handleCardClick = (modelId) => {
+        console.log("Navigating to model:", modelId);
+        window.location.href = `/model/${modelId}`;
+    };
     const formatFirebaseTimestamp = (timestamp) => {
         try {
             // If timestamp is a firebase object in seconds
@@ -229,7 +341,24 @@ function Dashboard() {
             return 'Unknown';
         }
     };
-    
+    //Load favorite models function
+    const loadFavoriteModels = async () => {
+        if (!user) return;
+
+        try {
+            setFavoritesLoading(true);
+            const result = await getUserFavoriteModels(user.uid);
+            if (result.success) {
+                setFavoriteModels(result.models);
+            } else {
+                console.error("Failed to load favorite models:", result.message);
+            }
+        } catch (error) {
+            console.error("Error loading favorite models:", error);
+        } finally {
+            setFavoritesLoading(false);
+        }
+    };
     // Effect for check authentication and fetch user data
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -254,7 +383,7 @@ function Dashboard() {
                     setUsername(stats.username);
                     setSelectedSkills(stats.skills || [])
                     setLoading(false);
-                    
+
                     // Fetch followers and following lists
                     const followers = await getFollowers(currentUser.uid);
                     setFollowersData(followers);
@@ -262,7 +391,21 @@ function Dashboard() {
                     const followings = await getFollowing(currentUser.uid);
                     setFollowingData(followings);
                 });
-                
+                // Load favorite models
+                try {
+                    setFavoritesLoading(true);
+                    const result = await getUserFavoriteModels(currentUser.uid); // <- FIX AICI
+                    if (result.success) {
+                        setFavoriteModels(result.models);
+                        console.log("Favorite models loaded:", result.models.length);
+                    } else {
+                        console.error("Failed to load favorite models:", result.message);
+                    }
+                } catch (error) {
+                    console.error("Error loading favorite models:", error);
+                } finally {
+                    setFavoritesLoading(false);
+                }
                 // Clean up listener on unmount
                 return () => stopListening();
             } else {
@@ -283,18 +426,28 @@ function Dashboard() {
                     skills: []
                 })
                 setSelectedSkills([]);
+                setFavoriteModels([]); // Reset favorite models
                 setLoading(false);
                 navigate('/');
+
             }
         });
         return () => unsubscribe();
     }, [navigate]);
+      // Get thumbnail image for model, fallback to default if not available
+    const getModelThumbnail = (model) => {
+        if (model.previewImages && model.previewImages.length > 0) {
+            return model.previewImages[0];
+        }
+        // Fallback to a default 3D model image
+        return '/default-model-preview.png';
+    };
 
     return (
         <div style={backgroundStyle}>
             <Header />
-            <CookiesBanner/>
-            
+            <CookiesBanner />
+
             {/* Profile header */}
             <div style={profileContainerStyle}>
                 {/* Profile pic */}
@@ -327,9 +480,9 @@ function Dashboard() {
 
             {/* Dashboard content */}
             <div style={{ marginTop: '2rem', width: '100%' }}>
-                <section className="responsive-container" style={{backgroundColor:'#f1f1f1ff', minHeight:'1000px'}}>
+                <section className="responsive-container" style={{ backgroundColor: '#f1f1f1ff', minHeight: '1000px' }}>
                     {/* Navigation buttons */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', marginBottom:'4rem', alignItems: 'flex-start', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
                             onClick={() => setActiveIndex(5)}
                             style={getTabButtonStyle(activeIndex === 5)}
@@ -391,34 +544,131 @@ function Dashboard() {
                     </>)}
 
                     {/* Tab content 2 - Favourites*/}
-                    {activeIndex === 1 && (<>
-                        <img src="bookmark-star_2.png"
-                            style={{
-                                width: '150px',
-                                marginTop: '3rem',
-                                display: 'flex',
-                                justifySelf: 'center',
-                                filter: 'invert(1) brightness(50%)'
-                            }}
-                        />
-                        <h2 style={{
-                            fontFamily: "Arial, sans-serif",
-                            color: 'gray',
-                            fontSize: '1.5rem',
-                            textAlign: 'center',
-                            fontWeight: 'normal',
-                        }}>
-                            "Favourites" will show you the models added to the favourite list.
-                        </h2>
-                        <h2 style={{
-                            fontFamily: "Arial, sans-serif",
-                            color: 'gray',
-                            fontSize: '0.9rem',
-                            textAlign: 'center',
-                        }}>
-                            You don't have models at favourites at the moment.
-                        </h2>
-                    </>)}
+                    {activeIndex === 1 && (
+                        <>
+                            {favoritesLoading ? (
+                                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
+                                    <div style={{ fontSize: '2rem', marginBottom: '15px' }}>⏳</div>
+                                    Loading your favorite models...
+                                </div>
+                            ) : favoriteModels.length === 0 ? (
+                                <>
+                                    <img src="bookmark-star_2.png"
+                                        style={{
+                                            width: '150px',
+                                            marginTop: '3rem',
+                                            display: 'flex',
+                                            justifySelf: 'center',
+                                            filter: 'invert(1) brightness(50%)'
+                                        }}
+                                    />
+                                    <h2 style={{
+                                        fontFamily: "Arial, sans-serif",
+                                        color: 'gray',
+                                        fontSize: '1.5rem',
+                                        textAlign: 'center',
+                                        fontWeight: 'normal',
+                                    }}>
+                                        No favorite models yet
+                                    </h2>
+                                    <h2 style={{
+                                        fontFamily: "Arial, sans-serif",
+                                        color: 'gray',
+                                        fontSize: '0.9rem',
+                                        textAlign: 'center',
+                                    }}>
+                                        Models you favorite will appear here.
+                                    </h2>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 style={{
+                                        fontFamily: "Arial, sans-serif",
+                                        color: 'gray',
+                                        fontSize: '1.5rem',
+                                        textAlign: 'center',
+                                        fontWeight: 'normal',
+                                        marginBottom: '30px'
+                                    }}>
+                                        Your Favorite Models ({favoriteModels.length})
+                                    </h2>
+
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 280px))',
+                                        gap: '20px',
+                                        justifyContent: 'center',
+                                        padding: '0 20px'
+                                    }}>
+                                        {favoriteModels.map((model, index) => (
+                                            <div
+                                                key={model.id}
+                                                style={hoveredCard === index ? modelCardHoverStyle : modelCardStyle}
+                                                onClick={() => handleCardClick(model.id)}
+                                                onMouseEnter={() => setHoveredCard(index)}
+                                                onMouseLeave={() => setHoveredCard(null)}
+                                            >
+                                                <img
+                                                    src={getModelThumbnail(model)}
+                                                    alt={model.title}
+                                                    style={hoveredCard === index ? modelImageHoverStyle : modelImageStyle}
+                                                    onError={(e) => {
+                                                        e.target.src = '/default-model-preview.png';
+                                                    }}
+                                                />
+
+                                                <div style={modelContentStyle}>
+                                                    {/* Display category badge if available */}
+                                                    {model.category && (
+                                                        <div style={categoryBadgeStyle}>
+                                                            {model.category}
+                                                        </div>
+                                                    )}
+                                                    <h3 style={modelTitleStyle}>
+                                                        {model.title}
+                                                    </h3>
+                                                    {/* Creator information */}
+                                                    <div style={modelMetaStyle}>
+
+                                                        <span>Created by: <strong>{model.creatorUsername || 'Unknown'}</strong></span>
+                                                    </div>
+
+
+                                                    {/* Download and favorite counts */}
+                                                    <div style={modelMetaStyle}>
+
+                                                        <span>{model.downloads || 0} downloads</span>
+
+                                                        <span>{model.favorites || 0} favorites</span>
+                                                    </div>
+                                                    {/* Compatible software list */}
+                                                    {model.software && model.software.length > 0 && (
+                                                        <div style={compatibleSoftwaresStyle}>
+                                                            <div style={modelMetaStyle}>
+
+                                                                <span>Compatible with:</span>
+                                                            </div>
+                                                            <div style={softwaresListStyle}>
+                                                                {model.software.map((software, idx) => (
+                                                                    <span key={idx} style={softwareBadgeStyle}>
+                                                                        {software}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+
+
+                                                </div>
+                                            </div>
+
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </>
+                    )}
 
                     {/* Followers content*/}
                     {activeIndex === 2 && (
@@ -432,7 +682,7 @@ function Dashboard() {
                             }}>
                                 Followers:
                             </h2>
-                            
+
                             {/* Followers list */}
                             <div className="responsive-grid">
                                 {followersData.length === 0 ? (
@@ -507,7 +757,7 @@ function Dashboard() {
                             }}>
                                 Followed users:
                             </h2>
-                            
+
                             <div className="responsive-grid">
                                 {followingData.length === 0 ? (
                                     <p style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: 'gray', gridColumn: "1 / -1" }}>You're not following anyone.</p>
@@ -572,12 +822,12 @@ function Dashboard() {
                     {activeIndex === 5 && (
                         <div style={summaryContainerStyle}>
                             <h2 style={{ color: '#333', marginBottom: '3rem', fontSize: '1.7rem' }}>Summary</h2>
-                            
+
                             {/* The time when this account was created*/}
                             <div style={{ marginBottom: '3rem' }}>
                                 <strong>Member since:</strong> {userStats.createdAt ? formatFirebaseTimestamp(userStats.createdAt) : 'Unknown'}
                             </div>
-                            
+
                             {/* Account Type */}
                             <div style={{ marginBottom: '2rem' }}>
                                 <h3 style={sectionTitleStyle}>Account Type</h3>
