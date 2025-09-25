@@ -2,10 +2,10 @@ import Header from '../UI+UX/Header.jsx';
 import { useNavigate } from 'react-router-dom';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { auth, db } from '/backend/firebase.js';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { getUserFavoriteModels } from '/backend/models.js';
+import { getUserFavoriteModels, getModelsByCreator } from '/backend/models.js'; 
 import '/frontend/css/App.css'
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
@@ -142,8 +142,8 @@ const modelCardStyle = {
     transition: 'all 0.3s ease',
     cursor: 'pointer',
     border: '1px solid rgba(0, 0, 0, 0.05)',
-    width: '280px', 
-    fontFamily:'Arial, sans-serif',
+    width: '280px',
+    fontFamily: 'Arial, sans-serif',
     display: 'flex',
     flexDirection: 'column'
 };
@@ -198,7 +198,7 @@ const modelContentStyle = {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    gap:'8px',
+    gap: '8px',
 };
 // Model title styling
 const modelTitleStyle = {
@@ -237,13 +237,15 @@ const categoryBadgeStyle = {
     marginTop: '8px'
 };
 function Dashboard() {
+    const [userModels, setUserModels] = useState([]);
+    const [userModelsLoading, setUserModelsLoading] = useState(false);
     const [favoriteModels, setFavoriteModels] = useState([]);
     const [favoritesLoading, setFavoritesLoading] = useState(false);
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState("");
     const [activeIndex, setActiveIndex] = useState(5);
-     // Track which card is hovered
-        const [hoveredCard, setHoveredCard] = useState(null);
+    // Track which card is hovered
+    const [hoveredCard, setHoveredCard] = useState(null);
     const [userStats, setUserStats] = useState({
         followers: 0,
         following: 0,
@@ -304,8 +306,33 @@ function Dashboard() {
     // Handle click on model card to navigate to model details
     const handleCardClick = (modelId) => {
         console.log("Navigating to model:", modelId);
-        window.location.href = `/model/${modelId}`;
+        navigate(`/model/${modelId}`);
     };
+    //Function to load the models made by this user
+    const loadUserModels = useCallback(async () => {
+        if (!user) {
+            setUserModels([]);
+            return;
+        }
+
+        try {
+            setUserModelsLoading(true);
+            const result = await getModelsByCreator(user.uid);
+
+            if (result.success) {
+                console.log("User models loaded:", result.models.length);
+                setUserModels(result.models);
+            } else {
+                console.error("Failed to load user models:", result.message);
+                setUserModels([]);
+            }
+        } catch (error) {
+            console.error("Error loading user models:", error);
+            setUserModels([]);
+        } finally {
+            setUserModelsLoading(false);
+        }
+    }, [user]);
     const formatFirebaseTimestamp = (timestamp) => {
         try {
             // If timestamp is a firebase object in seconds
@@ -342,7 +369,7 @@ function Dashboard() {
         }
     };
     //Load favorite models function
-    const loadFavoriteModels = async () => {
+    const loadFavoriteModels = useCallback(async () => {
         if (!user) return;
 
         try {
@@ -350,6 +377,7 @@ function Dashboard() {
             const result = await getUserFavoriteModels(user.uid);
             if (result.success) {
                 setFavoriteModels(result.models);
+                console.log("Favorite models loaded:", result.models.length);
             } else {
                 console.error("Failed to load favorite models:", result.message);
             }
@@ -358,7 +386,7 @@ function Dashboard() {
         } finally {
             setFavoritesLoading(false);
         }
-    };
+    }, [user]);
     // Effect for check authentication and fetch user data
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -391,21 +419,8 @@ function Dashboard() {
                     const followings = await getFollowing(currentUser.uid);
                     setFollowingData(followings);
                 });
-                // Load favorite models
-                try {
-                    setFavoritesLoading(true);
-                    const result = await getUserFavoriteModels(currentUser.uid); // <- FIX AICI
-                    if (result.success) {
-                        setFavoriteModels(result.models);
-                        console.log("Favorite models loaded:", result.models.length);
-                    } else {
-                        console.error("Failed to load favorite models:", result.message);
-                    }
-                } catch (error) {
-                    console.error("Error loading favorite models:", error);
-                } finally {
-                    setFavoritesLoading(false);
-                }
+                loadUserModels();
+                loadFavoriteModels();
                 // Clean up listener on unmount
                 return () => stopListening();
             } else {
@@ -427,14 +442,15 @@ function Dashboard() {
                 })
                 setSelectedSkills([]);
                 setFavoriteModels([]); // Reset favorite models
+                setUserModels([]); // Reset user models
                 setLoading(false);
                 navigate('/');
 
             }
         });
         return () => unsubscribe();
-    }, [navigate]);
-      // Get thumbnail image for model, fallback to default if not available
+    }, [navigate, loadUserModels, loadFavoriteModels]);
+    // Get thumbnail image for model, fallback to default if not available
     const getModelThumbnail = (model) => {
         if (model.previewImages && model.previewImages.length > 0) {
             return model.previewImages[0];
@@ -482,7 +498,7 @@ function Dashboard() {
             <div style={{ marginTop: '2rem', width: '100%' }}>
                 <section className="responsive-container" style={{ backgroundColor: '#f1f1f1ff', minHeight: '1000px' }}>
                     {/* Navigation buttons */}
-                    <div style={{ display: 'flex', marginBottom:'4rem', alignItems: 'flex-start', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', marginBottom: '4rem', alignItems: 'flex-start', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
                             onClick={() => setActiveIndex(5)}
                             style={getTabButtonStyle(activeIndex === 5)}
@@ -504,44 +520,133 @@ function Dashboard() {
                     </div>
 
                     {/* Tab content 1 - Your Work*/}
-                    {activeIndex === 0 && (<>
-                        <h2 style={{
-                            fontFamily: "Arial, sans-serif",
-                            color: 'gray',
-                            fontSize: '1.5rem',
-                            textAlign: 'center',
-                            fontWeight: 'normal',
-                        }}>
-                            Models:0
-                        </h2>
-                        <img src="3d-model.png"
-                            style={{
-                                width: '150px',
-                                marginTop: '3rem',
-                                display: 'flex',
-                                justifySelf: 'center',
-                                filter: 'invert(1) brightness(50%)'
-                            }}
-                        />
-                        <h2 style={{
-                            fontFamily: "Arial, sans-serif",
-                            color: 'gray',
-                            fontSize: '1.5rem',
-                            textAlign: 'center',
-                            fontWeight: 'normal',
-                        }}>
-                            "Your Work" will show you all your models.
-                        </h2>
-                        <h2 style={{
-                            fontFamily: "Arial, sans-serif",
-                            marginTop: '0rem',
-                            color: 'gray',
-                            fontSize: '0.9rem',
-                            textAlign: 'center',
-                        }}>
-                            You don't have models uploaded at the moment.
-                        </h2>
-                    </>)}
+                    {activeIndex === 0 && (
+                        <>
+                            {userModelsLoading ? (
+                                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
+                                    <div style={{ fontSize: '2rem', marginBottom: '15px' }}>⏳</div>
+                                    Loading your models...
+                                </div>
+                            ) : userModels.length === 0 ? (
+                                <>
+                                    <h2 style={{
+                                        fontFamily: "Arial, sans-serif",
+                                        color: 'gray',
+                                        fontSize: '1.5rem',
+                                        textAlign: 'center',
+                                        fontWeight: 'normal',
+                                    }}>
+                                        Models: {userModels.length}
+                                    </h2>
+                                    <img src="/3d-model.png"
+                                        style={{
+                                            width: '150px',
+                                            marginTop: '3rem',
+                                            display: 'flex',
+                                            justifySelf: 'center',
+                                            filter: 'invert(1) brightness(50%)'
+                                        }}
+                                    />
+                                    <h2 style={{
+                                        fontFamily: "Arial, sans-serif",
+                                        color: 'gray',
+                                        fontSize: '1.5rem',
+                                        textAlign: 'center',
+                                        fontWeight: 'normal',
+                                    }}>
+                                        "Your Work" will show you all your models.
+                                    </h2>
+                                    <h2 style={{
+                                        fontFamily: "Arial, sans-serif",
+                                        marginTop: '0rem',
+                                        color: 'gray',
+                                        fontSize: '0.9rem',
+                                        textAlign: 'center',
+                                    }}>
+                                        You don't have models uploaded at the moment.
+                                    </h2>
+                                </>
+                            ) : (
+                                <>
+                                    <h2 style={{
+                                        fontFamily: "Arial, sans-serif",
+                                        color: 'gray',
+                                        fontSize: '1.5rem',
+                                        textAlign: 'center',
+                                        fontWeight: 'normal',
+                                        marginBottom: '30px'
+                                    }}>
+                                        Your Models ({userModels.length})
+                                    </h2>
+
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 280px))',
+                                        gap: '20px',
+                                        justifyContent: 'center',
+                                        padding: '0 20px'
+                                    }}>
+                                        {userModels.map((model, index) => (
+                                            <div
+                                                key={model.id}
+                                                style={hoveredCard === index ? modelCardHoverStyle : modelCardStyle}
+                                                onClick={() => handleCardClick(model.id)}
+                                                onMouseEnter={() => setHoveredCard(index)}
+                                                onMouseLeave={() => setHoveredCard(null)}
+                                            >
+                                                <img
+                                                    src={getModelThumbnail(model)}
+                                                    alt={model.title}
+                                                    style={hoveredCard === index ? modelImageHoverStyle : modelImageStyle}
+                                                    onError={(e) => {
+                                                        e.target.src = '/default-model-preview.png';
+                                                    }}
+                                                />
+
+                                                <div style={modelContentStyle}>
+                                                    {/* Display category badge if available */}
+                                                    {model.category && (
+                                                        <div style={categoryBadgeStyle}>
+                                                            {model.category}
+                                                        </div>
+                                                    )}
+                                                    <h3 style={modelTitleStyle}>
+                                                        {model.title}
+                                                    </h3>
+                                                    {/* Creator information */}
+                                                    <div style={modelMetaStyle}>
+                                                        <span>Created by: <strong>{model.creatorUsername || 'Unknown'}</strong></span>
+                                                    </div>
+
+                                                    {/* Download and favorite counts */}
+                                                    <div style={modelMetaStyle}>
+                                                        <span>{model.downloads || 0} downloads</span>
+                                                        <span>{model.favorites || 0} favorites</span>
+                                                    </div>
+
+                                                    {/* Compatible software list */}
+                                                    {model.software && model.software.length > 0 && (
+                                                        <div style={compatibleSoftwaresStyle}>
+                                                            <div style={modelMetaStyle}>
+                                                                <span>Compatible with:</span>
+                                                            </div>
+                                                            <div style={softwaresListStyle}>
+                                                                {model.software.map((software, idx) => (
+                                                                    <span key={idx} style={softwareBadgeStyle}>
+                                                                        {software}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </>
+                    )}
 
                     {/* Tab content 2 - Favourites*/}
                     {activeIndex === 1 && (
@@ -553,7 +658,7 @@ function Dashboard() {
                                 </div>
                             ) : favoriteModels.length === 0 ? (
                                 <>
-                                    <img src="bookmark-star_2.png"
+                                    <img src="/bookmark-star_2.png"
                                         style={{
                                             width: '150px',
                                             marginTop: '3rem',

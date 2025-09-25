@@ -599,11 +599,7 @@ function ModelDetails() {
             const result = await downloadModel(modelId, specificFileName);
 
             if (result.success) {
-                // Update downloads number
-                setModel(prev => ({
-                    ...prev,
-                    downloads: (prev.downloads || 0) + 1
-                }));
+                
 
                 // Succes message
                 if (result.downloads) {

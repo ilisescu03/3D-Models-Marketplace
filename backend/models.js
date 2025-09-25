@@ -621,10 +621,11 @@ export const downloadModel = async (modelId, fileName = null) => {
     const hasDownloaded = downloadedModels.includes(modelId);
 
     // Update model download count
+    if(!hasDownloaded){
     await updateDoc(modelRef, {
       downloads: increment(1),
       downloadedBy: arrayUnion(userId)
-    });
+    });}
 
     // Update user's downloaded models if not already downloaded
     if (!hasDownloaded) {
@@ -702,5 +703,49 @@ export const getFileDownloadUrl = async (filePath) => {
   } catch (error) {
     console.error("Error getting download URL:", error);
     throw error;
+  }
+};
+// Get modeld of a certain creator
+export const getModelsByCreator = async (creatorUID) => {
+  try {
+    console.log("Fetching models for creator:", creatorUID);
+    
+    const { collection, query, where, getDocs, doc, getDoc } = await import('firebase/firestore');
+
+    // Query the user's models
+    const q = query(
+      collection(db, "models"), 
+      where("creatorUID", "==", creatorUID),
+      where("isPublic", "==", true)
+    );
+
+    const snapshot = await getDocs(q);
+    const models = [];
+
+    snapshot.forEach((docSnapshot) => {
+      models.push({ id: docSnapshot.id, ...docSnapshot.data() });
+    });
+
+    // Get creator info for each model
+    for (let model of models) {
+      try {
+        const creatorRef = doc(db, "users", model.creatorUID);
+        const creatorSnap = await getDoc(creatorRef);
+        if (creatorSnap.exists()) {
+          const creatorData = creatorSnap.data();
+          model.creatorUsername = creatorData.username || creatorData.email || 'Unknown';
+          model.creatorProfilePicture = creatorData.profilePicture || '';
+        }
+      } catch (error) {
+        console.error('Error fetching creator info:', error);
+        model.creatorUsername = 'Unknown';
+        model.creatorProfilePicture = '';
+      }
+    }
+
+    return { success: true, models };
+  } catch (error) {
+    console.error("Error fetching models by creator:", error);
+    return { success: false, message: error.message, models: [] };
   }
 };
