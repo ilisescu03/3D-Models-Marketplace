@@ -5,7 +5,7 @@ import Header from "../UI+UX/Header";
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getModelById } from '/backend/models.js';
-
+import { downloadModel } from '/backend/models.js';
 //Background style
 const backgroundStyle = {
     background: '#ecececff',
@@ -446,6 +446,9 @@ const useScreenSize = () => {
     return isLargeScreen;
 };
 function ModelDetails() {
+    const [downloadLoading, setDownloadLoading] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState({});
+    const [showDownloadOptions, setShowDownloadOptions] = useState(false);
     const [isFavorited, setIsFavorited] = useState(false);//Favourite state
     const [favoriteLoading, setFavoriteLoading] = useState(false);//State for favourite add/remove
     const { modelId } = useParams(); // To identify the model that should be displayed
@@ -580,13 +583,74 @@ function ModelDetails() {
     };
 
     //DOWNLOAD
-    const handleDownload = () => {
-        console.log("Download initiated for model:", modelId);
-        // TODO: Implement download functionality
-        alert('Download functionality will be implemented soon!');
+    const handleDownload = async (specificFileName = null) => {
+        if (!currentUser) {
+            alert('Please log in to download models');
+            return;
+        }
+
+        if (downloadLoading) return;
+
+        try {
+            setDownloadLoading(true);
+            setDownloadProgress({});
+            console.log('Initiating download for model:', modelId, 'File:', specificFileName);
+
+            const result = await downloadModel(modelId, specificFileName);
+
+            if (result.success) {
+                // Update downloads number
+                setModel(prev => ({
+                    ...prev,
+                    downloads: (prev.downloads || 0) + 1
+                }));
+
+                // Succes message
+                if (result.downloads) {
+                    const successful = result.downloads.filter(d => d.success);
+                    const failed = result.downloads.filter(d => !d.success);
+
+                    let message = `Download completed! `;
+                    if (successful.length > 0) {
+                        message += `Successfully downloaded ${successful.length} file(s). `;
+                    }
+                    if (failed.length > 0) {
+                        message += `Failed to download ${failed.length} file(s).`;
+                    }
+
+                    alert(message);
+                } else {
+                    alert(result.message);
+                }
+
+                // Hide download options
+                setShowDownloadOptions(false);
+
+            } else {
+                alert(result.message || 'Download failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error during download:', error);
+            alert('Download failed. Please try again.');
+        } finally {
+            setDownloadLoading(false);
+            setDownloadProgress({});
+        }
+    };
+    const handleSingleFileDownload = (fileName) => {
+        handleDownload(fileName);
     };
 
-
+    const handleAllFilesDownload = () => {
+        handleDownload();
+    }
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
     //ADD TO FAVOURITES
     const handleFavorite = async () => {
         if (!currentUser) {
@@ -838,25 +902,49 @@ function ModelDetails() {
                             )}
                         </div>
                     </div>
-
                     {/* Right Column - Download and Actions */}
                     <div style={isLargeScreen ? { ...rightColumnStyleLarge, ...responsiveFixStyle } : { ...rightColumnStyle, ...responsiveFixStyle }}>
                         <div style={detailsCardStyle}>
+                            {/* Download button */}
                             <button
                                 style={isDownloadHovered ? downloadButtonHoverStyle : downloadButtonStyle}
                                 onMouseEnter={() => setIsDownloadHovered(true)}
                                 onMouseLeave={() => setIsDownloadHovered(false)}
-                                onClick={handleDownload}
+                                onClick={() => {
+                                    if (model.modelFiles && model.modelFiles.length === 1) {
+                                        // If there is one file to download
+                                        handleSingleFileDownload(model.modelFiles[0].fileName);
+                                    } else {
+                                        // If there is a package to download
+                                        onClick={handleAllFilesDownload}
+                                    }
+                                }}
+                                disabled={downloadLoading}
                             >
                                 <img
                                     src="/DownloadIcon.png"
                                     alt="Download"
                                     style={downloadIconStyle}
                                 />
-                                DOWNLOAD NOW
+                                {downloadLoading ? 'DOWNLOADING...' : 'DOWNLOAD NOW'}
                             </button>
 
+                            
+
+                            {/* Progress indicator */}
+                            {downloadLoading && (
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '10px',
+                                    color: '#666',
+                                    fontSize: '0.9rem'
+                                }}>
+                                    ⏳ Downloading files... Please wait.
+                                </div>
+                            )}
+
                             <div style={isLargeScreen ? actionButtonsStyle : actionButtonsStyleMobile}>
+                                {/* Favorite toggle and Share buttons */}
                                 <button
                                     style={actionButtonStyle}
                                     onMouseEnter={(e) => {
@@ -901,16 +989,30 @@ function ModelDetails() {
                                 </button>
                             </div>
 
-                            {/* File List */}
+                            {/* File List  */}
                             {model.modelFiles && model.modelFiles.length > 0 && (
                                 <div style={fileListStyle}>
                                     <h3 style={{ marginBottom: '15px', color: '#333' }}>Files Included</h3>
                                     {model.modelFiles.map((file, index) => (
-                                        <div key={index} style={fileItemStyle}>
-                                            <span style={fileNameStyle}>{file.fileName}</span>
-                                            <span style={fileSizeStyle}>
-                                                {(file.fileSize / (1024 * 1024)).toFixed(2)} MB
-                                            </span>
+                                        <div key={index} style={{
+                                            ...fileItemStyle,
+                                            cursor: 'pointer'
+                                        }}
+                                           
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#f9f9f9';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = 'transparent';
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                                <span style={fileNameStyle}>{file.fileName}</span>
+                                                <span style={fileSizeStyle}>
+                                                    {formatFileSize(file.fileSize)} • {file.software}
+                                                </span>
+                                            </div>
+                                            
                                         </div>
                                     ))}
                                 </div>

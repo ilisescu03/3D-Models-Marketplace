@@ -567,3 +567,140 @@ export const getUserFavoriteModels = async (userId) => {
     return { success: false, message: error.message, models: [] };
   }
 };
+// DOWNLOAD
+export const downloadModel = async (modelId, fileName = null) => {
+  try {
+    console.log("=== INITIATING MODEL DOWNLOAD ===");
+    console.log("Model ID:", modelId);
+    console.log("File name:", fileName);
+
+    if (!auth.currentUser) {
+      return { success: false, message: 'User not authenticated' };
+    }
+
+    const userId = auth.currentUser.uid;
+    const { doc, getDoc, updateDoc, arrayUnion, increment } = await import('firebase/firestore');
+    const { ref, getDownloadURL } = await import('firebase/storage');
+
+    // Get model data
+    const modelRef = doc(db, "models", modelId);
+    const modelDoc = await getDoc(modelRef);
+
+    if (!modelDoc.exists()) {
+      return { success: false, message: 'Model not found' };
+    }
+
+    const modelData = modelDoc.data();
+    const modelFiles = modelData.modelFiles || [];
+
+    if (modelFiles.length === 0) {
+      return { success: false, message: 'No files available for download' };
+    }
+
+    let filesToDownload = [];
+
+    if (fileName) {
+      // Download specific file
+      const specificFile = modelFiles.find(file => file.fileName === fileName);
+      if (!specificFile) {
+        return { success: false, message: 'File not found' };
+      }
+      filesToDownload = [specificFile];
+    } else {
+      // Download all files
+      filesToDownload = modelFiles;
+    }
+
+    // Update download count and user's downloaded models
+    const userRef = doc(db, "users", userId);
+    
+    // Check if user has already downloaded this model
+    const userDoc = await getDoc(userRef);
+    const userData = userDoc.data();
+    const downloadedModels = userData.downloadedModels || [];
+    const hasDownloaded = downloadedModels.includes(modelId);
+
+    // Update model download count
+    await updateDoc(modelRef, {
+      downloads: increment(1),
+      downloadedBy: arrayUnion(userId)
+    });
+
+    // Update user's downloaded models if not already downloaded
+    if (!hasDownloaded) {
+      await updateDoc(userRef, {
+        downloadedModels: arrayUnion(modelId)
+      });
+    }
+
+    // Download files using Firebase's method
+    const downloadResults = [];
+
+    for (const file of filesToDownload) {
+      try {
+        console.log(`Downloading file: ${file.fileName}`);
+        
+        // Use the fileUrl that's already stored in the model data
+        // This URL should work without CORS issues
+        const link = document.createElement('a');
+        link.href = file.fileUrl;
+        link.download = file.fileName;
+        link.style.display = 'none';
+        link.target = '_blank'; // Open in new tab to avoid CORS
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        downloadResults.push({
+          fileName: file.fileName,
+          success: true,
+          fileSize: file.fileSize
+        });
+        
+        console.log(`File download initiated: ${file.fileName}`);
+        
+        // Small delay between downloads to avoid browser issues
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (fileError) {
+        console.error(`Error downloading file ${file.fileName}:`, fileError);
+        downloadResults.push({
+          fileName: file.fileName,
+          success: false,
+          error: fileError.message
+        });
+      }
+    }
+
+    console.log("=== DOWNLOAD INITIATED ===");
+    return {
+      success: true,
+      message: filesToDownload.length === 1 
+        ? `Download initiated for "${filesToDownload[0].fileName}"!`
+        : `Download initiated for ${filesToDownload.length} files!`,
+      downloads: downloadResults,
+      totalFiles: filesToDownload.length,
+      successfulDownloads: downloadResults.filter(r => r.success).length
+    };
+
+  } catch (error) {
+    console.error("Error during download process:", error);
+    return {
+      success: false,
+      message: error.message || 'Download failed. Please try again.'
+    };
+  }
+};
+
+// Get download URL for a specific file (for direct download links)
+export const getFileDownloadUrl = async (filePath) => {
+  try {
+    const { ref, getDownloadURL } = await import('firebase/storage');
+    const fileRef = ref(storage, filePath);
+    return await getDownloadURL(fileRef);
+  } catch (error) {
+    console.error("Error getting download URL:", error);
+    throw error;
+  }
+};

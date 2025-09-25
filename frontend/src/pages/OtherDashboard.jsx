@@ -365,7 +365,7 @@ function OtherDashboard() {
                     // Load favorite models using the actual userDoc.id, not profileUserId
                     try {
                         setFavoritesLoading(true);
-                        const result = await getUserFavoriteModels(userDoc.id); // <- FIX: Use userDoc.id directly
+                        const result = await getUserFavoriteModels(userDoc.id)
                         if (result.success) {
                             setFavoriteModels(result.models);
                             console.log("Favorite models loaded:", result.models.length);

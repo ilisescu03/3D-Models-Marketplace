@@ -241,8 +241,8 @@ const successStyle = {
 // Constants
 const CATEGORY_OPTIONS = [
     'Architecture', 'Character', 'Vehicle', 'Environment', 'Furniture',
-    'Electronics', 'Jewelry', 'Weapons', 'Food', 'Plants', 'Animals',
-    'Abstract', 'Mechanical', 'Clothing', 'Other'
+    'Electronics', 'Jewelry', 'Weapons', 'Food & Drink', 'Plants', 'Animals',
+    'Abstract', 'Mechanical', 'Fashion & Style', 'Sports', 'Culture & History','Other'
 ];
 
 const TAG_OPTIONS = [
