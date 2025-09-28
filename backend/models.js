@@ -749,3 +749,158 @@ export const getModelsByCreator = async (creatorUID) => {
     return { success: false, message: error.message, models: [] };
   }
 };
+
+// Add comment to model
+export const addComment = async (modelId, commentText) => {
+  try {
+    console.log("=== ADDING COMMENT ===");
+    console.log("Model ID:", modelId);
+    console.log("Comment text:", commentText);
+
+    if (!auth.currentUser) {
+      return { success: false, message: 'User not authenticated' };
+    }
+
+    if (!commentText || !commentText.trim()) {
+      return { success: false, message: 'Comment text is required' };
+    }
+
+    const userId = auth.currentUser.uid;
+    const { doc, getDoc, updateDoc, arrayUnion } = await import('firebase/firestore');
+    
+    // Get user info for the comment
+    const userRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      return { success: false, message: 'User not found' };
+    }
+
+    const userData = userDoc.data();
+    
+    // Create comment object
+    const comment = {
+      id: `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      userId: userId,
+      username: userData.username || userData.email || 'Unknown',
+      profilePicture: userData.profilePicture || '',
+      text: commentText.trim(),
+      createdAt: new Date(),
+      replies: []
+    };
+
+    // Add comment to model
+    const modelRef = doc(db, "models", modelId);
+    await updateDoc(modelRef, {
+      comments: arrayUnion(comment)
+    });
+
+    console.log("Comment added successfully");
+    return { success: true, message: 'Comment added successfully', comment };
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    return { success: false, message: error.message };
+  }
+};
+// Add reply to comment
+export const addReply = async (modelId, commentId, replyText, repliedToUsername = null) => {
+    try {
+        console.log("=== ADDING REPLY ===");
+        console.log("Model ID:", modelId);
+        console.log("Comment ID:", commentId);
+        console.log("Reply text:", replyText);
+        console.log("Replied to:", repliedToUsername);
+
+        if (!auth.currentUser) {
+            return { success: false, message: 'User not authenticated' };
+        }
+
+        if (!replyText || !replyText.trim()) {
+            return { success: false, message: 'Reply text is required' };
+        }
+
+        const userId = auth.currentUser.uid;
+        const { doc, getDoc, updateDoc } = await import('firebase/firestore');
+        
+        // Get user info for the reply
+        const userRef = doc(db, "users", userId);
+        const userDoc = await getDoc(userRef);
+        
+        if (!userDoc.exists()) {
+            return { success: false, message: 'User not found' };
+        }
+
+        const userData = userDoc.data();
+        
+        // Get model data
+        const modelRef = doc(db, "models", modelId);
+        const modelDoc = await getDoc(modelRef);
+        
+        if (!modelDoc.exists()) {
+            return { success: false, message: 'Model not found' };
+        }
+
+        const modelData = modelDoc.data();
+        const comments = modelData.comments || [];
+        
+        // Find the comment and add reply
+        const updatedComments = comments.map(comment => {
+            if (comment.id === commentId) {
+                const reply = {
+                    id: `reply_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    userId: userId,
+                    username: userData.username || userData.email || 'Unknown',
+                    profilePicture: userData.profilePicture || '',
+                    text: replyText.trim(),
+                    repliedTo: repliedToUsername, // Adăugăm câmpul repliedTo
+                    createdAt: new Date()
+                };
+                
+                return {
+                    ...comment,
+                    replies: [...(comment.replies || []), reply]
+                };
+            }
+            return comment;
+        });
+
+        // Update model with new reply
+        await updateDoc(modelRef, {
+            comments: updatedComments
+        });
+
+        console.log("Reply added successfully");
+        return { success: true, message: 'Reply added successfully' };
+    } catch (error) {
+        console.error("Error adding reply:", error);
+        return { success: false, message: error.message };
+    }
+};
+// Get comments for model (this is already included in getModelById, but can be used separately if needed)
+export const getModelComments = async (modelId) => {
+  try {
+    const { doc, getDoc } = await import('firebase/firestore');
+    
+    const modelRef = doc(db, "models", modelId);
+    const modelDoc = await getDoc(modelRef);
+    
+    if (!modelDoc.exists()) {
+      return { success: false, message: 'Model not found', comments: [] };
+    }
+    
+    const modelData = modelDoc.data();
+    const comments = modelData.comments || [];
+    
+    // Sort comments by creation date (newest first)
+    const sortedComments = comments.sort((a, b) => {
+      const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(a.createdAt);
+      const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(b.createdAt);
+      return dateB - dateA;
+    });
+    
+    return { success: true, comments: sortedComments };
+  } catch (error) {
+    console.error("Error getting comments:", error);
+    return { success: false, message: error.message, comments: [] };
+  }
+};

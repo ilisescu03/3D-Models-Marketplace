@@ -1,4 +1,4 @@
-import { toggleFavoriteModel, isModelFavorited } from '/backend/models.js';
+import { toggleFavoriteModel, isModelFavorited, addComment, addReply } from '/backend/models.js';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../UI+UX/Header";
@@ -6,6 +6,1060 @@ import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getModelById } from '/backend/models.js';
 import { downloadModel } from '/backend/models.js';
+
+//Screen size handle
+const useScreenSize = () => {
+    const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0);
+    useEffect(() => {
+        const handleResize = () => {
+            setIsLargeScreen(window.innerWidth >= 1024);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return isLargeScreen;
+};
+function ModelDetails() {
+    const [downloadLoading, setDownloadLoading] = useState(false); //State that shows if the model is downloading or not
+    const [downloadProgress, setDownloadProgress] = useState({}); //Download progress state
+    const [showDownloadOptions, setShowDownloadOptions] = useState(false); //Download options state
+    const [isFavorited, setIsFavorited] = useState(false);//Favourite state
+    const [favoriteLoading, setFavoriteLoading] = useState(false);//State for favourite add/remove
+    const { modelId } = useParams(); // To identify the model that should be displayed
+    const { currentUser, userLogedIn } = useAuth(); //To identify the user
+    const [username, setUsername] = useState(""); //To identify the username of the user
+    const [model, setModel] = useState(null); //Model details
+    const [loading, setLoading] = useState(true); //To check if the page is loading
+    const [error, setError] = useState(null); //Errors
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0); //Which preview image is selected
+    const [isDownloadHovered, setIsDownloadHovered] = useState(false); //Check if mouse is on the button
+    const [isModalOpen, setIsModalOpen] = useState(false); //Check if the full view of the images is active
+    const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0); //Current image to show on full view
+    const isLargeScreen = useScreenSize(); //Check the screen size
+    //States for comments
+    const [commentText, setCommentText] = useState("");//Comment state
+    const [replyingTo, setReplyingTo] = useState(null);//Reply to state
+    const [replyText, setReplyText] = useState("");//Reply state
+    const [comments, setComments] = useState([]);//Comments state
+    const [commentLoading, setCommentLoading] = useState(false);//Check if the comment is loading
+    const [replyLoading, setReplyLoading] = useState(false);//Check if the reply is loading
+
+    //Open the image full view
+    const openModal = (index) => {
+        setCurrentModalImageIndex(index);
+        setIsModalOpen(true);
+    };
+
+    //Close the image full view
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
+    //Handle prev image
+    const goToPrevImage = (e) => {
+        e.stopPropagation();
+        if (model.previewImages && model.previewImages.length > 0) {
+            setCurrentModalImageIndex(prev =>
+                prev === 0 ? model.previewImages.length - 1 : prev - 1
+            );
+        }
+    };
+
+    //Handle next image
+    const goToNextImage = (e) => {
+        e.stopPropagation();
+        if (model.previewImages && model.previewImages.length > 0) {
+            setCurrentModalImageIndex(prev =>
+                prev === model.previewImages.length - 1 ? 0 : prev + 1
+            );
+        }
+    };
+    //Loading comments when the model is loaded
+    useEffect(() => {
+        if (model && model.comments) {
+            // Coment sorting
+            const sortedComments = [...model.comments].sort((a, b) => {
+                const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(a.createdAt);
+                const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(b.createdAt);
+                return dateB - dateA;
+            });
+            setComments(sortedComments);
+        }
+    }, [model]);
+
+    //Use effect to check if the model is favorited or not
+    useEffect(() => {
+        const checkFavoriteStatus = async () => {
+            if (model && currentUser) {
+                const favorited = await isModelFavorited(model.id);
+                setIsFavorited(favorited);
+            }
+        };
+
+        checkFavoriteStatus();
+    }, [model, currentUser]);
+    // Use effect for setting the username
+    useEffect(() => {
+        console.log("=== SETTING AUTHENTICATED USER USERNAME ===");
+
+        const fetchUsername = async () => {
+            if (currentUser && userLogedIn) {
+                console.log("Authenticated user:", currentUser);
+
+                try {
+                    // Firestore imports
+                    const { doc, getDoc } = await import('firebase/firestore');
+                    const { db } = await import('/backend/firebase.js');
+                    // Get firestore doc
+                    const userDocRef = doc(db, "users", currentUser.uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        const actualUsername = userData.username;
+
+                        if (actualUsername) {
+                            setUsername(actualUsername);
+                            console.log("Username set from Firestore:", actualUsername);
+                        } else {
+                            // Fallback to email if the username doesn't exist
+                            const usernameFromEmail = currentUser.email ? currentUser.email.split('@')[0] : 'Unknown';
+                            setUsername(usernameFromEmail);
+                            console.log("Username generated from email:", usernameFromEmail);
+                        }
+                    } else {
+                        console.log("User document not found in Firestore");
+                        const usernameFromEmail = currentUser.email ? currentUser.email.split('@')[0] : 'Unknown';
+                        setUsername(usernameFromEmail);
+                    }
+                } catch (error) {
+                    console.error("Error fetching user data from Firestore:", error);
+                    // Fallback for error case
+                    const usernameFromEmail = currentUser.email ? currentUser.email.split('@')[0] : 'Unknown';
+                    setUsername(usernameFromEmail);
+                }
+            } else {
+                console.log("No user authenticated or user not logged in");
+                setUsername("");
+            }
+        };
+
+        fetchUsername();
+    }, [currentUser, userLogedIn]);
+
+    //Load model details
+    useEffect(() => {
+        console.log("=== LOADING MODEL DETAILS ===");
+        console.log("Model ID:", modelId);
+
+        loadModelDetails();
+    }, [modelId]);
+
+    const loadModelDetails = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const result = await getModelById(modelId);
+
+            if (result.success) {
+                console.log("Model loaded successfully:", result.model);
+                setModel(result.model);
+            } else {
+                console.error("Failed to load model:", result.message);
+                setError(result.message || "Model not found");
+            }
+        } catch (err) {
+            console.error("Error loading model details:", err);
+            setError("Failed to load model details. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    //Add comment
+    const handleAddComment = async () => {
+        if (!commentText.trim()) {
+            alert('Please enter a comment');
+            return;
+        }
+
+        if (!currentUser) {
+            alert('Please log in to add comments');
+            return;
+        }
+
+        try {
+            setCommentLoading(true);
+            const result = await addComment(modelId, commentText);
+
+            if (result.success) {
+                setCommentText("");
+                // Reload model to obtain the updated comments
+                if (result.comment) {
+                    setComments(prevComments => [result.comment, ...prevComments]);
+
+                    setModel(prev => ({
+                        ...prev,
+                        comments: [result.comment, ...(prev.comments || [])]
+                    }));
+                }
+               
+            } else {
+                alert(result.message || 'Failed to add comment');
+            }
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            alert('Failed to add comment. Please try again.');
+        } finally {
+            setCommentLoading(false);
+        }
+    };
+    //Add reply
+    const handleAddReply = async (targetId, targetType, parentCommentId, repliedToUsername = null) => {
+        if (!replyText.trim()) {
+            alert('Please enter a reply');
+            return;
+        }
+
+        if (!currentUser) {
+            alert('Please log in to add replies');
+            return;
+        }
+
+        try {
+            setReplyLoading(true);
+            const result = await addReply(modelId, targetType === 'comment' ? targetId : parentCommentId, replyText, repliedToUsername);
+
+            if (result.success) {
+                setReplyText("");
+                setReplyingTo(null);
+                const modelResult = await getModelById(modelId);
+                if (modelResult.success) {
+                    setModel(modelResult.model);
+                    
+                    const sortedComments = [...(modelResult.model.comments || [])].sort((a, b) => {
+                        const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(a.createdAt);
+                        const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(b.createdAt);
+                        return dateB - dateA;
+                    });
+                    setComments(sortedComments);
+                }
+            } else {
+                alert(result.message || 'Failed to add reply');
+            }
+        } catch (error) {
+            console.error('Error adding reply:', error);
+            alert('Failed to add reply. Please try again.');
+        } finally {
+            setReplyLoading(false);
+        }
+    };
+    const startReplyToComment = (commentId) => {
+        setReplyingTo({ type: 'comment', id: commentId, parentCommentId: commentId });
+    };
+
+    const startReplyToReply = (replyId, parentCommentId) => {
+        setReplyingTo({ type: 'reply', id: replyId, parentCommentId: parentCommentId });
+    };
+    const getReplyPlaceholder = () => {
+        if (!replyingTo) return "Write a reply...";
+
+        if (replyingTo.type === 'comment') {
+            const comment = comments.find(c => c.id === replyingTo.id);
+            return comment ? `Reply to ${comment.username}...` : "Write a reply...";
+        } else {
+            // Finding the target reply if we are replying to a reply
+            const comment = comments.find(c => c.id === replyingTo.parentCommentId);
+            if (comment && comment.replies) {
+                const reply = comment.replies.find(r => r.id === replyingTo.id);
+                return reply ? `Reply to ${reply.username}...` : "Write a reply...";
+            }
+        }
+        return "Write a reply...";
+    };
+
+    // Format date
+    const formatDate = (date) => {
+        if (!date) return 'Unknown date';
+
+        try {
+            const dateObj = date.seconds ? new Date(date.seconds * 1000) : new Date(date);
+            return dateObj.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            return 'Invalid date';
+        }
+    };
+    //DOWNLOAD
+    const handleDownload = async (specificFileName = null) => {
+        if (!currentUser) {
+            alert('Please log in to download models');
+            return;
+        }
+
+        if (downloadLoading) return;
+
+        try {
+            setDownloadLoading(true);
+            setDownloadProgress({});
+            console.log('Initiating download for model:', modelId, 'File:', specificFileName);
+
+            const result = await downloadModel(modelId, specificFileName);
+
+            if (result.success) {
+
+
+                // Succes message
+                if (result.downloads) {
+                    const successful = result.downloads.filter(d => d.success);
+                    const failed = result.downloads.filter(d => !d.success);
+
+                    let message = `Download completed! `;
+                    if (successful.length > 0) {
+                        message += `Successfully downloaded ${successful.length} file(s). `;
+                    }
+                    if (failed.length > 0) {
+                        message += `Failed to download ${failed.length} file(s).`;
+                    }
+
+                    alert(message);
+                } else {
+                    alert(result.message);
+                }
+
+                // Hide download options
+                setShowDownloadOptions(false);
+
+            } else {
+                alert(result.message || 'Download failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error during download:', error);
+            alert('Download failed. Please try again.');
+        } finally {
+            setDownloadLoading(false);
+            setDownloadProgress({});
+        }
+    };
+    const handleSingleFileDownload = (fileName) => {
+        handleDownload(fileName);
+    };
+
+    const handleAllFilesDownload = () => {
+        handleDownload();
+    }
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+    //ADD TO FAVOURITES
+    const handleFavorite = async () => {
+        if (!currentUser) {
+            alert('Please log in to favorite models');
+            return;
+        }
+
+        if (favoriteLoading) return;
+
+        try {
+            setFavoriteLoading(true);
+            console.log('Toggling favorite for model:', modelId);
+
+            const result = await toggleFavoriteModel(modelId);
+
+            if (result.success) {
+                setIsFavorited(result.isFavorite);
+                // Update model's favorites count in local state
+                setModel(prev => ({
+                    ...prev,
+                    favorites: result.action === 'added'
+                        ? (prev.favorites || 0) + 1
+                        : Math.max((prev.favorites || 1) - 1, 0)
+                }));
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            alert('Failed to update favorite status');
+        } finally {
+            setFavoriteLoading(false);
+        }
+    };
+
+    const handleShare = () => {
+        console.log("Share model:", modelId);
+        navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+    };
+
+    //Loading screen
+    if (loading) {
+        return (
+            <div style={backgroundStyle}>
+                <Header />
+                <CookiesBanner />
+                <div style={loadingStyle}>
+                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⏳</div>
+                    Loading model details...
+                </div>
+            </div>
+        );
+    }
+
+    //Error screen
+    if (error) {
+        return (
+            <div style={backgroundStyle}>
+                <Header />
+                <CookiesBanner />
+                <div style={errorStyle}>
+                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>❌</div>
+                    {error}
+                    <br />
+                    <button
+                        onClick={loadModelDetails}
+                        style={{
+                            marginTop: '20px',
+                            padding: '12px 24px',
+                            backgroundColor: '#ff7b00',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '1rem'
+                        }}
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    //If the model doesn't exist screen
+    if (!model) {
+        return (
+            <div style={backgroundStyle}>
+                <Header />
+                <CookiesBanner />
+                <div style={errorStyle}>
+                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🔍</div>
+                    Model not found
+                </div>
+            </div>
+        );
+    }
+
+
+    return (
+        <div style={{ ...backgroundStyle, ...responsiveFixStyle }}>
+            <Header />
+            <CookiesBanner />
+
+            <div style={containerStyle}>
+                <div style={isLargeScreen ? { ...contentStyleLarge, ...responsiveFixStyle } : { ...contentStyle, ...responsiveFixStyle }}>
+                    {/* Left Column - Model Preview and Details */}
+                    <div style={{ ...leftColumnStyle, ...responsiveFixStyle }}>
+                        {/* Model Preview */}
+                        <div style={modelPreviewStyle}>
+                            {model.previewImages && model.previewImages.length > 0 ? (
+                                <img
+                                    onClick={() => openModal(selectedImageIndex)}
+                                    src={model.previewImages[selectedImageIndex]}
+                                    alt={model.title}
+                                    style={previewImageStyle}
+                                    onError={(e) => {
+                                        e.target.src = '/profile.png';
+                                    }}
+                                />
+                            ) : (
+                                <div style={previewPlaceholderStyle}>
+                                    🎨 No Preview Available
+                                </div>
+                            )}
+
+                            {/* Thumbnails */}
+                            {model.previewImages && model.previewImages.length > 1 && (
+                                <div style={thumbnailsStyle}>
+                                    {model.previewImages.map((image, index) => (
+                                        <img
+                                            key={index}
+                                            src={image}
+                                            alt={`Preview ${index + 1}`}
+                                            style={selectedImageIndex === index ? thumbnailActiveStyle : thumbnailStyle}
+                                            onClick={() => setSelectedImageIndex(index)}
+                                            onError={(e) => {
+                                                e.target.src = '/profile.png';
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Model Details */}
+                        <div style={detailsCardStyle}>
+                            <h1 style={isLargeScreen ? titleStyle : titleStyleMobile}>{model.title}</h1>
+                            {/* Creator info */}
+                            <div
+                                style={creatorStyle}
+                                onClick={() => window.location.href = username === model.creatorUsername ? '/dashboard' : `/user/${model.creatorUsername}`}
+                            >
+                                <img
+                                    src={model.creatorProfilePicture || '/profile.png'}
+                                    alt={model.creatorUsername}
+                                    style={avatarStyle}
+                                    onError={(e) => {
+                                        e.target.src = '/profile.png';
+                                    }}
+                                />
+                                <span>Created by <strong>{model.creatorUsername}</strong></span>
+                            </div>
+                            {/* Stats */}
+                            <div style={isLargeScreen ? statsStyle : statsStyleMobile}>
+                                <div style={statItemStyle}>
+                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
+                                        {model.downloads || 0}
+                                    </span>
+                                    <span style={statLabelStyle}>Downloads</span>
+                                </div>
+                                <div style={statItemStyle}>
+                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
+                                        {model.favorites || 0}
+                                    </span>
+                                    <span style={statLabelStyle}>Favorites</span>
+                                </div>
+                                <div style={statItemStyle}>
+                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
+                                        {model.likes || 0}
+                                    </span>
+                                    <span style={statLabelStyle}>Likes</span>
+                                </div>
+                            </div>
+
+                            {/* Description */}
+                            {model.description && (
+                                <div style={descriptionStyle}>
+                                    <h3 style={{ marginBottom: '10px', color: '#333' }}>Description</h3>
+                                    <p>{model.description}</p>
+                                </div>
+                            )}
+
+                            {/* Specifications */}
+                            <div style={isLargeScreen ? specsGridStyle : specsGridStyleMobile}>
+                                <div style={specItemStyle}>
+                                    <span style={specLabelStyle}>Category</span>
+                                    <span style={specValueStyle}>{model.category || 'Other'}</span>
+                                </div>
+                                <div style={specItemStyle}>
+                                    <span style={specLabelStyle}>Type</span>
+                                    <span style={specValueStyle}>{model.type || 'Model'}</span>
+                                </div>
+                                <div style={specItemStyle}>
+                                    <span style={specLabelStyle}>File Format</span>
+                                    <span style={specValueStyle}>
+                                        {model.modelFiles && model.modelFiles.length > 0
+                                            ? model.modelFiles.map(file => file.fileName.split('.').pop()).join(', ')
+                                            : 'Unknown'
+                                        }
+                                    </span>
+                                </div>
+                                <div style={specItemStyle}>
+                                    <span style={specLabelStyle}>Created</span>
+                                    <span style={specValueStyle}>
+                                        {model.createdAt ? new Date(model.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Compatible Software */}
+                            {model.software && model.software.length > 0 && (
+                                <div style={specItemStyle}>
+                                    <span style={specLabelStyle}>Compatible Software</span>
+                                    <div style={softwareListStyle}>
+                                        {model.software.map((software, index) => (
+                                            <span key={index} style={softwareBadgeStyle}>
+                                                {software}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tags */}
+                            {model.tags && model.tags.length > 0 && (
+                                <div style={specItemStyle}>
+                                    <span style={specLabelStyle}>Tags</span>
+                                    <div style={softwareListStyle}>
+                                        {model.tags.map((tag, index) => (
+                                            <span key={index} style={{ ...softwareBadgeStyle, backgroundColor: '#f0f0f0', color: '#666' }}>
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    {/* Right Column - Download and Actions */}
+                    <div style={isLargeScreen ? { ...rightColumnStyleLarge, ...responsiveFixStyle } : { ...rightColumnStyle, ...responsiveFixStyle }}>
+                        <div style={detailsCardStyle}>
+                            {/* Download button */}
+                            <button
+                                style={isDownloadHovered ? downloadButtonHoverStyle : downloadButtonStyle}
+                                onMouseEnter={() => setIsDownloadHovered(true)}
+                                onMouseLeave={() => setIsDownloadHovered(false)}
+                                onClick={() => {
+                                    if (model.modelFiles && model.modelFiles.length === 1) {
+                                        // If there is one file to download
+                                        handleSingleFileDownload(model.modelFiles[0].fileName);
+                                    } else {
+                                        // If there is a package to download
+                                        onClick = { handleAllFilesDownload }
+                                    }
+                                }}
+                                disabled={downloadLoading}
+                            >
+                                <img
+                                    src="/DownloadIcon.png"
+                                    alt="Download"
+                                    style={downloadIconStyle}
+                                />
+                                {downloadLoading ? 'DOWNLOADING...' : 'DOWNLOAD NOW'}
+                            </button>
+
+
+
+                            {/* Progress indicator */}
+                            {downloadLoading && (
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '10px',
+                                    color: '#666',
+                                    fontSize: '0.9rem'
+                                }}>
+                                    ⏳ Downloading files... Please wait.
+                                </div>
+                            )}
+
+                            <div style={isLargeScreen ? actionButtonsStyle : actionButtonsStyleMobile}>
+                                {/* Favorite toggle and Share buttons */}
+                                <button
+                                    style={actionButtonStyle}
+                                    onMouseEnter={(e) => {
+                                        if (isLargeScreen) {
+                                            e.target.style.borderColor = '#ff7b00';
+                                            e.target.style.color = '#ff7b00';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (isLargeScreen) {
+                                            e.target.style.borderColor = '#ddd';
+                                            e.target.style.color = '#333';
+                                        }
+                                    }}
+                                    onClick={handleFavorite}
+                                    disabled={favoriteLoading}
+                                >
+                                    {favoriteLoading
+                                        ? '⏳ Processing...'
+                                        : isFavorited
+                                            ? '💔 Remove from Favorites'
+                                            : '❤️ Add to Favorites'
+                                    }
+                                </button>
+                                <button
+                                    style={actionButtonStyle}
+                                    onMouseEnter={(e) => {
+                                        if (isLargeScreen) {
+                                            e.target.style.borderColor = '#ff7b00';
+                                            e.target.style.color = '#ff7b00';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (isLargeScreen) {
+                                            e.target.style.borderColor = '#ddd';
+                                            e.target.style.color = '#333';
+                                        }
+                                    }}
+                                    onClick={handleShare}
+                                >
+                                    🔗 Share
+                                </button>
+                            </div>
+
+                            {/* File List  */}
+                            {model.modelFiles && model.modelFiles.length > 0 && (
+                                <div style={fileListStyle}>
+                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>Files Included</h3>
+                                    {model.modelFiles.map((file, index) => (
+                                        <div key={index} style={{
+                                            ...fileItemStyle,
+                                            cursor: 'pointer'
+                                        }}
+
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = '#f9f9f9';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = 'transparent';
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                                                <span style={fileNameStyle}>{file.fileName}</span>
+                                                <span style={fileSizeStyle}>
+                                                    {formatFileSize(file.fileSize)} • {file.software}
+                                                </span>
+                                            </div>
+
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        {/* Comments Section */}
+                        <div style={commentsSectionStyle}>
+                            <h3 style={{ marginBottom: '20px', color: '#333', fontSize: '1.4rem' }}>
+                                Comments ({comments.length + comments.reduce((total, comment) => total + (comment.replies ? comment.replies.length : 0), 0)})
+                            </h3>
+
+                            {/* Comment Form */}
+                            {currentUser ? (
+                                <div style={commentFormStyle}>
+                                    <textarea
+                                        style={commentText ? { ...commentInputStyle, ...commentInputFocusStyle } : commentInputStyle}
+                                        placeholder="Add a comment..."
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        onFocus={(e) => {
+                                            e.target.style.borderColor = '#ff7b00';
+                                            e.target.style.outline = 'none';
+                                        }}
+                                        onBlur={(e) => {
+                                            if (!commentText) {
+                                                e.target.style.borderColor = '#ddd';
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        style={
+                                            commentLoading || !commentText.trim()
+                                                ? { ...commentSubmitStyle, ...commentSubmitDisabledStyle }
+                                                : commentSubmitStyle
+                                        }
+                                        onMouseEnter={(e) => {
+                                            if (!commentLoading && commentText.trim()) {
+                                                e.target.style.backgroundColor = '#e66a00';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!commentLoading && commentText.trim()) {
+                                                e.target.style.backgroundColor = '#ff7b00';
+                                            }
+                                        }}
+                                        onClick={handleAddComment}
+                                        disabled={commentLoading || !commentText.trim()}
+                                    >
+                                        {commentLoading ? 'Posting...' : 'Post Comment'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={loginPromptStyle}>
+                                    Please <a href="/login" style={{ color: '#ff7b00', textDecoration: 'none' }}>log in</a> to add comments
+                                </div>
+                            )}
+
+                            {/* Comments List */}
+                            <div style={commentsListStyle} className="comments-scrollbar">
+                                {comments.length > 0 ? (
+                                    comments.map((comment) => (
+                                        <div key={comment.id} style={commentItemStyle}>
+                                            {/* Comment Header */}
+                                            <div style={commentHeaderStyle}>
+                                                <img
+                                                    src={comment.profilePicture || '/profile.png'}
+                                                    alt={comment.username}
+                                                    style={commentAvatarStyle}
+                                                    onError={(e) => {
+                                                        e.target.src = '/profile.png';
+                                                    }}
+                                                />
+                                                <div style={commentMetaStyle}>
+                                                    <span style={commentUsernameStyle}>{comment.username}</span>
+                                                    <span style={commentDateStyle}>{formatDate(comment.createdAt)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Comment Text */}
+                                            <div style={commentTextStyle}>
+                                                {comment.text}
+                                            </div>
+
+
+                                            {/* Comment Actions */}
+                                            <div style={commentActionsStyle}>
+                                                {currentUser && (<button
+                                                    style={replyButtonStyle}
+                                                    onMouseEnter={(e) => {
+                                                        e.target.style.backgroundColor = 'rgba(255, 123, 0, 0.1)';
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.target.style.backgroundColor = 'transparent';
+                                                    }}
+                                                    onClick={() => startReplyToComment(comment.id)}
+                                                >
+                                                    {replyingTo && replyingTo.type === 'comment' && replyingTo.id === comment.id ? 'Cancel' : 'Reply'}
+                                                </button>
+                                                )}
+                                            </div>
+
+                                            {/* Reply Form */}
+                                            {replyingTo && replyingTo.type === 'comment' && replyingTo.id === comment.id && currentUser && (
+                                                <div style={replyFormStyle}>
+                                                    <textarea
+                                                        style={replyText ? { ...replyInputStyle, ...replyInputFocusStyle } : replyInputStyle}
+                                                        placeholder={getReplyPlaceholder()}
+                                                        value={replyText}
+                                                        onChange={(e) => setReplyText(e.target.value)}
+                                                        onFocus={(e) => {
+                                                            e.target.style.borderColor = '#ff7b00';
+                                                            e.target.style.outline = 'none';
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            if (!replyText) {
+                                                                e.target.style.borderColor = '#ddd';
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div style={replyButtonsStyle}>
+                                                        <button
+                                                            style={replyCancelStyle}
+                                                            onMouseEnter={(e) => {
+                                                                e.target.style.backgroundColor = '#aaa';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.target.style.backgroundColor = '#ccc';
+                                                            }}
+                                                            onClick={() => {
+                                                                setReplyingTo(null);
+                                                                setReplyText("");
+                                                            }}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                        <button
+                                                            style={
+                                                                replyLoading || !replyText.trim()
+                                                                    ? { ...replySubmitStyle, backgroundColor: '#ccc', cursor: 'not-allowed' }
+                                                                    : replySubmitStyle
+                                                            }
+                                                            onMouseEnter={(e) => {
+                                                                if (!replyLoading && replyText.trim()) {
+                                                                    e.target.style.backgroundColor = '#e66a00';
+                                                                }
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                if (!replyLoading && replyText.trim()) {
+                                                                    e.target.style.backgroundColor = '#ff7b00';
+                                                                }
+                                                            }}
+                                                            onClick={() => handleAddReply(comment.id, 'comment', comment.id, comment.username)}
+                                                            disabled={replyLoading || !replyText.trim()}
+                                                        >
+                                                            {replyLoading ? 'Posting...' : 'Post Reply'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+
+                                            {/* Replies List */}
+                                            {comment.replies && comment.replies.length > 0 && (
+                                                <div style={repliesStyle}>
+                                                    {comment.replies.map((reply) => (
+                                                        <div key={reply.id} style={replyItemStyle}>
+                                                            <div style={replyHeaderWithMentionStyle}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                    <img
+                                                                        src={reply.profilePicture || '/profile.png'}
+                                                                        alt={reply.username}
+                                                                        style={replyAvatarStyle}
+                                                                        onError={(e) => {
+                                                                            e.target.src = '/profile.png';
+                                                                        }}
+                                                                    />
+                                                                    <div style={replyMetaStyle}>
+                                                                        <span style={replyUsernameStyle}>{reply.username}</span>
+                                                                        <span style={replyDateStyle}>{formatDate(reply.createdAt)}</span>
+                                                                    </div>
+                                                                </div>
+                                                                {reply.repliedTo && (
+                                                                    <div style={replyMentionStyle}>
+                                                                        <span style={replyArrowStyle}>→</span>
+                                                                        <span>{reply.repliedTo}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div style={replyTextStyle}>
+                                                                {reply.text}
+                                                            </div>
+
+                                                            {/* Reply Actions for replies */}
+                                                            <div style={commentActionsStyle}>
+                                                                {currentUser && (<button
+                                                                    style={replyButtonStyle}
+                                                                    onMouseEnter={(e) => {
+                                                                        e.target.style.backgroundColor = 'rgba(255, 123, 0, 0.1)';
+                                                                    }}
+                                                                    onMouseLeave={(e) => {
+                                                                        e.target.style.backgroundColor = 'transparent';
+                                                                    }}
+                                                                    onClick={() => startReplyToReply(reply.id, comment.id)}
+                                                                >
+                                                                    {replyingTo && replyingTo.type === 'reply' && replyingTo.id === reply.id ? 'Cancel' : 'Reply'}
+                                                                </button>)}
+                                                            </div>
+
+                                                            {/* Reply Form replies */}
+                                                            {replyingTo && replyingTo.type === 'reply' && replyingTo.id === reply.id && currentUser && (
+                                                                <div style={replyFormStyle}>
+                                                                    <textarea
+                                                                        style={replyText ? { ...replyInputStyle, ...replyInputFocusStyle } : replyInputStyle}
+                                                                        placeholder={getReplyPlaceholder()}
+                                                                        value={replyText}
+                                                                        onChange={(e) => setReplyText(e.target.value)}
+                                                                        onFocus={(e) => {
+                                                                            e.target.style.borderColor = '#ff7b00';
+                                                                            e.target.style.outline = 'none';
+                                                                        }}
+                                                                        onBlur={(e) => {
+                                                                            if (!replyText) {
+                                                                                e.target.style.borderColor = '#ddd';
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    <div style={replyButtonsStyle}>
+                                                                        <button
+                                                                            style={replyCancelStyle}
+                                                                            onMouseEnter={(e) => {
+                                                                                e.target.style.backgroundColor = '#aaa';
+                                                                            }}
+                                                                            onMouseLeave={(e) => {
+                                                                                e.target.style.backgroundColor = '#ccc';
+                                                                            }}
+                                                                            onClick={() => {
+                                                                                setReplyingTo(null);
+                                                                                setReplyText("");
+                                                                            }}
+                                                                        >
+                                                                            Cancel
+                                                                        </button>
+                                                                        <button
+                                                                            style={
+                                                                                replyLoading || !replyText.trim()
+                                                                                    ? { ...replySubmitStyle, backgroundColor: '#ccc', cursor: 'not-allowed' }
+                                                                                    : replySubmitStyle
+                                                                            }
+                                                                            onMouseEnter={(e) => {
+                                                                                if (!replyLoading && replyText.trim()) {
+                                                                                    e.target.style.backgroundColor = '#e66a00';
+                                                                                }
+                                                                            }}
+                                                                            onMouseLeave={(e) => {
+                                                                                if (!replyLoading && replyText.trim()) {
+                                                                                    e.target.style.backgroundColor = '#ff7b00';
+                                                                                }
+                                                                            }}
+                                                                            onClick={() => handleAddReply(reply.id, 'reply', comment.id, reply.username)}
+                                                                            disabled={replyLoading || !replyText.trim()}
+                                                                        >
+                                                                            {replyLoading ? 'Posting...' : 'Post Reply'}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div style={noCommentsStyle}>
+                                        No comments yet. Be the first to comment!
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {/* Full view image */}
+            {isModalOpen && model.previewImages && model.previewImages.length > 0 && (
+                <div style={modalOverlayStyle} onClick={closeModal}>
+                    {/* Close button */}
+                    <button
+                        style={closeButtonStyle}
+                        onClick={closeModal}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
+                    >
+                        ×
+                    </button>
+                    {/* Nav buttons */}
+                    {model.previewImages.length > 1 && (
+                        <>
+                            <button
+                                style={prevButtonStyle}
+                                onClick={goToPrevImage}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
+                            >
+                                ‹
+                            </button>
+                            <button
+                                style={nextButtonStyle}
+                                onClick={goToNextImage}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
+                            >
+                                ›
+                            </button>
+                        </>
+                    )}
+                    {/* Preview image */}
+
+                    <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+                        <img
+                            src={model.previewImages[currentModalImageIndex]}
+                            alt={`Preview ${currentModalImageIndex + 1}`}
+                            style={modalImageStyle}
+                            onError={(e) => {
+                                e.target.src = '/profile.png';
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
+
+        </div>
+
+    );
+}
 //Background style
 const backgroundStyle = {
     background: '#ecececff',
@@ -429,643 +1483,331 @@ const nextButtonStyle = {
     right: '20px'
 };
 
-//Screen size handle
-const useScreenSize = () => {
-    const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0);
-    useEffect(() => {
-        const handleResize = () => {
-            setIsLargeScreen(window.innerWidth >= 1024);
-        };
 
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+// Comments section styles
+const commentsSectionStyle = {
+    backgroundColor: 'white',
+    borderRadius: '15px',
+    padding: '2rem',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
+    marginTop: '10px',
+    maxWidth: '100%',
 
-    return isLargeScreen;
+
+    boxSizing: 'border-box'
 };
-function ModelDetails() {
-    const [downloadLoading, setDownloadLoading] = useState(false);
-    const [downloadProgress, setDownloadProgress] = useState({});
-    const [showDownloadOptions, setShowDownloadOptions] = useState(false);
-    const [isFavorited, setIsFavorited] = useState(false);//Favourite state
-    const [favoriteLoading, setFavoriteLoading] = useState(false);//State for favourite add/remove
-    const { modelId } = useParams(); // To identify the model that should be displayed
-    const { currentUser, userLogedIn } = useAuth(); //To identify the user
-    const [username, setUsername] = useState(""); //To identify the username of the user
-    const [model, setModel] = useState(null); //Model details
-    const [loading, setLoading] = useState(true); //To check if the page is loading
-    const [error, setError] = useState(null); //Errors
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0); //Which preview image is selected
-    const [isDownloadHovered, setIsDownloadHovered] = useState(false); //Check if mouse is on the button
-    const [isModalOpen, setIsModalOpen] = useState(false); //Check if the full view of the images is active
-    const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0); //Current image to show on full view
-    const isLargeScreen = useScreenSize(); //Check the screen size
+//Comment form
+const commentFormStyle = {
+    marginBottom: '25px'
+};
 
-    //Open the image full view
-    const openModal = (index) => {
-        setCurrentModalImageIndex(index);
-        setIsModalOpen(true);
-    };
+//Comment input
+const commentInputStyle = {
+    width: '100%',
+    padding: '15px',
+    border: '2px solid #ddd',
+    borderRadius: '10px',
+    fontSize: '1rem',
+    resize: 'vertical',
+    minHeight: '100px',
+    marginBottom: '15px',
+    fontFamily: 'Arial, sans-serif',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.3s ease'
+};
 
-    //Close the image full view
-    const closeModal = () => {
-        setIsModalOpen(false);
-    };
+//Comment Input focus
+const commentInputFocusStyle = {
+    borderColor: '#ff7b00',
+    outline: 'none'
+};
 
-    //Handle prev image
-    const goToPrevImage = (e) => {
-        e.stopPropagation();
-        if (model.previewImages && model.previewImages.length > 0) {
-            setCurrentModalImageIndex(prev =>
-                prev === 0 ? model.previewImages.length - 1 : prev - 1
-            );
-        }
-    };
+//Comment Submit
+const commentSubmitStyle = {
+    padding: '12px 24px',
+    backgroundColor: '#ff7b00',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease',
+    width: '100%'
+};
 
-    //Handle next image
-    const goToNextImage = (e) => {
-        e.stopPropagation();
-        if (model.previewImages && model.previewImages.length > 0) {
-            setCurrentModalImageIndex(prev =>
-                prev === model.previewImages.length - 1 ? 0 : prev + 1
-            );
-        }
-    };
-    //Use effect to check if the model is favorited or not
-    useEffect(() => {
-        const checkFavoriteStatus = async () => {
-            if (model && currentUser) {
-                const favorited = await isModelFavorited(model.id);
-                setIsFavorited(favorited);
-            }
-        };
+//Comment Submit Hover
+const commentSubmitHoverStyle = {
+    backgroundColor: '#e66a00'
+};
 
-        checkFavoriteStatus();
-    }, [model, currentUser]);
-    // Use effect for setting the username
-    useEffect(() => {
-        console.log("=== SETTING AUTHENTICATED USER USERNAME ===");
+//Comment Submit Disabled 
+const commentSubmitDisabledStyle = {
+    backgroundColor: '#ccc',
+    cursor: 'not-allowed'
+};
+//Comments List
+const commentsListStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    marginTop: '20px',
+    maxHeight: '600px',
+    overflowY: "scroll",
+    gap: '20px'
+};
 
-        const fetchUsername = async () => {
-            if (currentUser && userLogedIn) {
-                console.log("Authenticated user:", currentUser);
+//Comment Item
+const commentItemStyle = {
+    border: '1px solid #f0f0f0',
+    borderRadius: '10px',
+    padding: '20px',
+    backgroundColor: '#fafafa'
+};
 
-                try {
-                    // Firestore imports
-                    const { doc, getDoc } = await import('firebase/firestore');
-                    const { db } = await import('/backend/firebase.js');
-                    // Get firestore doc
-                    const userDocRef = doc(db, "users", currentUser.uid);
-                    const userDoc = await getDoc(userDocRef);
+//Comment Header
+const commentHeaderStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginBottom: '15px'
+};
 
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        const actualUsername = userData.username;
+//Comment Avatar
+const commentAvatarStyle = {
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    objectFit: 'cover'
+};
 
-                        if (actualUsername) {
-                            setUsername(actualUsername);
-                            console.log("Username set from Firestore:", actualUsername);
-                        } else {
-                            // Fallback to email if the username doesn't exist
-                            const usernameFromEmail = currentUser.email ? currentUser.email.split('@')[0] : 'Unknown';
-                            setUsername(usernameFromEmail);
-                            console.log("Username generated from email:", usernameFromEmail);
-                        }
-                    } else {
-                        console.log("User document not found in Firestore");
-                        const usernameFromEmail = currentUser.email ? currentUser.email.split('@')[0] : 'Unknown';
-                        setUsername(usernameFromEmail);
-                    }
-                } catch (error) {
-                    console.error("Error fetching user data from Firestore:", error);
-                    // Fallback for error case
-                    const usernameFromEmail = currentUser.email ? currentUser.email.split('@')[0] : 'Unknown';
-                    setUsername(usernameFromEmail);
-                }
-            } else {
-                console.log("No user authenticated or user not logged in");
-                setUsername("");
-            }
-        };
+const commentMetaStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1
+};
+//Comment Username
+const commentUsernameStyle = {
+    fontSize: '1rem',
+    fontWeight: 'bold',
+    color: '#333',
+    margin: '0 0 4px 0'
+};
+//Comment Date
+const commentDateStyle = {
+    fontSize: '0.85rem',
+    color: '#666',
+    margin: 0
+};
+//Comment Text
+const commentTextStyle = {
+    fontSize: '1rem',
+    color: '#333',
+    lineHeight: '1.5',
+    marginBottom: '15px',
+    wordBreak: 'break-word'
+};
+//Comment Actions
+const commentActionsStyle = {
+    display: 'flex',
+    gap: '15px',
+    alignItems: 'center'
+};
+//Reply Button
+const replyButtonStyle = {
+    background: 'none',
+    border: 'none',
+    color: '#ff7b00',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    fontWeight: '500',
+    padding: '5px 10px',
+    borderRadius: '5px',
+    transition: 'background-color 0.3s ease'
+};
+//Reply Button Hover
+const replyButtonHoverStyle = {
+    backgroundColor: 'rgba(255, 123, 0, 0.1)'
+};
+//Replies list
+const repliesStyle = {
+    marginTop: '20px',
+    paddingLeft: '20px',
+    borderLeft: '3px solid #eee',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px'
+};
+//Reply item
+const replyItemStyle = {
+    backgroundColor: 'white',
+    padding: '15px',
+    borderRadius: '8px',
+    border: '1px solid #f0f0f0'
+};
+//Reply Header
+const replyHeaderStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '10px'
+};
+//Reply Avatar
+const replyAvatarStyle = {
+    width: '30px',
+    height: '30px',
+    borderRadius: '50%',
+    objectFit: 'cover'
+};
 
-        fetchUsername();
-    }, [currentUser, userLogedIn]);
-    //Load model details
-    useEffect(() => {
-        console.log("=== LOADING MODEL DETAILS ===");
-        console.log("Model ID:", modelId);
+//Reply Meta
+const replyMetaStyle = {
+    display: 'flex',
+    flexDirection: 'column'
+};
 
-        loadModelDetails();
-    }, [modelId]);
+//Reply Username
+const replyUsernameStyle = {
+    fontSize: '0.9rem',
+    fontWeight: 'bold',
+    color: '#333',
+    margin: 0
+};
 
-    const loadModelDetails = async () => {
-        try {
-            setLoading(true);
-            setError(null);
+//Reply Date
+const replyDateStyle = {
+    fontSize: '0.8rem',
+    color: '#666',
+    margin: 0
+};
 
-            const result = await getModelById(modelId);
+//Reply Text
+const replyTextStyle = {
+    fontSize: '0.9rem',
+    color: '#333',
+    lineHeight: '1.4',
+    wordBreak: 'break-word'
+};
 
-            if (result.success) {
-                console.log("Model loaded successfully:", result.model);
-                setModel(result.model);
-            } else {
-                console.error("Failed to load model:", result.message);
-                setError(result.message || "Model not found");
-            }
-        } catch (err) {
-            console.error("Error loading model details:", err);
-            setError("Failed to load model details. Please try again later.");
-        } finally {
-            setLoading(false);
-        }
-    };
+//Reply Form
+const replyFormStyle = {
+    marginTop: '15px',
+    padding: '15px',
+    backgroundColor: '#f9f9f9',
+    borderRadius: '8px',
+    border: '1px solid #eee'
+};
 
-    //DOWNLOAD
-    const handleDownload = async (specificFileName = null) => {
-        if (!currentUser) {
-            alert('Please log in to download models');
-            return;
-        }
+//Reply Input
+const replyInputStyle = {
+    width: '100%',
+    padding: '12px',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    fontSize: '0.9rem',
+    resize: 'vertical',
+    minHeight: '80px',
+    marginBottom: '10px',
+    fontFamily: 'Arial, sans-serif',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.3s ease'
+};
 
-        if (downloadLoading) return;
+//Reply Input Focus
+const replyInputFocusStyle = {
+    borderColor: '#ff7b00',
+    outline: 'none'
+};
 
-        try {
-            setDownloadLoading(true);
-            setDownloadProgress({});
-            console.log('Initiating download for model:', modelId, 'File:', specificFileName);
+//Reply Button
+const replyButtonsStyle = {
+    display: 'flex',
+    gap: '10px',
+    justifyContent: 'flex-end'
+};
 
-            const result = await downloadModel(modelId, specificFileName);
+//Reply Submit
+const replySubmitStyle = {
+    padding: '8px 16px',
+    backgroundColor: '#ff7b00',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease'
+};
 
-            if (result.success) {
-                
+//Reply Submit Hover
+const replySubmitHoverStyle = {
+    backgroundColor: '#e66a00'
+};
 
-                // Succes message
-                if (result.downloads) {
-                    const successful = result.downloads.filter(d => d.success);
-                    const failed = result.downloads.filter(d => !d.success);
+//Reply Cancel
+const replyCancelStyle = {
+    padding: '8px 16px',
+    backgroundColor: '#ccc',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease'
+};
 
-                    let message = `Download completed! `;
-                    if (successful.length > 0) {
-                        message += `Successfully downloaded ${successful.length} file(s). `;
-                    }
-                    if (failed.length > 0) {
-                        message += `Failed to download ${failed.length} file(s).`;
-                    }
+//Reply Cancel Hover
+const replyCancelHoverStyle = {
+    backgroundColor: '#aaa'
+};
 
-                    alert(message);
-                } else {
-                    alert(result.message);
-                }
+//No comments
+const noCommentsStyle = {
+    textAlign: 'center',
+    padding: '40px 20px',
+    color: '#666',
+    fontSize: '1.1rem'
+};
 
-                // Hide download options
-                setShowDownloadOptions(false);
+//Login Prompt
+const loginPromptStyle = {
+    textAlign: 'center',
+    padding: '30px 20px',
+    color: '#666',
+    fontSize: '1rem',
+    backgroundColor: '#f9f9f9',
+    borderRadius: '10px',
+    border: '1px solid #eee'
+};
+//Reply Header With Mention
+const replyHeaderWithMentionStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '10px',
+    flexWrap: 'wrap'
+};
 
-            } else {
-                alert(result.message || 'Download failed. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error during download:', error);
-            alert('Download failed. Please try again.');
-        } finally {
-            setDownloadLoading(false);
-            setDownloadProgress({});
-        }
-    };
-    const handleSingleFileDownload = (fileName) => {
-        handleDownload(fileName);
-    };
+//Reply Mention
+const replyMentionStyle = {
+    color: '#666',
+    fontSize: '0.85rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px'
+};
 
-    const handleAllFilesDownload = () => {
-        handleDownload();
-    }
-    const formatFileSize = (bytes) => {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
-    //ADD TO FAVOURITES
-    const handleFavorite = async () => {
-        if (!currentUser) {
-            alert('Please log in to favorite models');
-            return;
-        }
+//Reply Arrow
+const replyArrowStyle = {
+    color: '#999',
+    fontSize: '0.8rem'
+};
 
-        if (favoriteLoading) return;
-
-        try {
-            setFavoriteLoading(true);
-            console.log('Toggling favorite for model:', modelId);
-
-            const result = await toggleFavoriteModel(modelId);
-
-            if (result.success) {
-                setIsFavorited(result.isFavorite);
-                // Update model's favorites count in local state
-                setModel(prev => ({
-                    ...prev,
-                    favorites: result.action === 'added'
-                        ? (prev.favorites || 0) + 1
-                        : Math.max((prev.favorites || 1) - 1, 0)
-                }));
-            } else {
-                alert(result.message);
-            }
-        } catch (error) {
-            console.error('Error toggling favorite:', error);
-            alert('Failed to update favorite status');
-        } finally {
-            setFavoriteLoading(false);
-        }
-    };
-
-    const handleShare = () => {
-        console.log("Share model:", modelId);
-        // TODO: Implement share functionality
-        navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
-    };
-
-    //Loading screen
-    if (loading) {
-        return (
-            <div style={backgroundStyle}>
-                <Header />
-                <CookiesBanner />
-                <div style={loadingStyle}>
-                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⏳</div>
-                    Loading model details...
-                </div>
-            </div>
-        );
-    }
-
-    //Error screen
-    if (error) {
-        return (
-            <div style={backgroundStyle}>
-                <Header />
-                <CookiesBanner />
-                <div style={errorStyle}>
-                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>❌</div>
-                    {error}
-                    <br />
-                    <button
-                        onClick={loadModelDetails}
-                        style={{
-                            marginTop: '20px',
-                            padding: '12px 24px',
-                            backgroundColor: '#ff7b00',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '1rem'
-                        }}
-                    >
-                        Try Again
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    //If the model doesn't exist screen
-    if (!model) {
-        return (
-            <div style={backgroundStyle}>
-                <Header />
-                <CookiesBanner />
-                <div style={errorStyle}>
-                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🔍</div>
-                    Model not found
-                </div>
-            </div>
-        );
-    }
-
-
-    return (
-        <div style={{ ...backgroundStyle, ...responsiveFixStyle }}>
-            <Header />
-            <CookiesBanner />
-
-            <div style={containerStyle}>
-                <div style={isLargeScreen ? { ...contentStyleLarge, ...responsiveFixStyle } : { ...contentStyle, ...responsiveFixStyle }}>
-                    {/* Left Column - Model Preview and Details */}
-                    <div style={{ ...leftColumnStyle, ...responsiveFixStyle }}>
-                        {/* Model Preview */}
-                        <div style={modelPreviewStyle}>
-                            {model.previewImages && model.previewImages.length > 0 ? (
-                                <img
-                                    onClick={() => openModal(selectedImageIndex)}
-                                    src={model.previewImages[selectedImageIndex]}
-                                    alt={model.title}
-                                    style={previewImageStyle}
-                                    onError={(e) => {
-                                        e.target.src = '/default-model-preview.png';
-                                    }}
-                                />
-                            ) : (
-                                <div style={previewPlaceholderStyle}>
-                                    🎨 No Preview Available
-                                </div>
-                            )}
-
-                            {/* Thumbnails */}
-                            {model.previewImages && model.previewImages.length > 1 && (
-                                <div style={thumbnailsStyle}>
-                                    {model.previewImages.map((image, index) => (
-                                        <img
-                                            key={index}
-                                            src={image}
-                                            alt={`Preview ${index + 1}`}
-                                            style={selectedImageIndex === index ? thumbnailActiveStyle : thumbnailStyle}
-                                            onClick={() => setSelectedImageIndex(index)}
-                                            onError={(e) => {
-                                                e.target.src = '/default-model-preview.png';
-                                            }}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Model Details */}
-                        <div style={detailsCardStyle}>
-                            <h1 style={isLargeScreen ? titleStyle : titleStyleMobile}>{model.title}</h1>
-                            {/* Creator info */}
-                            <div
-                                style={creatorStyle}
-                                onClick={() => window.location.href = username === model.creatorUsername ? '/dashboard' : `/user/${model.creatorUsername}`}
-                            >
-                                <img
-                                    src={model.creatorProfilePicture || '/default-avatar.png'}
-                                    alt={model.creatorUsername}
-                                    style={avatarStyle}
-                                    onError={(e) => {
-                                        e.target.src = '/default-avatar.png';
-                                    }}
-                                />
-                                <span>Created by <strong>{model.creatorUsername}</strong></span>
-                            </div>
-                            {/* Stats */}
-                            <div style={isLargeScreen ? statsStyle : statsStyleMobile}>
-                                <div style={statItemStyle}>
-                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
-                                        {model.downloads || 0}
-                                    </span>
-                                    <span style={statLabelStyle}>Downloads</span>
-                                </div>
-                                <div style={statItemStyle}>
-                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
-                                        {model.favorites || 0}
-                                    </span>
-                                    <span style={statLabelStyle}>Favorites</span>
-                                </div>
-                                <div style={statItemStyle}>
-                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
-                                        {model.likes || 0}
-                                    </span>
-                                    <span style={statLabelStyle}>Likes</span>
-                                </div>
-                            </div>
-
-                            {/* Description */}
-                            {model.description && (
-                                <div style={descriptionStyle}>
-                                    <h3 style={{ marginBottom: '10px', color: '#333' }}>Description</h3>
-                                    <p>{model.description}</p>
-                                </div>
-                            )}
-
-                            {/* Specifications */}
-                            <div style={isLargeScreen ? specsGridStyle : specsGridStyleMobile}>
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Category</span>
-                                    <span style={specValueStyle}>{model.category || 'Other'}</span>
-                                </div>
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Type</span>
-                                    <span style={specValueStyle}>{model.type || 'Model'}</span>
-                                </div>
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>File Format</span>
-                                    <span style={specValueStyle}>
-                                        {model.modelFiles && model.modelFiles.length > 0
-                                            ? model.modelFiles.map(file => file.fileName.split('.').pop()).join(', ')
-                                            : 'Unknown'
-                                        }
-                                    </span>
-                                </div>
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Created</span>
-                                    <span style={specValueStyle}>
-                                        {model.createdAt ? new Date(model.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Compatible Software */}
-                            {model.software && model.software.length > 0 && (
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Compatible Software</span>
-                                    <div style={softwareListStyle}>
-                                        {model.software.map((software, index) => (
-                                            <span key={index} style={softwareBadgeStyle}>
-                                                {software}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Tags */}
-                            {model.tags && model.tags.length > 0 && (
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Tags</span>
-                                    <div style={softwareListStyle}>
-                                        {model.tags.map((tag, index) => (
-                                            <span key={index} style={{ ...softwareBadgeStyle, backgroundColor: '#f0f0f0', color: '#666' }}>
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    {/* Right Column - Download and Actions */}
-                    <div style={isLargeScreen ? { ...rightColumnStyleLarge, ...responsiveFixStyle } : { ...rightColumnStyle, ...responsiveFixStyle }}>
-                        <div style={detailsCardStyle}>
-                            {/* Download button */}
-                            <button
-                                style={isDownloadHovered ? downloadButtonHoverStyle : downloadButtonStyle}
-                                onMouseEnter={() => setIsDownloadHovered(true)}
-                                onMouseLeave={() => setIsDownloadHovered(false)}
-                                onClick={() => {
-                                    if (model.modelFiles && model.modelFiles.length === 1) {
-                                        // If there is one file to download
-                                        handleSingleFileDownload(model.modelFiles[0].fileName);
-                                    } else {
-                                        // If there is a package to download
-                                        onClick={handleAllFilesDownload}
-                                    }
-                                }}
-                                disabled={downloadLoading}
-                            >
-                                <img
-                                    src="/DownloadIcon.png"
-                                    alt="Download"
-                                    style={downloadIconStyle}
-                                />
-                                {downloadLoading ? 'DOWNLOADING...' : 'DOWNLOAD NOW'}
-                            </button>
-
-                            
-
-                            {/* Progress indicator */}
-                            {downloadLoading && (
-                                <div style={{
-                                    textAlign: 'center',
-                                    padding: '10px',
-                                    color: '#666',
-                                    fontSize: '0.9rem'
-                                }}>
-                                    ⏳ Downloading files... Please wait.
-                                </div>
-                            )}
-
-                            <div style={isLargeScreen ? actionButtonsStyle : actionButtonsStyleMobile}>
-                                {/* Favorite toggle and Share buttons */}
-                                <button
-                                    style={actionButtonStyle}
-                                    onMouseEnter={(e) => {
-                                        if (isLargeScreen) {
-                                            e.target.style.borderColor = '#ff7b00';
-                                            e.target.style.color = '#ff7b00';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (isLargeScreen) {
-                                            e.target.style.borderColor = '#ddd';
-                                            e.target.style.color = '#333';
-                                        }
-                                    }}
-                                    onClick={handleFavorite}
-                                    disabled={favoriteLoading}
-                                >
-                                    {favoriteLoading
-                                        ? '⏳ Processing...'
-                                        : isFavorited
-                                            ? '💔 Remove from Favorites'
-                                            : '❤️ Add to Favorites'
-                                    }
-                                </button>
-                                <button
-                                    style={actionButtonStyle}
-                                    onMouseEnter={(e) => {
-                                        if (isLargeScreen) {
-                                            e.target.style.borderColor = '#ff7b00';
-                                            e.target.style.color = '#ff7b00';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (isLargeScreen) {
-                                            e.target.style.borderColor = '#ddd';
-                                            e.target.style.color = '#333';
-                                        }
-                                    }}
-                                    onClick={handleShare}
-                                >
-                                    🔗 Share
-                                </button>
-                            </div>
-
-                            {/* File List  */}
-                            {model.modelFiles && model.modelFiles.length > 0 && (
-                                <div style={fileListStyle}>
-                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>Files Included</h3>
-                                    {model.modelFiles.map((file, index) => (
-                                        <div key={index} style={{
-                                            ...fileItemStyle,
-                                            cursor: 'pointer'
-                                        }}
-                                           
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.backgroundColor = '#f9f9f9';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.backgroundColor = 'transparent';
-                                            }}
-                                        >
-                                            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                                <span style={fileNameStyle}>{file.fileName}</span>
-                                                <span style={fileSizeStyle}>
-                                                    {formatFileSize(file.fileSize)} • {file.software}
-                                                </span>
-                                            </div>
-                                            
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {/* Full view image */}
-            {isModalOpen && model.previewImages && model.previewImages.length > 0 && (
-                <div style={modalOverlayStyle} onClick={closeModal}>
-                    {/* Close button */}
-                    <button
-                        style={closeButtonStyle}
-                        onClick={closeModal}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
-                    >
-                        ×
-                    </button>
-                    {/* Nav buttons */}
-                    {model.previewImages.length > 1 && (
-                        <>
-                            <button
-                                style={prevButtonStyle}
-                                onClick={goToPrevImage}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
-                            >
-                                ‹
-                            </button>
-                            <button
-                                style={nextButtonStyle}
-                                onClick={goToNextImage}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
-                            >
-                                ›
-                            </button>
-                        </>
-                    )}
-                    {/* Preview image */}
-
-                    <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
-                        <img
-                            src={model.previewImages[currentModalImageIndex]}
-                            alt={`Preview ${currentModalImageIndex + 1}`}
-                            style={modalImageStyle}
-                            onError={(e) => {
-                                e.target.src = '/default-model-preview.png';
-                            }}
-                        />
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
+//Comments Container
+const commentsContainerStyle = {
+    maxHeight: '600px',
+    overflowY: 'auto',
+    paddingRight: '10px',
+    marginTop: '20px'
+};
 export default ModelDetails;
