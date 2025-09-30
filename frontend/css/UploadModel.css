@@ -1,0 +1,401 @@
+/* Page layout */
+
+.upload-model-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  font-family: Arial, sans-serif;
+  padding-top: 120px;
+  padding-bottom: 50px;
+}
+
+.upload-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.upload-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.upload-form {
+  background-color: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+/* Section */
+.section-title {
+  width:100%;
+  font-size: 1.5rem;
+  font-weight: bold;
+  display:flex;
+  justify-self:flex-start;
+  color: #333;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #ff7b00;
+  padding-bottom: 5px;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #ff7b00;
+}
+
+.form-textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+/* File upload area */
+
+.file-upload-area {
+  border: 3px dashed #e0e0e0;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.file-upload-area.active {
+  border-color: #ff7b00;
+  background-color: #fff7f0;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  color: #ccc;
+  margin-bottom: 15px;
+}
+
+.upload-text {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.upload-subtext {
+  font-size: 0.9rem;
+  color: #999;
+}
+
+/* File list and previews */
+
+.file-list {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: white;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.file-size {
+  color: #666;
+  margin-left: 10px;
+}
+
+/* Remove button */
+
+.remove-button {
+  background: #ff4757;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.remove-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Image previews */
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 120px));
+  gap: 15px;
+  margin-top: 15px;
+  justify-content: start;
+}
+
+.preview-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+  width: 120px;
+  height: 120px;
+}
+
+.preview-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  aspect-ratio: 1/1;
+}
+
+/* Remove preview button */
+
+.remove-preview-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 71, 87, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tags for categories and attributes */
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.tag {
+  background-color: #c2c2c2ff;
+  color: #000000ff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tag:hover {
+  background-color: #8a8a8aff;
+}
+
+.tag.active {
+  background-color: #ff7b00;
+  color: white;
+}
+
+.tag.active:hover {
+  background-color: #994a00ff;
+}
+
+.tag:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Buttons */
+
+.primary-button {
+  background-color: rgba(255, 145, 0, 1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-right: 15px;
+}
+
+.primary-button:hover {
+  background-color: rgb(216, 127, 11);
+}
+
+.primary-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  padding: 15px 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-right: 15px;
+}
+
+.secondary-button:hover {
+  background-color: rgb(75, 82, 87);
+}
+
+.secondary-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Notices and info boxes */
+
+.alert {
+  background-color: #fff;
+  color: #333;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+}
+
+.alert.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #ffcdd2;
+}
+
+.alert.success {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  border-color: #c8e6c9;
+}
+
+/* Loading and progress */
+.centered-loading {
+  text-align: center;
+  padding: 50px;
+}
+/* Two column grid for form layout */
+.two-col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Utility classes */
+
+.muted-paragraph {
+  color: #666;
+  margin-bottom: 15px;
+}
+
+/* Hidden file input */
+.hidden-input {
+  display: none;
+}
+
+/* Margin top utility */
+.mt-20 {
+  margin-top: 20px;
+}
+
+/* Inline checkbox with label */
+.inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.clickable-label {
+  cursor: pointer;
+}
+
+/* Small hint text */
+.hint {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Action buttons section */
+.actions {
+  margin-top: 40px;
+  text-align: center;
+}
+
+/* Upload progress box */
+.upload-progress {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #e3f2fd;
+  border-radius: 8px;
+  text-align: center;
+}
+
+
+.progress-title {
+  margin: 0;
+  color: #1976d2;
+}
+
+.progress-subtext {
+  margin: 10px 0 0 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+/* Upload guidelines section */
+.guidelines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.guideline-title {
+  color: #ff7b00;
+  margin-bottom: 10px;
+}
+
+.guideline-list {
+  color: #666;
+  line-height: 1.6;
+}

@@ -3,240 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import { uploadModel, getSupportedExtensions, getSoftwareOptions } from '/backend/models.js';
 import Header from '../UI+UX/Header';
+import '/frontend/css/UploadModel.css';
 
-// Styles
-const pageStyle = {
-    minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
-    fontFamily: 'Arial, sans-serif',
-    paddingTop: '120px',
-    paddingBottom: '50px'
-};
-
-const containerStyle = {
-    maxWidth: '1000px',
-    margin: '0 auto',
-    padding: '0 20px'
-};
-
-const formStyle = {
-    backgroundColor: 'white',
-    borderRadius: '15px',
-    padding: '30px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-    marginBottom: '30px'
-};
-
-const titleStyle = {
-    fontSize: '2.5rem',
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: '30px'
-};
-
-const sectionTitleStyle = {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: '15px',
-    borderBottom: '2px solid #ff7b00',
-    paddingBottom: '5px'
-};
-
-const inputGroupStyle = {
-    marginBottom: '20px'
-};
-
-const labelStyle = {
-    display: 'block',
-    marginBottom: '8px',
-    fontWeight: '600',
-    color: '#333'
-};
-
-const inputStyle = {
-    width: '100%',
-    padding: '12px',
-    border: '2px solid #e0e0e0',
-    borderRadius: '8px',
-    fontSize: '16px',
-    transition: 'border-color 0.3s ease',
-    boxSizing: 'border-box'
-};
-
-const textareaStyle = {
-    ...inputStyle,
-    minHeight: '120px',
-    resize: 'vertical',
-    fontFamily: 'inherit'
-};
-
-const selectStyle = {
-    ...inputStyle,
-    cursor: 'pointer'
-};
-
-const fileUploadAreaStyle = {
-    border: '3px dashed #e0e0e0',
-    borderRadius: '12px',
-    padding: '40px',
-    textAlign: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    backgroundColor: '#fafafa'
-};
-
-const fileUploadActiveStyle = {
-    ...fileUploadAreaStyle,
-    borderColor: '#ff7b00',
-    backgroundColor: '#fff7f0'
-};
-
-const uploadIconStyle = {
-    fontSize: '3rem',
-    color: '#ccc',
-    marginBottom: '15px'
-};
-
-const uploadTextStyle = {
-    fontSize: '1.1rem',
-    color: '#666',
-    marginBottom: '10px'
-};
-
-const uploadSubtextStyle = {
-    fontSize: '0.9rem',
-    color: '#999'
-};
-
-const fileListStyle = {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '8px'
-};
-
-const fileItemStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px',
-    backgroundColor: 'white',
-    borderRadius: '6px',
-    marginBottom: '10px',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-};
-
-const removeButtonStyle = {
-    background: '#ff4757',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    padding: '5px 10px',
-    cursor: 'pointer',
-    fontSize: '0.8rem'
-};
-
-const previewGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 120px))',
-    gap: '15px',
-    marginTop: '15px',
-    justifyContent:'start'
-};
-
-const previewItemStyle = {
-    position: 'relative',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    backgroundColor: '#f0f0f0',
-    width: '120px', 
-    height: '120px'
-};
-
-const previewImageStyle = {
-    width: '100%',
-    height: '120px',
-    objectFit: 'cover',
-    aspectRatio: '1/1'
-};
-
-const removePreviewStyle = {
-    position: 'absolute',
-    top: '5px',
-    right: '5px',
-    background: 'rgba(255, 71, 87, 0.8)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '50%',
-    width: '25px',
-    height: '25px',
-    cursor: 'pointer',
-    fontSize: '14px'
-};
-
-const tagsContainerStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '10px',
-    marginTop: '10px'
-};
-
-const tagStyle = {
-    backgroundColor: '#c2c2c2ff',
-    color: '#000000ff',
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontSize: '0.9rem',
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease'
-};
-
-const tagActiveStyle = {
-    ...tagStyle,
-    backgroundColor: '#ff7b00',
-    color: 'white'
-};
-
-const buttonStyle = {
-    backgroundColor: 'rgba(255, 145, 0, 1)',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    marginTop:'10px',
-    padding: '15px 30px',
-    fontSize: '1.1rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease',
-    marginRight: '15px'
-};
-
-const buttonDisabledStyle = {
-    ...buttonStyle,
-    backgroundColor: '#ccc',
-    cursor: 'not-allowed'
-};
-
-const errorStyle = {
-    backgroundColor: '#ffebee',
-    color: '#c62828',
-    padding: '15px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    border: '1px solid #ffcdd2'
-};
-
-const successStyle = {
-    backgroundColor: '#e8f5e8',
-    color: '#2e7d32',
-    padding: '15px',
-    borderRadius: '8px',
-    marginBottom: '20px',
-    border: '1px solid #c8e6c9'
-};
 
 // Constants
 const CATEGORY_OPTIONS = [
@@ -475,11 +243,13 @@ function UploadModel() {
     // Show loading if user data is still loading
     if (!currentUser && userLogedIn === undefined) {
         return (
-            <div style={pageStyle}>
+            <div className="upload-model-page">
+                
                 <Header />
-                <div style={containerStyle}>
-                    <div style={{ textAlign: 'center', padding: '50px' }}>
-                        Loading...
+                <div className="upload-container">
+                  
+                    <div className="centered-loading">
+                       Loading...
                     </div>
                 </div>
             </div>
@@ -488,50 +258,50 @@ function UploadModel() {
 
 
     return (
-        <div style={pageStyle}>
+        <div className="upload-model-page">
             <Header />
-            <div style={containerStyle}>
-                <h1 style={titleStyle}>Upload 3D Model</h1>
-                {error && <div style={errorStyle}>{error}</div>}
-                {success && <div style={successStyle}>{success}</div>}
-                <form onSubmit={handleSubmit} style={formStyle}>
+            <div className="upload-container">
+                <h1 className="upload-title">Upload 3D Model</h1>
+                {error && <div className="alert error">{error}</div>}
+                {success && <div className="alert success">{success}</div>}
+                <form onSubmit={handleSubmit} className="upload-form">
                     {/* Basic Information */}
-                    <h2 style={sectionTitleStyle}>Basic Information</h2>
+                    <h2 className="section-title">Basic Information</h2>
 
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Title *</label>
+                    <div className="input-group">
+                        <label className="form-label">Title *</label>
                         <input
                             type="text"
                             name="title"
                             value={formData.title}
                             onChange={handleInputChange}
-                            style={inputStyle}
+                            className="form-input"
                             placeholder="Enter model title..."
                             required
                             disabled={uploading}
                         />
                     </div>
 
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Description</label>
+                    <div className="input-group">
+                        <label className="form-label">Description</label>
                         <textarea
                             name="description"
                             value={formData.description}
                             onChange={handleInputChange}
-                            style={textareaStyle}
+                            className="form-input form-textarea"
                             placeholder="Describe your model..."
                             disabled={uploading}
                         />
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                        <div style={inputGroupStyle}>
-                            <label style={labelStyle}>Type</label>
+                    <div className="two-col-grid">
+                        <div className="input-group">
+                            <label className="form-label">Type</label>
                             <select
                                 name="type"
                                 value={formData.type}
                                 onChange={handleInputChange}
-                                style={selectStyle}
+                                className="form-input form-select"
                                 disabled={uploading}
                             >
                                 <option value="Model">Single Model</option>
@@ -539,13 +309,13 @@ function UploadModel() {
                             </select>
                         </div>
 
-                        <div style={inputGroupStyle}>
-                            <label style={labelStyle}>Category *</label>
+                        <div className="input-group">
+                            <label className="form-label">Category *</label>
                             <select
                                 name="category"
                                 value={formData.category}
                                 onChange={handleInputChange}
-                                style={selectStyle}
+                                className="form-input form-select"
                                 required
                                 disabled={uploading}
                             >
@@ -557,20 +327,17 @@ function UploadModel() {
                         </div>
                     </div>
                     {/* Software Compatibility */}
-                    <h2 style={sectionTitleStyle}>Software Compatibility</h2>
-                    <p style={{ color: '#666', marginBottom: '15px' }}>
+                    <h2 className="section-title">Software Compatibility</h2>
+                    <p className="muted-paragraph">
                         Select the software programs that can open your model files:
                     </p>
-                    <div style={tagsContainerStyle}>
+                    <div className="tags-container">
                         {softwareOptions.map(software => (
                             <button
-
                                 key={software}
                                 type="button"
-                                onMouseEnter={(e) => { formData.software.includes(software) ? e.currentTarget.style.backgroundColor = '#994a00ff' : e.currentTarget.style.backgroundColor = '#8a8a8aff' }}
-                                onMouseLeave={(e) => { formData.software.includes(software) ? e.currentTarget.style.backgroundColor = '#ff7b00' : e.currentTarget.style.backgroundColor = '#c2c2c2ff' }}
                                 onClick={() => !uploading && handleSoftwareToggle(software)}
-                                style={formData.software.includes(software) ? tagActiveStyle : tagStyle}
+                                className={formData.software.includes(software) ? 'tag active' : 'tag'}
                                 disabled={uploading}
                             >
                                 {software}
@@ -579,19 +346,17 @@ function UploadModel() {
                     </div>
 
                     {/* Tags */}
-                    <h2 style={sectionTitleStyle}>Tags</h2>
-                    <p style={{ color: '#666', marginBottom: '15px' }}>
+                    <h2 className="section-title">Tags</h2>
+                    <p className="muted-paragraph">
                         Select tags that describe your model:
                     </p>
-                    <div style={tagsContainerStyle}>
+                    <div className="tags-container">
                         {TAG_OPTIONS.map(tag => (
                             <button
-                                onMouseEnter={(e) => { formData.tags.includes(tag) ? e.currentTarget.style.backgroundColor = '#994a00ff' : e.currentTarget.style.backgroundColor = '#8a8a8aff' }}
-                                onMouseLeave={(e) => { formData.tags.includes(tag) ? e.currentTarget.style.backgroundColor = '#ff7b00' : e.currentTarget.style.backgroundColor = '#c2c2c2ff' }}
                                 key={tag}
                                 type="button"
                                 onClick={() => !uploading && handleTagToggle(tag)}
-                                style={formData.tags.includes(tag) ? tagActiveStyle : tagStyle}
+                                className={formData.tags.includes(tag) ? 'tag active' : 'tag'}
                                 disabled={uploading}
                             >
                                 {tag}
@@ -600,20 +365,20 @@ function UploadModel() {
                     </div>
 
                     {/* Model Files Upload */}
-                    <h2 style={sectionTitleStyle}>Model Files *</h2>
+                    <h2 className="section-title">Model Files *</h2>
                     <div
-                        style={dragActive ? fileUploadActiveStyle : fileUploadAreaStyle}
+                        className={dragActive ? 'file-upload-area active' : 'file-upload-area'}
                         onDragEnter={(e) => !uploading && handleDrag(e, true, setDragActive)}
                         onDragLeave={(e) => !uploading && handleDrag(e, false, setDragActive)}
                         onDragOver={(e) => !uploading && handleDrag(e, true, setDragActive)}
                         onDrop={!uploading ? handleModelDrop : undefined}
                         onClick={() => !uploading && document.getElementById('modelFiles').click()}
                     >
-                        <div style={uploadIconStyle}>📁</div>
-                        <div style={uploadTextStyle}>
+                        <div className="upload-icon">📁</div>
+                        <div className="upload-text">
                             {uploading ? 'Uploading...' : 'Drag & drop your 3D model files here, or click to browse'}
                         </div>
-                        <div style={uploadSubtextStyle}>
+                        <div className="upload-subtext">
                             Supported formats: .blend, .fbx, .obj, .c4d, .max, .ma, .mb, and more (max 100MB per file, 500MB total)
                         </div>
                     </div>
@@ -624,25 +389,25 @@ function UploadModel() {
                         multiple
                         accept={supportedExtensions.join(',')}
                         onChange={(e) => !uploading && handleModelFiles(Array.from(e.target.files))}
-                        style={{ display: 'none' }}
+                        className="hidden-input"
                         disabled={uploading}
                     />
 
                     {modelFiles.length > 0 && (
-                        <div style={fileListStyle}>
+                        <div className="file-list">
                             <h4>Selected Files ({modelFiles.length}):</h4>
                             {modelFiles.map((file, index) => (
-                                <div key={index} style={fileItemStyle}>
+                                <div key={index} className="file-item">
                                     <span>
                                         <strong>{file.name}</strong>
-                                        <span style={{ color: '#666', marginLeft: '10px' }}>
+                                        <span className="file-size">
                                             ({(file.size / 1024 / 1024).toFixed(2)} MB)
                                         </span>
                                     </span>
                                     <button
                                         type="button"
                                         onClick={() => !uploading && removeModelFile(index)}
-                                        style={removeButtonStyle}
+                                        className="remove-button"
                                         disabled={uploading}
                                     >
                                         Remove
@@ -653,20 +418,20 @@ function UploadModel() {
                     )}
 
                     {/* Preview Images Upload */}
-                    <h2 style={sectionTitleStyle}>Preview Images *</h2>
+                    <h2 className="section-title">Preview Images *</h2>
                     <div
-                        style={previewDragActive ? fileUploadActiveStyle : fileUploadAreaStyle}
+                        className={previewDragActive ? 'file-upload-area active' : 'file-upload-area'}
                         onDragEnter={(e) => !uploading && handleDrag(e, true, setPreviewDragActive)}
                         onDragLeave={(e) => !uploading && handleDrag(e, false, setPreviewDragActive)}
                         onDragOver={(e) => !uploading && handleDrag(e, true, setPreviewDragActive)}
                         onDrop={!uploading ? handlePreviewDrop : undefined}
                         onClick={() => !uploading && document.getElementById('previewImages').click()}
                     >
-                        <div style={uploadIconStyle}>🖼️</div>
-                        <div style={uploadTextStyle}>
+                        <div className="upload-icon">🖼️</div>
+                        <div className="upload-text">
                             {uploading ? 'Uploading...' : 'Drag & drop preview images here, or click to browse'}
                         </div>
-                        <div style={uploadSubtextStyle}>
+                        <div className="upload-subtext">
                             Upload images that showcase your model (JPG, PNG, WebP - max 10MB per image, max 10 images)
                         </div>
                     </div>
@@ -677,25 +442,25 @@ function UploadModel() {
                         multiple
                         accept="image/*"
                         onChange={(e) => !uploading && handlePreviewFiles(Array.from(e.target.files))}
-                        style={{ display: 'none' }}
+                        className="hidden-input"
                         disabled={uploading}
                     />
 
                     {previewUrls.length > 0 && (
                         <div>
-                            <h4 style={{ marginTop: '20px' }}>Preview Images ({previewUrls.length}):</h4>
-                            <div style={previewGridStyle}>
+                            <h4 className="mt-20">Preview Images ({previewUrls.length}):</h4>
+                            <div className="preview-grid">
                                 {previewUrls.map((url, index) => (
-                                    <div key={index} style={previewItemStyle}>
+                                    <div key={index} className="preview-item">
                                         <img
                                             src={url}
                                             alt={`Preview ${index + 1}`}
-                                            style={previewImageStyle}
+                                            className="preview-image"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => !uploading && removePreviewImage(index)}
-                                            style={removePreviewStyle}
+                                            className="remove-preview-button"
                                             disabled={uploading}
                                         >
                                             ✕
@@ -707,8 +472,8 @@ function UploadModel() {
                     )}
 
                     {/* Privacy Settings */}
-                    <h2 style={sectionTitleStyle}>Privacy Settings</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h2 className="section-title">Privacy Settings</h2>
+                    <div className="inline-checkbox">
                         <input
                             type="checkbox"
                             id="isPublic"
@@ -717,24 +482,22 @@ function UploadModel() {
                             onChange={handleInputChange}
                             disabled={uploading}
                         />
-                        <label htmlFor="isPublic" style={{ cursor: 'pointer' }}>
+                        <label htmlFor="isPublic" className="clickable-label">
                             Make this model publicly visible in community
                         </label>
                     </div>
-                    <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '5px' }}>
+                    <p className="hint">
                         {formData.isPublic
                             ? 'Your model will be visible to all users and appear in the community feed.'
                             : 'Your model will be private and only you can see it.'}
                     </p>
 
                     {/* Submit Buttons */}
-                    <div style={{ marginTop: '40px', textAlign: 'center' }}>
+                    <div className="actions">
                         <button
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(170, 99, 6, 1)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 145, 0, 1)'; }}
                             type="submit"
                             disabled={uploading}
-                            style={uploading ? buttonDisabledStyle : buttonStyle}
+                            className="primary-button"
                         >
                             {uploading ? 'Uploading Model...' : 'Upload Model'}
                         </button>
@@ -742,13 +505,7 @@ function UploadModel() {
                         <button
                             type="button"
                             onClick={() => window.location.href = '/'}
-                             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2e3235ff'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#6c757d'; }}
-                            
-                            style={{
-                                ...buttonStyle,
-                                backgroundColor: '#6c757d'
-                            }}
+                            className="secondary-button"
                             disabled={uploading}
                         >
                             Cancel
@@ -757,17 +514,11 @@ function UploadModel() {
 
                     {/* Upload Progress Info */}
                     {uploading && (
-                        <div style={{
-                            marginTop: '20px',
-                            padding: '15px',
-                            backgroundColor: '#e3f2fd',
-                            borderRadius: '8px',
-                            textAlign: 'center'
-                        }}>
-                            <p style={{ margin: '0', color: '#1976d2' }}>
+                        <div className="upload-progress">
+                            <p className="progress-title">
                                 📤 Uploading your model... This may take a few minutes depending on file size.
                             </p>
-                            <p style={{ margin: '10px 0 0 0', fontSize: '0.9rem', color: '#666' }}>
+                            <p className="progress-subtext">
                                 Please don't close this page until upload is complete.
                             </p>
                         </div>
@@ -775,12 +526,12 @@ function UploadModel() {
                 </form>
 
                 {/* Help Section */}
-                <div style={formStyle}>
-                    <h2 style={sectionTitleStyle}>📋 Upload Guidelines</h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                <div className="upload-form">
+                    <h2 className="section-title">📋 Upload Guidelines</h2>
+                    <div className="guidelines-grid">
                         <div>
-                            <h4 style={{ color: '#ff7b00', marginBottom: '10px' }}>📁 Model Files</h4>
-                            <ul style={{ color: '#666', lineHeight: '1.6' }}>
+                            <h4 className="guideline-title">📁 Model Files</h4>
+                            <ul className="guideline-list">
                                 <li>Support for 15+ software formats</li>
                                 <li>Maximum 100MB per file</li>
                                 <li>Maximum 500MB total upload size</li>
@@ -788,8 +539,8 @@ function UploadModel() {
                             </ul>
                         </div>
                         <div>
-                            <h4 style={{ color: '#ff7b00', marginBottom: '10px' }}>🖼️ Preview Images</h4>
-                            <ul style={{ color: '#666', lineHeight: '1.6' }}>
+                            <h4 className="guideline-title">🖼️ Preview Images</h4>
+                            <ul className="guideline-list">
                                 <li>At least one image required</li>
                                 <li>JPG, PNG, or WebP formats</li>
                                 <li>Maximum 10MB per image</li>
@@ -798,8 +549,8 @@ function UploadModel() {
                             </ul>
                         </div>
                         <div>
-                            <h4 style={{ color: '#ff7b00', marginBottom: '10px' }}>✅ Best Practices</h4>
-                            <ul style={{ color: '#666', lineHeight: '1.6' }}>
+                            <h4 className="guideline-title">✅ Best Practices</h4>
+                            <ul className="guideline-list">
                                 <li>Use descriptive titles and descriptions</li>
                                 <li>Select appropriate software compatibility</li>
                                 <li>Add relevant tags for discoverability</li>

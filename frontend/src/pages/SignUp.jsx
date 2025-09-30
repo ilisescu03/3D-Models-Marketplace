@@ -8,6 +8,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doCreateUserWithEmailAndPassword, doSignInWithGoogle } from "/backend/auth.js";
 import { auth } from '/backend/firebase.js';
 import CookiesBanner from '../UI+UX/CookiesBanner';
+import LoadingScreen from "../UI+UX/LoadingScreen.jsx";
 
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
@@ -234,21 +235,7 @@ function SignUp() {
 
     // Show loading while checking authentication state
     if (isAuthLoading) {
-        return (
-            <div style={{
-                ...backgroundStyle,
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}>
-                <div style={{
-                    color: 'white',
-                    fontSize: '1.5rem',
-                    fontFamily: 'RaleWay, sans-serif'
-                }}>
-                    Loading...
-                </div>
-            </div>
-        );
+         return <LoadingScreen />;
     }
 
     // Don't render the form if user is already logged in
@@ -256,21 +243,7 @@ function SignUp() {
         return null; // Component will unmount as navigate('/') is called in useEffect
     }
     if (isSubmitting) {
-        return (
-            <div style={{
-                ...backgroundStyle,
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}>
-                <div style={{
-                    color: 'white',
-                    fontSize: '1.5rem',
-                    fontFamily: 'RaleWay, sans-serif'
-                }}>
-                    Loading...
-                </div>
-            </div>
-        );
+         return <LoadingScreen />;
     }
     return (
         <div style={backgroundStyle}>
@@ -399,7 +372,7 @@ function SignUp() {
                     disabled={isSubmitting}
                     onMouseEnter={(e) => {
                         if (!isSubmitting) {
-                            e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
+                            e.currentTarget.style.backgroundColor = 'rgba(223, 108, 0, 1)';
                         }
                     }}
                     onMouseLeave={(e) => {
@@ -423,7 +396,7 @@ function SignUp() {
                 <button
                     type="button"
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
+                        e.currentTarget.style.backgroundColor = 'rgba(104, 104, 104, 1)';
                     }}
                     onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)';
@@ -441,7 +414,7 @@ function SignUp() {
                     disabled={isSubmitting}
                     onMouseEnter={(e) => {
                         if (!isSubmitting) {
-                            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
+                            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.07)';
                         }
                     }}
                     onMouseLeave={(e) => {

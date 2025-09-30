@@ -7,31 +7,8 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { getUserStats, getFollowers, getFollowing, getUsers, listenToUserStats, doFollowUser, doUnfollowUser } from '/backend/users.js';
 import '/frontend/css/App.css'; 
-// Background style for the page
-const backgroundStyle = {
-    backgroundColor: "rgba(238, 238, 238, 1)",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundSize: "cover",
-    minHeight: "100vh",
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-};
-
-// Container style for the main content area
-const containerStyle = {
-    marginTop: '6rem',
-    padding: '2rem 1rem',
-    fontSize: '1.5rem',
-    fontFamily: 'Manrope, system-ui',
-    width: '100%',
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-};
-
+import '/frontend/css/CommunityMembers.css'; 
+import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 function CommunityMembers() {
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState("");
@@ -106,23 +83,16 @@ function CommunityMembers() {
     }, [navigate]);
 
     if (loading) {
-        return (
-            <div style={backgroundStyle}>
-                <Header />
-                <div style={{ marginTop: '6rem', paddingLeft: '6rem' }}>
-                    <p>Loading...</p>
-                </div>
-            </div>
-        );
+       return   <LoadingScreen />;
     }
 
     const filteredUsers = usersData.filter(f => f.uid !== user?.uid);
 
     return (
-        <div style={backgroundStyle}>
+        <div className="comm-members-backgroundStyle">
             <Header />
             <CookiesBanner />
-            <div style={containerStyle}>
+            <div className="comm-members-containerStyle">
                 <h2 style={{ fontWeight: 'normal', color: 'gray', textAlign: 'center', width: '100%' }}>Users</h2>
                 <div className="responsive-grid">
                     {filteredUsers.length === 0 ? (

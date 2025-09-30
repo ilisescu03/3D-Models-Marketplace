@@ -6,8 +6,10 @@ import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getModelById } from '/backend/models.js';
 import { downloadModel } from '/backend/models.js';
+import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
+import '/frontend/css/ModelDetails.css'
 
-//Screen size handle
+// Screen size handle
 const useScreenSize = () => {
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,43 +25,44 @@ const useScreenSize = () => {
 
     return isLargeScreen;
 };
-function ModelDetails() {
-    const [downloadLoading, setDownloadLoading] = useState(false); //State that shows if the model is downloading or not
-    const [downloadProgress, setDownloadProgress] = useState({}); //Download progress state
-    const [showDownloadOptions, setShowDownloadOptions] = useState(false); //Download options state
-    const [isFavorited, setIsFavorited] = useState(false);//Favourite state
-    const [favoriteLoading, setFavoriteLoading] = useState(false);//State for favourite add/remove
-    const { modelId } = useParams(); // To identify the model that should be displayed
-    const { currentUser, userLogedIn } = useAuth(); //To identify the user
-    const [username, setUsername] = useState(""); //To identify the username of the user
-    const [model, setModel] = useState(null); //Model details
-    const [loading, setLoading] = useState(true); //To check if the page is loading
-    const [error, setError] = useState(null); //Errors
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0); //Which preview image is selected
-    const [isDownloadHovered, setIsDownloadHovered] = useState(false); //Check if mouse is on the button
-    const [isModalOpen, setIsModalOpen] = useState(false); //Check if the full view of the images is active
-    const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0); //Current image to show on full view
-    const isLargeScreen = useScreenSize(); //Check the screen size
-    //States for comments
-    const [commentText, setCommentText] = useState("");//Comment state
-    const [replyingTo, setReplyingTo] = useState(null);//Reply to state
-    const [replyText, setReplyText] = useState("");//Reply state
-    const [comments, setComments] = useState([]);//Comments state
-    const [commentLoading, setCommentLoading] = useState(false);//Check if the comment is loading
-    const [replyLoading, setReplyLoading] = useState(false);//Check if the reply is loading
 
-    //Open the image full view
+function ModelDetails() {
+    const [downloadLoading, setDownloadLoading] = useState(false); // State that shows if the model is downloading or not
+    const [downloadProgress, setDownloadProgress] = useState({}); // Download progress state
+    const [showDownloadOptions, setShowDownloadOptions] = useState(false); // Download options state
+    const [isFavorited, setIsFavorited] = useState(false); // Favourite state
+    const [favoriteLoading, setFavoriteLoading] = useState(false); // State for favourite add/remove
+    const { modelId } = useParams(); // To identify the model that should be displayed
+    const { currentUser, userLogedIn } = useAuth(); // To identify the user
+    const [username, setUsername] = useState(""); // To identify the username of the user
+    const [model, setModel] = useState(null); // Model details
+    const [loading, setLoading] = useState(true); // To check if the page is loading
+    const [error, setError] = useState(null); // Errors
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0); // Which preview image is selected
+    const [isModalOpen, setIsModalOpen] = useState(false); // Check if the full view of the images is active
+    const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0); // Current image to show on full view
+    const isLargeScreen = useScreenSize(); // Check the screen size
+
+    // States for comments
+    const [commentText, setCommentText] = useState(""); // Comment state
+    const [replyingTo, setReplyingTo] = useState(null); // Reply to state
+    const [replyText, setReplyText] = useState(""); // Reply state
+    const [comments, setComments] = useState([]); // Comments state
+    const [commentLoading, setCommentLoading] = useState(false); // Check if the comment is loading
+    const [replyLoading, setReplyLoading] = useState(false); // Check if the reply is loading
+
+    // Open the image full view
     const openModal = (index) => {
         setCurrentModalImageIndex(index);
         setIsModalOpen(true);
     };
 
-    //Close the image full view
+    // Close the image full view
     const closeModal = () => {
         setIsModalOpen(false);
     };
 
-    //Handle prev image
+    // Handle prev image
     const goToPrevImage = (e) => {
         e.stopPropagation();
         if (model.previewImages && model.previewImages.length > 0) {
@@ -69,7 +72,7 @@ function ModelDetails() {
         }
     };
 
-    //Handle next image
+    // Handle next image
     const goToNextImage = (e) => {
         e.stopPropagation();
         if (model.previewImages && model.previewImages.length > 0) {
@@ -78,10 +81,11 @@ function ModelDetails() {
             );
         }
     };
-    //Loading comments when the model is loaded
+
+    // Loading comments when the model is loaded
     useEffect(() => {
         if (model && model.comments) {
-            // Coment sorting
+            // Comment sorting
             const sortedComments = [...model.comments].sort((a, b) => {
                 const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(a.createdAt);
                 const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(b.createdAt);
@@ -91,7 +95,7 @@ function ModelDetails() {
         }
     }, [model]);
 
-    //Use effect to check if the model is favorited or not
+    // Use effect to check if the model is favorited or not
     useEffect(() => {
         const checkFavoriteStatus = async () => {
             if (model && currentUser) {
@@ -102,6 +106,7 @@ function ModelDetails() {
 
         checkFavoriteStatus();
     }, [model, currentUser]);
+
     // Use effect for setting the username
     useEffect(() => {
         console.log("=== SETTING AUTHENTICATED USER USERNAME ===");
@@ -151,7 +156,7 @@ function ModelDetails() {
         fetchUsername();
     }, [currentUser, userLogedIn]);
 
-    //Load model details
+    // Load model details
     useEffect(() => {
         console.log("=== LOADING MODEL DETAILS ===");
         console.log("Model ID:", modelId);
@@ -180,7 +185,8 @@ function ModelDetails() {
             setLoading(false);
         }
     };
-    //Add comment
+
+    // Add comment
     const handleAddComment = async () => {
         if (!commentText.trim()) {
             alert('Please enter a comment');
@@ -207,7 +213,6 @@ function ModelDetails() {
                         comments: [result.comment, ...(prev.comments || [])]
                     }));
                 }
-               
             } else {
                 alert(result.message || 'Failed to add comment');
             }
@@ -218,7 +223,8 @@ function ModelDetails() {
             setCommentLoading(false);
         }
     };
-    //Add reply
+
+    // Add reply
     const handleAddReply = async (targetId, targetType, parentCommentId, repliedToUsername = null) => {
         if (!replyText.trim()) {
             alert('Please enter a reply');
@@ -240,7 +246,7 @@ function ModelDetails() {
                 const modelResult = await getModelById(modelId);
                 if (modelResult.success) {
                     setModel(modelResult.model);
-                    
+
                     const sortedComments = [...(modelResult.model.comments || [])].sort((a, b) => {
                         const dateA = a.createdAt?.seconds ? new Date(a.createdAt.seconds * 1000) : new Date(a.createdAt);
                         const dateB = b.createdAt?.seconds ? new Date(b.createdAt.seconds * 1000) : new Date(b.createdAt);
@@ -258,6 +264,7 @@ function ModelDetails() {
             setReplyLoading(false);
         }
     };
+
     const startReplyToComment = (commentId) => {
         setReplyingTo({ type: 'comment', id: commentId, parentCommentId: commentId });
     };
@@ -265,6 +272,7 @@ function ModelDetails() {
     const startReplyToReply = (replyId, parentCommentId) => {
         setReplyingTo({ type: 'reply', id: replyId, parentCommentId: parentCommentId });
     };
+
     const getReplyPlaceholder = () => {
         if (!replyingTo) return "Write a reply...";
 
@@ -299,7 +307,8 @@ function ModelDetails() {
             return 'Invalid date';
         }
     };
-    //DOWNLOAD
+
+    // DOWNLOAD
     const handleDownload = async (specificFileName = null) => {
         if (!currentUser) {
             alert('Please log in to download models');
@@ -316,9 +325,7 @@ function ModelDetails() {
             const result = await downloadModel(modelId, specificFileName);
 
             if (result.success) {
-
-
-                // Succes message
+                // Success message
                 if (result.downloads) {
                     const successful = result.downloads.filter(d => d.success);
                     const failed = result.downloads.filter(d => !d.success);
@@ -350,6 +357,7 @@ function ModelDetails() {
             setDownloadProgress({});
         }
     };
+
     const handleSingleFileDownload = (fileName) => {
         handleDownload(fileName);
     };
@@ -357,6 +365,7 @@ function ModelDetails() {
     const handleAllFilesDownload = () => {
         handleDownload();
     }
+
     const formatFileSize = (bytes) => {
         if (bytes === 0) return '0 B';
         const k = 1024;
@@ -364,7 +373,8 @@ function ModelDetails() {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
-    //ADD TO FAVOURITES
+
+    // ADD TO FAVOURITES
     const handleFavorite = async () => {
         if (!currentUser) {
             alert('Please log in to favorite models');
@@ -405,42 +415,24 @@ function ModelDetails() {
         alert('Link copied to clipboard!');
     };
 
-    //Loading screen
+    // Loading screen
     if (loading) {
-        return (
-            <div style={backgroundStyle}>
-                <Header />
-                <CookiesBanner />
-                <div style={loadingStyle}>
-                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⏳</div>
-                    Loading model details...
-                </div>
-            </div>
-        );
+        return  <LoadingScreen />;
     }
 
-    //Error screen
+    // Error screen
     if (error) {
         return (
-            <div style={backgroundStyle}>
+            <div className="backgroundStyle">
                 <Header />
                 <CookiesBanner />
-                <div style={errorStyle}>
-                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>❌</div>
+                <div className="errorStyle">
+                    <div className="emojiIconLarge">❌</div>
                     {error}
                     <br />
                     <button
                         onClick={loadModelDetails}
-                        style={{
-                            marginTop: '20px',
-                            padding: '12px 24px',
-                            backgroundColor: '#ff7b00',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            fontSize: '1rem'
-                        }}
+                        className="retryButton"
                     >
                         Try Again
                     </button>
@@ -449,57 +441,56 @@ function ModelDetails() {
         );
     }
 
-    //If the model doesn't exist screen
+    // If the model doesn't exist screen
     if (!model) {
         return (
-            <div style={backgroundStyle}>
+            <div className="backgroundStyle">
                 <Header />
                 <CookiesBanner />
-                <div style={errorStyle}>
-                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🔍</div>
+                <div className="errorStyle">
+                    <div className="emojiIconLarge">🔍</div>
                     Model not found
                 </div>
             </div>
         );
     }
 
-
     return (
-        <div style={{ ...backgroundStyle, ...responsiveFixStyle }}>
+        <div className="backgroundStyle responsiveFixStyle">
             <Header />
             <CookiesBanner />
 
-            <div style={containerStyle}>
-                <div style={isLargeScreen ? { ...contentStyleLarge, ...responsiveFixStyle } : { ...contentStyle, ...responsiveFixStyle }}>
+            <div className="containerStyle">
+                <div className={isLargeScreen ? 'contentStyleLarge responsiveFixStyle' : 'contentStyle responsiveFixStyle'}>
                     {/* Left Column - Model Preview and Details */}
-                    <div style={{ ...leftColumnStyle, ...responsiveFixStyle }}>
+                    <div className="leftColumnStyle responsiveFixStyle">
                         {/* Model Preview */}
-                        <div style={modelPreviewStyle}>
+                        <div className="modelPreviewStyle">
                             {model.previewImages && model.previewImages.length > 0 ? (
                                 <img
                                     onClick={() => openModal(selectedImageIndex)}
                                     src={model.previewImages[selectedImageIndex]}
                                     alt={model.title}
-                                    style={previewImageStyle}
+                                    className="previewImageStyle"
                                     onError={(e) => {
                                         e.target.src = '/profile.png';
                                     }}
                                 />
                             ) : (
-                                <div style={previewPlaceholderStyle}>
+                                <div className="previewPlaceholderStyle">
                                     🎨 No Preview Available
                                 </div>
                             )}
 
                             {/* Thumbnails */}
                             {model.previewImages && model.previewImages.length > 1 && (
-                                <div style={thumbnailsStyle}>
+                                <div className="thumbnailsStyle">
                                     {model.previewImages.map((image, index) => (
                                         <img
                                             key={index}
                                             src={image}
                                             alt={`Preview ${index + 1}`}
-                                            style={selectedImageIndex === index ? thumbnailActiveStyle : thumbnailStyle}
+                                            className={selectedImageIndex === index ? 'thumbnailActiveStyle' : 'thumbnailStyle'}
                                             onClick={() => setSelectedImageIndex(index)}
                                             onError={(e) => {
                                                 e.target.src = '/profile.png';
@@ -511,17 +502,17 @@ function ModelDetails() {
                         </div>
 
                         {/* Model Details */}
-                        <div style={detailsCardStyle}>
-                            <h1 style={isLargeScreen ? titleStyle : titleStyleMobile}>{model.title}</h1>
+                        <div className="detailsCardStyle">
+                            <h1 className={isLargeScreen ? 'titleStyle' : 'titleStyle titleStyleMobile'}>{model.title}</h1>
                             {/* Creator info */}
                             <div
-                                style={creatorStyle}
+                                className="creatorStyle"
                                 onClick={() => window.location.href = username === model.creatorUsername ? '/dashboard' : `/user/${model.creatorUsername}`}
                             >
                                 <img
                                     src={model.creatorProfilePicture || '/profile.png'}
                                     alt={model.creatorUsername}
-                                    style={avatarStyle}
+                                    className="avatarStyle"
                                     onError={(e) => {
                                         e.target.src = '/profile.png';
                                     }}
@@ -529,57 +520,53 @@ function ModelDetails() {
                                 <span>Created by <strong>{model.creatorUsername}</strong></span>
                             </div>
                             {/* Stats */}
-                            <div style={isLargeScreen ? statsStyle : statsStyleMobile}>
-                                <div style={statItemStyle}>
-                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
+                            <div className={isLargeScreen ? 'statsStyle' : 'statsStyleMobile'}>
+                                <div className="statItemStyle">
+                      
+                                    <span className={isLargeScreen ? 'statValueStyle' : 'statValueStyleMobile'}>
                                         {model.downloads || 0}
                                     </span>
-                                    <span style={statLabelStyle}>Downloads</span>
+                                    <span className="statLabelStyle">Downloads</span>
                                 </div>
-                                <div style={statItemStyle}>
-                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
+                                <div className="statItemStyle">
+                                    <span className={isLargeScreen ? 'statValueStyle' : 'statValueStyleMobile'}>
                                         {model.favorites || 0}
                                     </span>
-                                    <span style={statLabelStyle}>Favorites</span>
+                                    <span className="statLabelStyle">Favorites</span>
                                 </div>
-                                <div style={statItemStyle}>
-                                    <span style={isLargeScreen ? statValueStyle : statValueStyleMobile}>
-                                        {model.likes || 0}
-                                    </span>
-                                    <span style={statLabelStyle}>Likes</span>
-                                </div>
+                                
                             </div>
 
                             {/* Description */}
                             {model.description && (
-                                <div style={descriptionStyle}>
-                                    <h3 style={{ marginBottom: '10px', color: '#333' }}>Description</h3>
+                                <div className="descriptionStyle">
+                                    <h3 className="sectionHeading">Description</h3>
                                     <p>{model.description}</p>
                                 </div>
                             )}
 
                             {/* Specifications */}
-                            <div style={isLargeScreen ? specsGridStyle : specsGridStyleMobile}>
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Category</span>
-                                    <span style={specValueStyle}>{model.category || 'Other'}</span>
+                            <div className={isLargeScreen ? 'specsGridStyle' : 'specsGridStyleMobile'}>
+                                <div className="specItemStyle">
+                                    <span className="specLabelStyle">Category</span>
+                                    <span className="specValueStyle">{model.category || 'Other'}</span>
                                 </div>
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Type</span>
-                                    <span style={specValueStyle}>{model.type || 'Model'}</span>
+                                <div className="specItemStyle">
+                                    <span className="specLabelStyle">Type</span>
+                                    <span className="specValueStyle">{model.type || 'Model'}</span>
                                 </div>
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>File Format</span>
-                                    <span style={specValueStyle}>
+                                <div className="specItemStyle">
+                                    <span className="specLabelStyle">File Format</span>
+                                    <span className="specValueStyle">
                                         {model.modelFiles && model.modelFiles.length > 0
                                             ? model.modelFiles.map(file => file.fileName.split('.').pop()).join(', ')
                                             : 'Unknown'
                                         }
                                     </span>
                                 </div>
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Created</span>
-                                    <span style={specValueStyle}>
+                                <div className="specItemStyle">
+                                    <span className="specLabelStyle">Created</span>
+                                    <span className="specValueStyle">
                                         {model.createdAt ? new Date(model.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}
                                     </span>
                                 </div>
@@ -587,11 +574,11 @@ function ModelDetails() {
 
                             {/* Compatible Software */}
                             {model.software && model.software.length > 0 && (
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Compatible Software</span>
-                                    <div style={softwareListStyle}>
+                                <div className="specItemStyle">
+                                    <span className="specLabelStyle">Compatible Software</span>
+                                    <div className="softwareListStyle">
                                         {model.software.map((software, index) => (
-                                            <span key={index} style={softwareBadgeStyle}>
+                                            <span key={index} className="softwareBadgeStyle">
                                                 {software}
                                             </span>
                                         ))}
@@ -601,11 +588,11 @@ function ModelDetails() {
 
                             {/* Tags */}
                             {model.tags && model.tags.length > 0 && (
-                                <div style={specItemStyle}>
-                                    <span style={specLabelStyle}>Tags</span>
-                                    <div style={softwareListStyle}>
+                                <div className="specItemStyle">
+                                    <span className="specLabelStyle">Tags</span>
+                                    <div className="softwareListStyle">
                                         {model.tags.map((tag, index) => (
-                                            <span key={index} style={{ ...softwareBadgeStyle, backgroundColor: '#f0f0f0', color: '#666' }}>
+                                            <span key={index} className="softwareBadgeStyle tagBadge">
                                                 #{tag}
                                             </span>
                                         ))}
@@ -614,21 +601,20 @@ function ModelDetails() {
                             )}
                         </div>
                     </div>
+
                     {/* Right Column - Download and Actions */}
-                    <div style={isLargeScreen ? { ...rightColumnStyleLarge, ...responsiveFixStyle } : { ...rightColumnStyle, ...responsiveFixStyle }}>
-                        <div style={detailsCardStyle}>
+                    <div className={isLargeScreen ? 'rightColumnStyleLarge responsiveFixStyle' : 'rightColumnStyle responsiveFixStyle'}>
+                        <div className="detailsCardStyle">
                             {/* Download button */}
                             <button
-                                style={isDownloadHovered ? downloadButtonHoverStyle : downloadButtonStyle}
-                                onMouseEnter={() => setIsDownloadHovered(true)}
-                                onMouseLeave={() => setIsDownloadHovered(false)}
+                                className="downloadButtonStyle"
                                 onClick={() => {
                                     if (model.modelFiles && model.modelFiles.length === 1) {
                                         // If there is one file to download
                                         handleSingleFileDownload(model.modelFiles[0].fileName);
                                     } else {
                                         // If there is a package to download
-                                        onClick = { handleAllFilesDownload }
+                                        handleAllFilesDownload();
                                     }
                                 }}
                                 disabled={downloadLoading}
@@ -636,41 +622,17 @@ function ModelDetails() {
                                 <img
                                     src="/DownloadIcon.png"
                                     alt="Download"
-                                    style={downloadIconStyle}
+                                    className="downloadIconStyle"
                                 />
                                 {downloadLoading ? 'DOWNLOADING...' : 'DOWNLOAD NOW'}
                             </button>
 
+                           
 
-
-                            {/* Progress indicator */}
-                            {downloadLoading && (
-                                <div style={{
-                                    textAlign: 'center',
-                                    padding: '10px',
-                                    color: '#666',
-                                    fontSize: '0.9rem'
-                                }}>
-                                    ⏳ Downloading files... Please wait.
-                                </div>
-                            )}
-
-                            <div style={isLargeScreen ? actionButtonsStyle : actionButtonsStyleMobile}>
+                            <div className={isLargeScreen ? 'actionButtonsStyle' : 'actionButtonsStyleMobile'}>
                                 {/* Favorite toggle and Share buttons */}
                                 <button
-                                    style={actionButtonStyle}
-                                    onMouseEnter={(e) => {
-                                        if (isLargeScreen) {
-                                            e.target.style.borderColor = '#ff7b00';
-                                            e.target.style.color = '#ff7b00';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (isLargeScreen) {
-                                            e.target.style.borderColor = '#ddd';
-                                            e.target.style.color = '#333';
-                                        }
-                                    }}
+                                    className="actionButtonStyle"
                                     onClick={handleFavorite}
                                     disabled={favoriteLoading}
                                 >
@@ -682,19 +644,7 @@ function ModelDetails() {
                                     }
                                 </button>
                                 <button
-                                    style={actionButtonStyle}
-                                    onMouseEnter={(e) => {
-                                        if (isLargeScreen) {
-                                            e.target.style.borderColor = '#ff7b00';
-                                            e.target.style.color = '#ff7b00';
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (isLargeScreen) {
-                                            e.target.style.borderColor = '#ddd';
-                                            e.target.style.color = '#333';
-                                        }
-                                    }}
+                                    className="actionButtonStyle"
                                     onClick={handleShare}
                                 >
                                     🔗 Share
@@ -703,73 +653,39 @@ function ModelDetails() {
 
                             {/* File List  */}
                             {model.modelFiles && model.modelFiles.length > 0 && (
-                                <div style={fileListStyle}>
-                                    <h3 style={{ marginBottom: '15px', color: '#333' }}>Files Included</h3>
+                                <div className="fileListStyle">
+                                    <h3 className="filesTitle">Files Included</h3>
                                     {model.modelFiles.map((file, index) => (
-                                        <div key={index} style={{
-                                            ...fileItemStyle,
-                                            cursor: 'pointer'
-                                        }}
-
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.backgroundColor = '#f9f9f9';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.backgroundColor = 'transparent';
-                                            }}
-                                        >
+                                        <div key={index} className="fileItemStyle">
                                             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                                                <span style={fileNameStyle}>{file.fileName}</span>
-                                                <span style={fileSizeStyle}>
+                                                <span className="fileNameStyle">{file.fileName}</span>
+                                                <span className="fileSizeStyle">
                                                     {formatFileSize(file.fileSize)} • {file.software}
                                                 </span>
                                             </div>
-
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
+
                         {/* Comments Section */}
-                        <div style={commentsSectionStyle}>
-                            <h3 style={{ marginBottom: '20px', color: '#333', fontSize: '1.4rem' }}>
+                        <div className="commentsSectionStyle">
+                            <h3 className="commentsHeading">
                                 Comments ({comments.length + comments.reduce((total, comment) => total + (comment.replies ? comment.replies.length : 0), 0)})
                             </h3>
 
                             {/* Comment Form */}
                             {currentUser ? (
-                                <div style={commentFormStyle}>
+                                <div className="commentFormStyle">
                                     <textarea
-                                        style={commentText ? { ...commentInputStyle, ...commentInputFocusStyle } : commentInputStyle}
+                                        className="commentInputStyle"
                                         placeholder="Add a comment..."
                                         value={commentText}
                                         onChange={(e) => setCommentText(e.target.value)}
-                                        onFocus={(e) => {
-                                            e.target.style.borderColor = '#ff7b00';
-                                            e.target.style.outline = 'none';
-                                        }}
-                                        onBlur={(e) => {
-                                            if (!commentText) {
-                                                e.target.style.borderColor = '#ddd';
-                                            }
-                                        }}
                                     />
                                     <button
-                                        style={
-                                            commentLoading || !commentText.trim()
-                                                ? { ...commentSubmitStyle, ...commentSubmitDisabledStyle }
-                                                : commentSubmitStyle
-                                        }
-                                        onMouseEnter={(e) => {
-                                            if (!commentLoading && commentText.trim()) {
-                                                e.target.style.backgroundColor = '#e66a00';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!commentLoading && commentText.trim()) {
-                                                e.target.style.backgroundColor = '#ff7b00';
-                                            }
-                                        }}
+                                        className="commentSubmitStyle"
                                         onClick={handleAddComment}
                                         disabled={commentLoading || !commentText.trim()}
                                     >
@@ -777,82 +693,61 @@ function ModelDetails() {
                                     </button>
                                 </div>
                             ) : (
-                                <div style={loginPromptStyle}>
-                                    Please <a href="/login" style={{ color: '#ff7b00', textDecoration: 'none' }}>log in</a> to add comments
+                                <div className="loginPromptStyle">
+                                    Please <a href="/login">log in</a> to add comments
                                 </div>
                             )}
 
                             {/* Comments List */}
-                            <div style={commentsListStyle} className="comments-scrollbar">
+                            <div className="commentsListStyle comments-scrollbar">
                                 {comments.length > 0 ? (
                                     comments.map((comment) => (
-                                        <div key={comment.id} style={commentItemStyle}>
+                                        <div key={comment.id} className="commentItemStyle">
                                             {/* Comment Header */}
-                                            <div style={commentHeaderStyle}>
+                                            <div className="commentHeaderStyle">
                                                 <img
                                                     src={comment.profilePicture || '/profile.png'}
                                                     alt={comment.username}
-                                                    style={commentAvatarStyle}
+                                                    className="commentAvatarStyle"
                                                     onError={(e) => {
                                                         e.target.src = '/profile.png';
                                                     }}
                                                 />
-                                                <div style={commentMetaStyle}>
-                                                    <span style={commentUsernameStyle}>{comment.username}</span>
-                                                    <span style={commentDateStyle}>{formatDate(comment.createdAt)}</span>
+                                                <div className="commentMetaStyle">
+                                                    <span className="commentUsernameStyle">{comment.username}</span>
+                                                    <span className="commentDateStyle">{formatDate(comment.createdAt)}</span>
                                                 </div>
                                             </div>
 
                                             {/* Comment Text */}
-                                            <div style={commentTextStyle}>
+                                            <div className="commentTextStyle">
                                                 {comment.text}
                                             </div>
 
-
                                             {/* Comment Actions */}
-                                            <div style={commentActionsStyle}>
-                                                {currentUser && (<button
-                                                    style={replyButtonStyle}
-                                                    onMouseEnter={(e) => {
-                                                        e.target.style.backgroundColor = 'rgba(255, 123, 0, 0.1)';
-                                                    }}
-                                                    onMouseLeave={(e) => {
-                                                        e.target.style.backgroundColor = 'transparent';
-                                                    }}
-                                                    onClick={() => startReplyToComment(comment.id)}
-                                                >
-                                                    {replyingTo && replyingTo.type === 'comment' && replyingTo.id === comment.id ? 'Cancel' : 'Reply'}
-                                                </button>
+                                            <div className="commentActionsStyle">
+                                                {currentUser && (
+                                                    <button
+                                                        className="replyButtonStyle"
+                                                        onClick={() => startReplyToComment(comment.id)}
+                                                    >
+                                                        {replyingTo && replyingTo.type === 'comment' && replyingTo.id === comment.id ? 'Cancel' : 'Reply'}
+                                                    </button>
                                                 )}
                                             </div>
 
                                             {/* Reply Form */}
                                             {replyingTo && replyingTo.type === 'comment' && replyingTo.id === comment.id && currentUser && (
-                                                <div style={replyFormStyle}>
+                                                <div className="replyFormStyle">
                                                     <textarea
-                                                        style={replyText ? { ...replyInputStyle, ...replyInputFocusStyle } : replyInputStyle}
+                                                        className="replyInputStyle"
                                                         placeholder={getReplyPlaceholder()}
                                                         value={replyText}
                                                         onChange={(e) => setReplyText(e.target.value)}
-                                                        onFocus={(e) => {
-                                                            e.target.style.borderColor = '#ff7b00';
-                                                            e.target.style.outline = 'none';
-                                                        }}
-                                                        onBlur={(e) => {
-                                                            if (!replyText) {
-                                                                e.target.style.borderColor = '#ddd';
-                                                            }
-                                                        }}
                                                     />
-                                                    <div style={replyButtonsStyle}>
+                                                    <div className="replyButtonsStyle">
                                                         <button
-                                                            style={replyCancelStyle}
-                                                            onMouseEnter={(e) => {
-                                                                e.target.style.backgroundColor = '#aaa';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.target.style.backgroundColor = '#ccc';
-                                                            }}
+                                                            className="replyCancelStyle"
                                                             onClick={() => {
                                                                 setReplyingTo(null);
                                                                 setReplyText("");
@@ -861,21 +756,7 @@ function ModelDetails() {
                                                             Cancel
                                                         </button>
                                                         <button
-                                                            style={
-                                                                replyLoading || !replyText.trim()
-                                                                    ? { ...replySubmitStyle, backgroundColor: '#ccc', cursor: 'not-allowed' }
-                                                                    : replySubmitStyle
-                                                            }
-                                                            onMouseEnter={(e) => {
-                                                                if (!replyLoading && replyText.trim()) {
-                                                                    e.target.style.backgroundColor = '#e66a00';
-                                                                }
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                if (!replyLoading && replyText.trim()) {
-                                                                    e.target.style.backgroundColor = '#ff7b00';
-                                                                }
-                                                            }}
+                                                            className="replySubmitStyle"
                                                             onClick={() => handleAddReply(comment.id, 'comment', comment.id, comment.username)}
                                                             disabled={replyLoading || !replyText.trim()}
                                                         >
@@ -885,81 +766,61 @@ function ModelDetails() {
                                                 </div>
                                             )}
 
-
                                             {/* Replies List */}
                                             {comment.replies && comment.replies.length > 0 && (
-                                                <div style={repliesStyle}>
+                                                <div className="repliesStyle">
                                                     {comment.replies.map((reply) => (
-                                                        <div key={reply.id} style={replyItemStyle}>
-                                                            <div style={replyHeaderWithMentionStyle}>
+                                                        <div key={reply.id} className="replyItemStyle">
+                                                            <div className="replyHeaderWithMentionStyle">
                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                     <img
                                                                         src={reply.profilePicture || '/profile.png'}
                                                                         alt={reply.username}
-                                                                        style={replyAvatarStyle}
+                                                                        className="replyAvatarStyle"
                                                                         onError={(e) => {
                                                                             e.target.src = '/profile.png';
                                                                         }}
                                                                     />
-                                                                    <div style={replyMetaStyle}>
-                                                                        <span style={replyUsernameStyle}>{reply.username}</span>
-                                                                        <span style={replyDateStyle}>{formatDate(reply.createdAt)}</span>
+                                                                    <div className="replyMetaStyle">
+                                                                        <span className="replyUsernameStyle">{reply.username}</span>
+                                                                        <span className="replyDateStyle">{formatDate(reply.createdAt)}</span>
                                                                     </div>
                                                                 </div>
                                                                 {reply.repliedTo && (
-                                                                    <div style={replyMentionStyle}>
-                                                                        <span style={replyArrowStyle}>→</span>
+                                                                    <div className="replyMentionStyle">
+                                                                        <span className="replyArrowStyle">→</span>
                                                                         <span>{reply.repliedTo}</span>
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <div style={replyTextStyle}>
+                                                            <div className="replyTextStyle">
                                                                 {reply.text}
                                                             </div>
 
                                                             {/* Reply Actions for replies */}
-                                                            <div style={commentActionsStyle}>
-                                                                {currentUser && (<button
-                                                                    style={replyButtonStyle}
-                                                                    onMouseEnter={(e) => {
-                                                                        e.target.style.backgroundColor = 'rgba(255, 123, 0, 0.1)';
-                                                                    }}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.target.style.backgroundColor = 'transparent';
-                                                                    }}
-                                                                    onClick={() => startReplyToReply(reply.id, comment.id)}
-                                                                >
-                                                                    {replyingTo && replyingTo.type === 'reply' && replyingTo.id === reply.id ? 'Cancel' : 'Reply'}
-                                                                </button>)}
+                                                            <div className="commentActionsStyle">
+                                                                {currentUser && (
+                                                                    <button
+                                                                        className="replyButtonStyle"
+                                                                        onClick={() => startReplyToReply(reply.id, comment.id)}
+                                                                    >
+                                                                        {replyingTo && replyingTo.type === 'reply' && replyingTo.id === reply.id ? 'Cancel' : 'Reply'}
+                                                                    </button>
+                                                                )}
                                                             </div>
 
                                                             {/* Reply Form replies */}
                                                             {replyingTo && replyingTo.type === 'reply' && replyingTo.id === reply.id && currentUser && (
-                                                                <div style={replyFormStyle}>
+                                                                <div className="replyFormStyle">
                                                                     <textarea
-                                                                        style={replyText ? { ...replyInputStyle, ...replyInputFocusStyle } : replyInputStyle}
+                                                                        className="replyInputStyle"
                                                                         placeholder={getReplyPlaceholder()}
                                                                         value={replyText}
                                                                         onChange={(e) => setReplyText(e.target.value)}
-                                                                        onFocus={(e) => {
-                                                                            e.target.style.borderColor = '#ff7b00';
-                                                                            e.target.style.outline = 'none';
-                                                                        }}
-                                                                        onBlur={(e) => {
-                                                                            if (!replyText) {
-                                                                                e.target.style.borderColor = '#ddd';
-                                                                            }
-                                                                        }}
                                                                     />
-                                                                    <div style={replyButtonsStyle}>
+                                                                    <div className="replyButtonsStyle">
                                                                         <button
-                                                                            style={replyCancelStyle}
-                                                                            onMouseEnter={(e) => {
-                                                                                e.target.style.backgroundColor = '#aaa';
-                                                                            }}
-                                                                            onMouseLeave={(e) => {
-                                                                                e.target.style.backgroundColor = '#ccc';
-                                                                            }}
+                                                                            className="replyCancelStyle"
                                                                             onClick={() => {
                                                                                 setReplyingTo(null);
                                                                                 setReplyText("");
@@ -968,21 +829,7 @@ function ModelDetails() {
                                                                             Cancel
                                                                         </button>
                                                                         <button
-                                                                            style={
-                                                                                replyLoading || !replyText.trim()
-                                                                                    ? { ...replySubmitStyle, backgroundColor: '#ccc', cursor: 'not-allowed' }
-                                                                                    : replySubmitStyle
-                                                                            }
-                                                                            onMouseEnter={(e) => {
-                                                                                if (!replyLoading && replyText.trim()) {
-                                                                                    e.target.style.backgroundColor = '#e66a00';
-                                                                                }
-                                                                            }}
-                                                                            onMouseLeave={(e) => {
-                                                                                if (!replyLoading && replyText.trim()) {
-                                                                                    e.target.style.backgroundColor = '#ff7b00';
-                                                                                }
-                                                                            }}
+                                                                            className="replySubmitStyle"
                                                                             onClick={() => handleAddReply(reply.id, 'reply', comment.id, reply.username)}
                                                                             disabled={replyLoading || !replyText.trim()}
                                                                         >
@@ -999,7 +846,7 @@ function ModelDetails() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div style={noCommentsStyle}>
+                                    <div className="noCommentsStyle">
                                         No comments yet. Be the first to comment!
                                     </div>
                                 )}
@@ -1008,15 +855,14 @@ function ModelDetails() {
                     </div>
                 </div>
             </div>
+
             {/* Full view image */}
             {isModalOpen && model.previewImages && model.previewImages.length > 0 && (
-                <div style={modalOverlayStyle} onClick={closeModal}>
+                <div className="modalOverlayStyle" onClick={closeModal}>
                     {/* Close button */}
                     <button
-                        style={closeButtonStyle}
+                        className="closeButtonStyle"
                         onClick={closeModal}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
                     >
                         ×
                     </button>
@@ -1024,18 +870,14 @@ function ModelDetails() {
                     {model.previewImages.length > 1 && (
                         <>
                             <button
-                                style={prevButtonStyle}
+                                className="navigationButtonStyle prevButtonStyle"
                                 onClick={goToPrevImage}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
                             >
                                 ‹
                             </button>
                             <button
-                                style={nextButtonStyle}
+                                className="navigationButtonStyle nextButtonStyle"
                                 onClick={goToNextImage}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.5)'}
                             >
                                 ›
                             </button>
@@ -1043,11 +885,11 @@ function ModelDetails() {
                     )}
                     {/* Preview image */}
 
-                    <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+                    <div className="modalContentStyle" onClick={(e) => e.stopPropagation()}>
                         <img
                             src={model.previewImages[currentModalImageIndex]}
                             alt={`Preview ${currentModalImageIndex + 1}`}
-                            style={modalImageStyle}
+                            className="modalImageStyle"
                             onError={(e) => {
                                 e.target.src = '/profile.png';
                             }}
@@ -1060,754 +902,5 @@ function ModelDetails() {
 
     );
 }
-//Background style
-const backgroundStyle = {
-    background: '#ecececff',
-    backgroundAttachment: "fixed",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundSize: "cover",
-    minHeight: "100vh",
-    display: 'flex',
-    fontFamily: 'Arial, sans-serif',
-    flexDirection: 'column',
-    alignItems: 'center',
-};
-//Page container 
-const containerStyle = {
-    width: '90%',
-    maxWidth: '1400px',
-    margin: '0 auto',
-    padding: '120px 20px 60px 20px',
-    boxSizing: 'border-box'
-};
 
-// Responsive grid
-const contentStyle = {
-    display: 'grid',
-    gridTemplateColumns: '1fr',
-    gap: '40px',
-    alignItems: 'start'
-};
-
-// Media query for big screens
-const contentStyleLarge = {
-    ...contentStyle,
-    gridTemplateColumns: '1fr 400px',
-    gap: '40px',
-    maxWidth: '100%',
-    overflow: 'hidden'
-};
-//Left column style
-const leftColumnStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '30px'
-};
-
-//Right column style
-const rightColumnStyle = {
-    position: 'relative',
-    top: '0'
-};
-
-// Media for big screens
-const rightColumnStyleLarge = {
-    ...rightColumnStyle,
-    position: 'sticky',
-    top: '0px'
-};
-//Preview model card
-const modelPreviewStyle = {
-    backgroundColor: 'white',
-    borderRadius: '15px',
-    overflow: 'hidden',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-    maxWidth: '100%'
-};
-//Preview Image style
-const previewImageStyle = {
-    width: '100%',
-    height: '400px',
-    objectFit: 'cover',
-    display: 'block',
-    cursor: 'pointer'
-};
-//Style for the no peview case (if the upload works properly it's not the case)
-const previewPlaceholderStyle = {
-    width: '100%',
-    height: '400px',
-    backgroundColor: '#f5f5f5',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#666',
-    fontSize: '1.2rem'
-};
-//Style for preview images array
-const thumbnailsStyle = {
-    display: 'flex',
-    gap: '10px',
-    padding: '15px',
-    overflowX: 'auto'
-};
-//Preview image from array
-const thumbnailStyle = {
-    width: '80px',
-    height: '80px',
-    objectFit: 'cover',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    border: '2px solid',
-    borderColor: 'transparent',
-    transition: 'border-color 0.3s ease'
-};
-//Border style that show which image is active
-const thumbnailActiveStyle = {
-    ...thumbnailStyle,
-    borderColor: '#ff7b00'
-};
-//Card for model info
-const detailsCardStyle = {
-    backgroundColor: 'white',
-    borderRadius: '15px',
-    padding: '2rem',
-    boxSizing: 'border-box',
-    maxWidth: '100%',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
-};
-//Model in fo card title
-const titleStyle = {
-    fontSize: '2.2rem',
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: '15px',
-    lineHeight: '1.2'
-};
-
-// Media query for title on mobile
-const titleStyleMobile = {
-    ...titleStyle,
-    fontSize: '1.8rem'
-};
-//Creator container
-const creatorStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '20px',
-    color: '#666',
-    cursor: 'pointer'
-};
-//Creator s profile pic
-const avatarStyle = {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    objectFit: 'cover'
-};
-//Style for download favourites and likes
-const statsStyle = {
-    display: 'flex',
-    gap: '20px',
-    marginBottom: '25px',
-    paddingBottom: '25px',
-    borderBottom: '1px solid #eee'
-};
-
-//Media query for mobile (stats)
-const statsStyleMobile = {
-    ...statsStyle,
-    gap: '15px'
-};
-
-//Style for stat item 
-const statItemStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center'
-};
-//Style for the value of the stat
-const statValueStyle = {
-    fontSize: '1.4rem',
-    fontWeight: 'bold',
-    color: '#333'
-};
-
-//Media query for mobile( stat value)
-const statValueStyleMobile = {
-    ...statValueStyle,
-    fontSize: '1.2rem'
-};
-
-//Stat label style (ex. Downloads)
-const statLabelStyle = {
-    fontSize: '0.9rem',
-    color: '#666',
-    marginTop: '5px'
-};
-
-//Stlye for description
-const descriptionStyle = {
-    marginBottom: '25px',
-    lineHeight: '1.6',
-    color: '#555'
-};
-//Specs grid style (Category, Type, etc.)
-const specsGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '15px',
-    marginBottom: '25px'
-};
-
-// Specs grid for mobile style
-const specsGridStyleMobile = {
-    ...specsGridStyle,
-    gridTemplateColumns: '1fr',
-    gap: '10px'
-};
-//Spec item style
-const specItemStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '5px'
-};
-//Spec label style(ex. Category)
-const specLabelStyle = {
-    marginTop: '1rem',
-    fontSize: '0.9rem',
-    color: '#666',
-    fontWeight: '500'
-};
-//Spec value style (ex. Vehicle)
-const specValueStyle = {
-    fontSize: '1rem',
-    color: '#333',
-    fontWeight: 'bold'
-};
-//Software list style
-const softwareListStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-    marginTop: '10px'
-};
-//Software badge style ( ex. blender, cinema4d, autocad, etc.)
-const softwareBadgeStyle = {
-    backgroundColor: '#fdeee8ff',
-    color: '#cc4100ff',
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontSize: '0.8rem',
-    fontWeight: '500'
-};
-//Style for download button
-const downloadButtonStyle = {
-    width: '100%',
-    padding: '15px 30px',
-    backgroundColor: '#ff7b00',
-    color: 'white',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '1.1rem',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease',
-    marginBottom: '20px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '10px'
-};
-//Style for download button in the case if the mouse is on the button
-const downloadButtonHoverStyle = {
-    ...downloadButtonStyle,
-    backgroundColor: '#e66a00'
-};
-//Style for download buton icon
-
-const downloadIconStyle = {
-    width: '20px',
-    height: '20px',
-    filter: 'invert(1)'
-};
-//Style for action buttons container (add to favourite, share)
-const actionButtonsStyle = {
-    display: 'flex',
-    gap: '10px',
-    marginBottom: '25px'
-};
-
-// Media query for mobile (action buttons)
-const actionButtonsStyleMobile = {
-    ...actionButtonsStyle,
-    flexDirection: 'column'
-};
-//Style for action button
-const actionButtonStyle = {
-    flex: 1,
-    padding: '12px 20px',
-    backgroundColor: 'white',
-    color: '#333',
-    border: '2px solid #ddd',
-    borderRadius: '8px',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease'
-};
-//Style for action button in the case the mouse is on the button
-const actionButtonHoverStyle = {
-    ...actionButtonStyle,
-    borderColor: '#ff7b00',
-    color: '#ff7b00'
-};
-//Style for the files list
-const fileListStyle = {
-    marginTop: '20px'
-};
-//Style for file item
-const fileItemStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 0',
-    borderBottom: '1px solid #f0f0f0'
-};
-
-//Styles for file elements
-const fileNameStyle = {
-    fontSize: '0.9rem',
-    color: '#333'
-};
-
-const fileSizeStyle = {
-    fontSize: '0.8rem',
-    color: '#666'
-};
-
-//Loading style
-const loadingStyle = {
-    textAlign: 'center',
-    padding: '100px 20px',
-    color: '#666',
-    fontSize: '1.2rem'
-};
-//Error style
-const errorStyle = {
-    textAlign: 'center',
-    padding: '100px 20px',
-    color: '#e74c3c',
-    fontSize: '1.1rem'
-};
-
-//Fixing the screen responsing
-const responsiveFixStyle = {
-    maxWidth: '100%',
-    overflow: 'hidden'
-};
-//Full view for image
-const modalOverlayStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    cursor: 'pointer'
-};
-//Content for full image view
-const modalContentStyle = {
-    position: 'relative',
-    maxWidth: '90%',
-    maxHeight: '90%',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center'
-};
-//Image view
-const modalImageStyle = {
-    maxWidth: '80%',
-    maxHeight: '760px',
-    objectFit: 'contain'
-};
-//Close button style
-const closeButtonStyle = {
-    position: 'absolute',
-    top: '20px',
-    right: '20px',
-    background: 'none',
-    border: 'none',
-    color: 'white',
-    fontSize: '2rem',
-    cursor: 'pointer',
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: '50%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 1001
-};
-//Nav buttons
-const navigationButtonStyle = {
-    position: 'absolute',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    background: 'rgba(0, 0, 0, 0.5)',
-    border: 'none',
-    color: 'white',
-    fontSize: '2.5rem',
-    cursor: 'pointer',
-    width: '50px',
-    height: '50px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: '50%'
-};
-
-const prevButtonStyle = {
-    ...navigationButtonStyle,
-    left: '20px'
-};
-
-const nextButtonStyle = {
-    ...navigationButtonStyle,
-    right: '20px'
-};
-
-
-// Comments section styles
-const commentsSectionStyle = {
-    backgroundColor: 'white',
-    borderRadius: '15px',
-    padding: '2rem',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-    marginTop: '10px',
-    maxWidth: '100%',
-
-
-    boxSizing: 'border-box'
-};
-//Comment form
-const commentFormStyle = {
-    marginBottom: '25px'
-};
-
-//Comment input
-const commentInputStyle = {
-    width: '100%',
-    padding: '15px',
-    border: '2px solid #ddd',
-    borderRadius: '10px',
-    fontSize: '1rem',
-    resize: 'vertical',
-    minHeight: '100px',
-    marginBottom: '15px',
-    fontFamily: 'Arial, sans-serif',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.3s ease'
-};
-
-//Comment Input focus
-const commentInputFocusStyle = {
-    borderColor: '#ff7b00',
-    outline: 'none'
-};
-
-//Comment Submit
-const commentSubmitStyle = {
-    padding: '12px 24px',
-    backgroundColor: '#ff7b00',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease',
-    width: '100%'
-};
-
-//Comment Submit Hover
-const commentSubmitHoverStyle = {
-    backgroundColor: '#e66a00'
-};
-
-//Comment Submit Disabled 
-const commentSubmitDisabledStyle = {
-    backgroundColor: '#ccc',
-    cursor: 'not-allowed'
-};
-//Comments List
-const commentsListStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    marginTop: '20px',
-    maxHeight: '600px',
-    overflowY: "scroll",
-    gap: '20px'
-};
-
-//Comment Item
-const commentItemStyle = {
-    border: '1px solid #f0f0f0',
-    borderRadius: '10px',
-    padding: '20px',
-    backgroundColor: '#fafafa'
-};
-
-//Comment Header
-const commentHeaderStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginBottom: '15px'
-};
-
-//Comment Avatar
-const commentAvatarStyle = {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    objectFit: 'cover'
-};
-
-const commentMetaStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1
-};
-//Comment Username
-const commentUsernameStyle = {
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    color: '#333',
-    margin: '0 0 4px 0'
-};
-//Comment Date
-const commentDateStyle = {
-    fontSize: '0.85rem',
-    color: '#666',
-    margin: 0
-};
-//Comment Text
-const commentTextStyle = {
-    fontSize: '1rem',
-    color: '#333',
-    lineHeight: '1.5',
-    marginBottom: '15px',
-    wordBreak: 'break-word'
-};
-//Comment Actions
-const commentActionsStyle = {
-    display: 'flex',
-    gap: '15px',
-    alignItems: 'center'
-};
-//Reply Button
-const replyButtonStyle = {
-    background: 'none',
-    border: 'none',
-    color: '#ff7b00',
-    fontSize: '0.9rem',
-    cursor: 'pointer',
-    fontWeight: '500',
-    padding: '5px 10px',
-    borderRadius: '5px',
-    transition: 'background-color 0.3s ease'
-};
-//Reply Button Hover
-const replyButtonHoverStyle = {
-    backgroundColor: 'rgba(255, 123, 0, 0.1)'
-};
-//Replies list
-const repliesStyle = {
-    marginTop: '20px',
-    paddingLeft: '20px',
-    borderLeft: '3px solid #eee',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px'
-};
-//Reply item
-const replyItemStyle = {
-    backgroundColor: 'white',
-    padding: '15px',
-    borderRadius: '8px',
-    border: '1px solid #f0f0f0'
-};
-//Reply Header
-const replyHeaderStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '10px'
-};
-//Reply Avatar
-const replyAvatarStyle = {
-    width: '30px',
-    height: '30px',
-    borderRadius: '50%',
-    objectFit: 'cover'
-};
-
-//Reply Meta
-const replyMetaStyle = {
-    display: 'flex',
-    flexDirection: 'column'
-};
-
-//Reply Username
-const replyUsernameStyle = {
-    fontSize: '0.9rem',
-    fontWeight: 'bold',
-    color: '#333',
-    margin: 0
-};
-
-//Reply Date
-const replyDateStyle = {
-    fontSize: '0.8rem',
-    color: '#666',
-    margin: 0
-};
-
-//Reply Text
-const replyTextStyle = {
-    fontSize: '0.9rem',
-    color: '#333',
-    lineHeight: '1.4',
-    wordBreak: 'break-word'
-};
-
-//Reply Form
-const replyFormStyle = {
-    marginTop: '15px',
-    padding: '15px',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '8px',
-    border: '1px solid #eee'
-};
-
-//Reply Input
-const replyInputStyle = {
-    width: '100%',
-    padding: '12px',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    fontSize: '0.9rem',
-    resize: 'vertical',
-    minHeight: '80px',
-    marginBottom: '10px',
-    fontFamily: 'Arial, sans-serif',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.3s ease'
-};
-
-//Reply Input Focus
-const replyInputFocusStyle = {
-    borderColor: '#ff7b00',
-    outline: 'none'
-};
-
-//Reply Button
-const replyButtonsStyle = {
-    display: 'flex',
-    gap: '10px',
-    justifyContent: 'flex-end'
-};
-
-//Reply Submit
-const replySubmitStyle = {
-    padding: '8px 16px',
-    backgroundColor: '#ff7b00',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease'
-};
-
-//Reply Submit Hover
-const replySubmitHoverStyle = {
-    backgroundColor: '#e66a00'
-};
-
-//Reply Cancel
-const replyCancelStyle = {
-    padding: '8px 16px',
-    backgroundColor: '#ccc',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease'
-};
-
-//Reply Cancel Hover
-const replyCancelHoverStyle = {
-    backgroundColor: '#aaa'
-};
-
-//No comments
-const noCommentsStyle = {
-    textAlign: 'center',
-    padding: '40px 20px',
-    color: '#666',
-    fontSize: '1.1rem'
-};
-
-//Login Prompt
-const loginPromptStyle = {
-    textAlign: 'center',
-    padding: '30px 20px',
-    color: '#666',
-    fontSize: '1rem',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '10px',
-    border: '1px solid #eee'
-};
-//Reply Header With Mention
-const replyHeaderWithMentionStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '10px',
-    flexWrap: 'wrap'
-};
-
-//Reply Mention
-const replyMentionStyle = {
-    color: '#666',
-    fontSize: '0.85rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '5px'
-};
-
-//Reply Arrow
-const replyArrowStyle = {
-    color: '#999',
-    fontSize: '0.8rem'
-};
-
-//Comments Container
-const commentsContainerStyle = {
-    maxHeight: '600px',
-    overflowY: 'auto',
-    paddingRight: '10px',
-    marginTop: '20px'
-};
 export default ModelDetails;

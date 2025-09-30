@@ -253,7 +253,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                         <>
                             <button
                                     onClick={() => window.location.href = '/upload'}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(170, 99, 6, 1)'; }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(207, 121, 8, 1)'; }}
                                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 145, 0, 1)'; }}
                                     style={{...buttonStyle, marginTop:'50px'}}
                                 >
@@ -275,7 +275,8 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                 style={{
                                     ...expandableButtonStyle,
                                     justifyContent: 'space-between',
-                                    alignItems: 'center'
+                                    alignItems: 'center',
+                                    
                                 }}
                             >
                                 <span
@@ -285,10 +286,11 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                         textAlign: 'center',
                                         color: 'white',
                                         fontFamily: 'Arial, sans-serif',
-                                        fontSize: '0.9rem'
+                                        fontSize: '0.9rem',
+                                       
                                     }}
                                 />
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ display: 'flex',  marginTop:'20px', flexDirection: 'column', alignItems: 'center' }}>
                                     <img
                                         style={{
                                             width: '50px',

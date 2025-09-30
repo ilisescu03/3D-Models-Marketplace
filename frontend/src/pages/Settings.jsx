@@ -10,94 +10,7 @@ import {
     updateUsername, doChangePassword, updateUserData, doDeleteUserAccount
 } from '/backend/users.js';
 import CookiesBanner from '../UI+UX/CookiesBanner';
-
-// Profile picture style
-const imageStyle = {
-    width: '100px',
-    height: '100px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-};
-
-// Background style for the entire page
-const backgroundStyle = {
-    background: '#eee',
-    minHeight: "100vh",
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-};
-
-// Style for tab buttons with active state
-const getTabButtonStyle = (isActive) => ({
-    height: '35px',
-    minWidth: '100px',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    border: 'none',
-    backgroundColor: isActive ? '#e99700ff' : 'transparent',
-    color: isActive ? 'white' : 'black',
-    fontWeight: 'bold',
-    margin: '0.5rem 0',
-    width: '100%',
-    textAlign: 'left',
-    padding: '0 1rem',
-});
-const getDeleteTabButtonStyle = (isActive) => ({
-    height: '35px',
-    minWidth: '100px',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    border: 'none',
-    backgroundColor: isActive ? '#e70000ff' : 'transparent',
-    color: isActive ? 'white' : 'black',
-    fontWeight: 'bold',
-    margin: '0.5rem 0',
-    width: '100%',
-    textAlign: 'left',
-    padding: '0 1rem',
-});
-// Main container style
-const containerStyle = {
-    width: '100%',
-    maxWidth: '1200px',
-    padding: '2rem',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-};
-
-// Wrapper for content area
-const contentWrapperStyle = {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginTop: '2rem',
-};
-
-// Layout style for mobile devices (single column)
-const mobileLayoutStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%',
-    gap: '2rem',
-};
-
-// Layout style for desktop devices (two columns)
-const desktopLayoutStyle = {
-    display: 'flex',
-    flexDirection: 'row',
-    width: '100%',
-    gap: '2rem',
-};
-
-// Style for tab content area
-const tabContentStyle = {
-    flex: 1,
-    display: 'flex',
-    justifyContent: 'center',
-};
+import '/frontend/css/Settings.css';
 
 function Settings() {
     const [userProvider, setUserProvider] = useState('password');
@@ -144,17 +57,6 @@ function Settings() {
     const [deleteError, setDeleteError] = useState("");
     const [deleteSuccess, setDeleteSuccess] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
-
-    // Style for tabs container that adapts to mobile/desktop
-    const tabsContainerStyle = {
-        display: 'flex',
-        flexDirection: isMobile ? 'row' : 'column',
-        flexWrap: isMobile ? 'wrap' : 'nowrap',
-        width: '100%',
-        maxWidth: isMobile ? '100%' : '250px',
-        justifyContent: isMobile ? 'center' : 'flex-start',
-        gap: '0.5rem',
-    };
 
     // Available skills for selection
     const [availableSkills] = useState([
@@ -264,6 +166,7 @@ function Settings() {
         });
         return () => unsubscribe();
     }, [navigate]);
+
     const formatFirebaseTimestamp = (timestamp) => {
         try {
             // If timestamp is a firebase object in seconds
@@ -299,6 +202,7 @@ function Settings() {
             return 'Unknown';
         }
     };
+
     // Function to toggle skill selection
     const toggleSkill = (skill) => {
         setSelectedSkills(prev => {
@@ -374,6 +278,7 @@ function Settings() {
         }
 
     };
+
     //Delete account
     const handleDeleteAccount = async () => {
         setDeleteError("");
@@ -397,9 +302,6 @@ function Settings() {
                 }, 2000);
             } else {
                 setDeleteError(result.message);
-
-
-
             }
         } catch (error) {
             setDeleteError(error.message || "An unexpected error occurred.");
@@ -407,104 +309,77 @@ function Settings() {
             setIsDeleting(false);
         }
     };
+
     return (
-        <div style={backgroundStyle}>
+        <div className="settings-page">
             <Header />
             <CookiesBanner />
-            <div style={containerStyle}>
-                <h1 style={{ fontFamily: 'Arial, sans-serif', color: '#333', marginBottom: '2rem' }}>
-                    Settings
-                </h1>
+            <div className="settings-container">
+                <h1 className="page-title">Settings</h1>
 
-                <div style={contentWrapperStyle}>
+                <div className="settings-content">
                     {/* Main content layout - changes based on screen size */}
-                    <div style={isMobile ? mobileLayoutStyle : desktopLayoutStyle}>
+                    <div className={`settings-layout ${isMobile ? 'mobile' : 'desktop'}`}>
 
                         {/* Navigation tabs - always displayed */}
-                        <div style={tabsContainerStyle}>
+                        <div className={`tabs-container ${isMobile ? 'mobile' : 'desktop'}`}>
                             <button
                                 onClick={() => setActiveTab('profile')}
-                                style={getTabButtonStyle(activeTab === 'profile')}
+                                className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
                             >
                                 Profile
                             </button>
                             <button
                                 onClick={() => setActiveTab('password')}
-                                style={getTabButtonStyle(activeTab === 'password')}
+                                className={`tab-button ${activeTab === 'password' ? 'active' : ''}`}
                             >
                                 Password
                             </button>
                             <button
                                 onClick={() => setActiveTab('payment')}
-                                style={getTabButtonStyle(activeTab === 'payment')}
+                                className={`tab-button ${activeTab === 'payment' ? 'active' : ''}`}
                             >
                                 Payment
                             </button>
                             <button
                                 onClick={() => setActiveTab('account')}
-                                style={getTabButtonStyle(activeTab === 'account')}
+                                className={`tab-button ${activeTab === 'account' ? 'active' : ''}`}
                             >
                                 Account
                             </button>
                             <button
                                 onClick={() => setActiveTab('cookies')}
-                                style={getTabButtonStyle(activeTab === 'cookies')}
+                                className={`tab-button ${activeTab === 'cookies' ? 'active' : ''}`}
                             >
                                 Cookies
                             </button>
                             <button
                                 onClick={() => setActiveTab('delete')}
-                                style={getDeleteTabButtonStyle(activeTab === 'delete')}
+                                className={`tab-button delete ${activeTab === 'delete' ? 'active' : ''}`}
                             >
                                 Delete Account
                             </button>
                         </div>
 
                         {/* Tab content */}
-                        <div style={tabContentStyle}>
+                        <div className="tab-content">
                             {/* Profile Tab */}
                             {activeTab === 'profile' && (
-                                <div
-                                    style={{
-                                        backgroundColor: 'white',
-                                        width: '100%',
-                                        maxWidth: '700px',
-                                        fontFamily: 'Arial, sans-serif',
-                                        padding: '2rem',
-                                        borderRadius: '15px',
-                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                    }}
-                                >
+                                <div className="card profile">
                                     {/* Profile picture with overlay */}
-                                    <div style={{ position: 'relative', width: '100px', height: '100px' }}>
+                                    <div className="profile-pic-wrapper">
                                         <img
-                                            style={imageStyle}
+                                            className="profile-pic"
                                             src={userStats.profilePicture}
                                             alt="Profile"
                                             onError={(e) => { e.target.src = "profile.png"; }}
                                         />
 
                                         <div
-                                            style={{
-                                                position: 'absolute',
-                                                top: 0,
-                                                left: 0,
-                                                width: '100%',
-                                                height: '100%',
-                                                borderRadius: '50%',
-                                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                cursor: 'pointer',
-                                                opacity: 0,
-                                                transition: 'opacity 0.3s ease'
-                                            }}
-                                            onMouseEnter={(e) => (e.currentTarget.style.opacity = 1)}
-                                            onMouseLeave={(e) => (e.currentTarget.style.opacity = 0)}
+                                            className="profile-pic-overlay"
                                             onClick={() => document.getElementById('profilePictureInput').click()}
                                         >
-                                            <p style={{ color: 'white', fontSize: '12px', textAlign: 'center' }}>
+                                            <p className="profile-pic-overlay-text">
                                                 Change profile pic.
                                             </p>
                                         </div>
@@ -515,7 +390,7 @@ function Settings() {
                                         id="profilePictureInput"
                                         type="file"
                                         accept="image/*"
-                                        style={{ display: 'none' }}
+                                        className="hidden-input"
                                         onChange={async (e) => {
                                             const file = e.target.files[0];
                                             if (file) {
@@ -548,31 +423,22 @@ function Settings() {
                                     />
 
                                     {/* Username input */}
-                                    <div style={{ marginTop: '1.5rem' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            <label style={{ color: 'black', fontWeight: 'bold' }}>
-                                                Username:
-                                            </label>
+                                    <div className="form-group">
+                                        <div className="form-col">
+                                            <label className="label">Username:</label>
                                             <input
                                                 type="text"
                                                 value={userStats.username}
                                                 onChange={(e) => setUserStats(prev => ({ ...prev, username: e.target.value }))}
-                                                style={{
-                                                    padding: '0.5rem',
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: '4px',
-                                                    width: '100%'
-                                                }}
+                                                className="input"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Account type selection */}
-                                    <div style={{ marginTop: '1.5rem' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            <label style={{ color: 'black', fontWeight: 'bold' }}>
-                                                Account type:
-                                            </label>
+                                    <div className="form-group">
+                                        <div className="form-col">
+                                            <label className="label">Account type:</label>
                                             <select
                                                 value={userStats.accountType}
                                                 onChange={(e) => {
@@ -584,12 +450,7 @@ function Settings() {
                                                     }));
                                                     setAccountType(newAccountType);
                                                 }}
-                                                style={{
-                                                    padding: '0.5rem',
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: '4px',
-                                                    width: '100%',
-                                                }}
+                                                className="select"
                                             >
                                                 <option value="individual">Individual</option>
                                                 <option value="organization">Organization</option>
@@ -598,20 +459,13 @@ function Settings() {
                                     </div>
 
                                     {/* Role selection */}
-                                    <div style={{ marginTop: '1.5rem' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            <label style={{ color: 'black', fontWeight: 'bold' }}>
-                                                Role:
-                                            </label>
+                                    <div className="form-group">
+                                        <div className="form-col">
+                                            <label className="label">Role:</label>
                                             <select
                                                 value={userStats.role}
                                                 onChange={(e) => setUserStats(prev => ({ ...prev, role: e.target.value }))}
-                                                style={{
-                                                    padding: '0.5rem',
-                                                    border: '1px solid ',
-                                                    borderRadius: '4px',
-                                                    width: '100%',
-                                                }}
+                                                className="select"
                                             >
                                                 {roles.map((role) => (
                                                     <option key={role.value} value={role.value}>
@@ -623,36 +477,24 @@ function Settings() {
                                     </div>
 
                                     {/* Bio */}
-                                    <div style={{ marginTop: '1.5rem' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            <label style={{ color: 'black', fontWeight: 'bold' }}>
-                                                Bio:
-                                            </label>
+                                    <div className="form-group">
+                                        <div className="form-col">
+                                            <label className="label">Bio:</label>
                                             <textarea
                                                 value={userStats.bio}
                                                 onChange={(e) => setUserStats(prev => ({ ...prev, bio: e.target.value }))}
                                                 maxLength={300}
                                                 rows={5}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '0.5rem',
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: '4px',
-                                                    resize: 'vertical',
-                                                    fontFamily: 'Arial, sans-serif',
-                                                    fontSize: '0.9rem'
-                                                }}
+                                                className="textarea"
                                                 placeholder="Write something about yourself..."
                                             />
                                         </div>
                                     </div>
 
                                     {/* Social media links */}
-                                    <div style={{ marginTop: '1.5rem' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            <label style={{ color: 'black', fontWeight: 'bold' }}>
-                                                Social media links:
-                                            </label>
+                                    <div className="form-group">
+                                        <div className="form-col">
+                                            <label className="label">Social media links:</label>
                                             {userStats.links.map((link, index) => (
                                                 <input
                                                     key={index}
@@ -664,40 +506,22 @@ function Settings() {
                                                         setUserStats(prev => ({ ...prev, links: newLinks }));
                                                     }}
                                                     placeholder={`Link ${index + 1}`}
-                                                    style={{ padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px', width: '100%' }}
+                                                    className="links-input"
                                                 />
                                             ))}
                                         </div>
                                     </div>
 
                                     {/* Software skills */}
-                                    <div style={{ marginTop: '1.5rem' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            <label style={{ color: 'black', fontWeight: 'bold' }}>
-                                                Software skills:
-                                            </label>
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    <div className="form-group">
+                                        <div className="form-col">
+                                            <label className="label">Software skills:</label>
+                                            <div className="skills-container">
                                                 {selectedSkills.map((skill) => (
                                                     <div
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#e2e2e2ff';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.backgroundColor = 'white';
-                                                        }}
                                                         key={skill}
                                                         onClick={() => toggleSkill(skill)}
-                                                        style={{
-                                                            padding: '0.4rem 0.8rem',
-                                                            border: '1px solid #ccc',
-                                                            backgroundColor: 'white',
-                                                            color: 'black',
-                                                            borderRadius: '15px',
-                                                            cursor: 'pointer',
-                                                            fontSize: '0.85rem',
-                                                            userSelect: 'none',
-                                                            transition: '0.3s ease'
-                                                        }}
+                                                        className="skill-chip"
                                                     >
                                                         {skill} ×
                                                     </div>
@@ -707,31 +531,14 @@ function Settings() {
                                     </div>
 
                                     {/* Available Software skills */}
-                                    <div style={{ marginTop: '1.5rem' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    <div className="form-group">
+                                        <div className="form-col">
+                                            <div className="skills-container">
                                                 {availableSkills.filter(skill => !selectedSkills.includes(skill)).map((skill) => (
                                                     <div
                                                         key={skill}
                                                         onClick={() => toggleSkill(skill)}
-                                                        onMouseEnter={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#7a7a7aff';
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            e.currentTarget.style.backgroundColor = '#c5c5c5ff';
-                                                        }}
-                                                        style={{
-                                                            padding: '0.4rem 0.8rem',
-                                                            border: 'none',
-                                                            backgroundColor: '#c5c5c5ff',
-                                                            color: 'black',
-                                                            borderRadius: '15px',
-                                                            cursor: 'pointer',
-                                                            fontSize: '0.85rem',
-                                                            userSelect: 'none',
-                                                            transition: '0.3s ease'
-                                                        }}
+                                                        className="skill-chip available"
                                                     >
                                                         {skill}
                                                     </div>
@@ -743,25 +550,7 @@ function Settings() {
                                     {/* Save button */}
                                     <button
                                         onClick={handleSaveProfile}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#b16a00ff';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#eb8d00ff';
-                                        }}
-                                        style={{
-                                            padding: '1rem 2rem',
-                                            marginTop: '3rem',
-                                            backgroundColor: '#eb8d00ff',
-                                            fontWeight: 'bold',
-                                            color: 'white',
-                                            border: 'none',
-                                            fontSize: '1.25rem',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            transition: '0.3s ease',
-                                            width: '100%'
-                                        }}
+                                        className="btn btn-lg"
                                     >
                                         SAVE PROFILE
                                     </button>
@@ -770,102 +559,50 @@ function Settings() {
 
                             {/* Password Tab */}
                             {activeTab === 'password' && (
-                                <div
-                                    style={{
-                                        backgroundColor: 'white',
-                                        width: '100%',
-                                        maxWidth: '500px',
-                                        fontFamily: 'Arial, sans-serif',
-                                        padding: '2rem',
-                                        borderRadius: '15px',
-                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                    }}
-                                >
-                                    <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>Change Password</h2>
+                                <div className="card small">
+                                    <h2 className="settings-section-title">Change Password</h2>
 
                                     {passwordError && (
-                                        <div style={{ color: 'red', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#ffeeee', borderRadius: '4px' }}>
-                                            {passwordError}
-                                        </div>
+                                        <div className="notice notice-error">{passwordError}</div>
                                     )}
 
                                     {passwordSuccess && (
-                                        <div style={{ color: 'green', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#eeffee', borderRadius: '4px' }}>
-                                            {passwordSuccess}
-                                        </div>
+                                        <div className="notice notice-success">{passwordSuccess}</div>
                                     )}
 
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                                            Current Password:
-                                        </label>
+                                    <div className="form-group">
+                                        <label className="label">Current Password:</label>
                                         <input
                                             type="password"
                                             value={passwordData.currentPassword}
                                             onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                            style={{
-                                                padding: '0.5rem',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px',
-                                                width: '100%'
-                                            }}
+                                            className="input"
                                         />
                                     </div>
 
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                                            New Password:
-                                        </label>
+                                    <div className="form-group">
+                                        <label className="label">New Password:</label>
                                         <input
                                             type="password"
                                             value={passwordData.newPassword}
                                             onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                            style={{
-                                                padding: '0.5rem',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px',
-                                                width: '100%'
-                                            }}
+                                            className="input"
                                         />
                                     </div>
 
-                                    <div style={{ marginBottom: '1.5rem' }}>
-                                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                                            Confirm New Password:
-                                        </label>
+                                    <div className="form-group">
+                                        <label className="label">Confirm New Password:</label>
                                         <input
                                             type="password"
                                             value={passwordData.confirmPassword}
                                             onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                            style={{
-                                                padding: '0.5rem',
-                                                border: '1px solid #ccc',
-                                                borderRadius: '4px',
-                                                width: '100%'
-                                            }}
+                                            className="input"
                                         />
                                     </div>
 
                                     <button
-
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#b16a00ff';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#eb8d00ff';
-                                        }}
                                         onClick={handlePasswordChange}
-                                        style={{
-                                            transition: '0.3s ease',
-                                            padding: '0.7rem 1.5rem',
-                                            backgroundColor: '#eb8d00ff',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '5px',
-                                            cursor: 'pointer',
-                                            fontWeight: 'bold',
-                                            width: '100%'
-                                        }}
+                                        className="btn"
                                     >
                                         Change Password
                                     </button>
@@ -874,61 +611,28 @@ function Settings() {
 
                             {/* Payment Tab */}
                             {activeTab === 'payment' && (
-                                <div
-                                    style={{
-                                        backgroundColor: 'white',
-                                        width: '100%',
-                                        maxWidth: '500px',
-                                        fontFamily: 'Arial, sans-serif',
-                                        padding: '2rem',
-                                        borderRadius: '15px',
-                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                        textAlign: 'center'
-                                    }}
-                                >
-                                    <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>Payment Agreement</h2>
-                                    <p style={{ marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                                <div className="card small center">
+                                    <h2 className="settings-section-title">Payment Agreement</h2>
+                                    <p className="paragraph">
                                         This is where you can manage your payment settings and agreements.
                                         In the future, you'll be able to add payment methods, view billing history,
                                         and manage subscriptions here.
                                     </p>
-                                    <button
-                                        style={{
-                                            padding: '0.7rem 1.5rem',
-                                            backgroundColor: '#eb8d00ff',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '5px',
-                                            cursor: 'pointer',
-                                            fontWeight: 'bold'
-                                        }}
-                                    >
-                                        Manage Payment Methods
-                                    </button>
+                                    <button className="btn">Manage Payment Methods</button>
                                 </div>
                             )}
 
                             {/* Account Tab */}
                             {activeTab === 'account' && (
-                                <div
-                                    style={{
-                                        backgroundColor: 'white',
-                                        width: '100%',
-                                        maxWidth: '500px',
-                                        fontFamily: 'Arial, sans-serif',
-                                        padding: '2rem',
-                                        borderRadius: '15px',
-                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                    }}
-                                >
-                                    <h2 style={{ color: '#333', marginBottom: '1.5rem' }}>Account Information</h2>
-                                    <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+                                <div className="card small">
+                                    <h2 className="settings-section-title">Account Information</h2>
+                                    <div className="info-box">
                                         <strong>Email:</strong> {user?.email || 'Not available'}
                                     </div>
-                                    <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+                                    <div className="info-box">
                                         <strong>Member since:</strong> {userStats.createdAt ? formatFirebaseTimestamp(userStats.createdAt) : 'Unknown'}
                                     </div>
-                                    <p style={{ color: '#666', fontStyle: 'italic' }}>
+                                    <p className="info-muted">
                                         This is your account information. You can view your email address and
                                         membership duration here.
                                     </p>
@@ -936,107 +640,81 @@ function Settings() {
                             )}
 
                             {/* Cookies Tab */}
-
                             {activeTab === 'cookies' && (
-                                <div style={{
-                                    backgroundColor: 'white',
-                                    width: '100%',
-                                    maxWidth: '600px',
-                                    fontFamily: 'Arial, sans-serif',
-                                    padding: '2rem',
-                                    borderRadius: '15px',
-                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                }}>
-                                    <h2 style={{ color: '#333', marginBottom: '1.5rem', fontSize: '1.7rem' }}> Cookie Management</h2>
+                                <div className="card cookies">
+                                    <h2 className="settings-section-title settings-section-title-lg"> Cookie Management</h2>
 
-                                    <div style={{ marginBottom: '2rem' }}>
-                                        <h3 style={{ color: '#555', marginBottom: '1rem' }}>Current Cookie Preferences</h3>
-
+                                    <div className="mb-2">
+                                       
                                         {/* Necessary Cookies */}
-                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                                <span style={{ fontWeight: 'bold', color: '#27ae60', marginRight: '0.5rem' }}>🍪</span>
+                                        <div className="cookies-box">
+                                            <div className="cookies-item">
+                                                <span className="cookies-icon-green">🍪</span>
                                                 <strong>Necessary Cookies:</strong>
-                                                <span style={{ color: '#27ae60', marginLeft: '0.5rem' }}>Always active</span>
+                                                <span className="status status-green">Always active</span>
                                             </div>
-                                            <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', paddingLeft: '1.8rem' }}>
+                                            <p className="cookies-subtext">
                                                 Required for the website to function properly. Includes session management, security, and basic functionality.
                                             </p>
                                         </div>
                                         {/* Functional Cookies */}
-                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                                <span style={{ fontWeight: 'bold', color: '#e67e22', marginRight: '0.5rem' }}>⚙️</span>
+                                        <div className="cookies-box">
+                                            <div className="cookies-item">
+                                                <span className="cookies-icon-orange">⚙️</span>
                                                 <strong>Functional Cookies:</strong>
-                                                <span style={{ color: CookieService.isAllowed('functional') ? '#27ae60' : '#e74c3c', marginLeft: '0.5rem' }}>
+                                                <span className={`status ${CookieService.isAllowed('functional') ? 'status-green' : 'status-red'}`}>
                                                     {CookieService.isAllowed('functional') ? 'Active' : 'Inactive'}
                                                 </span>
                                             </div>
-                                            <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', paddingLeft: '1.8rem' }}>
+                                            <p className="cookies-subtext">
                                                 Remember your preferences and settings to provide
                                                 a more personalized experience on our website.
                                             </p>
                                         </div>
                                         {/* Performance Cookies */}
-                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                                <span style={{ fontWeight: 'bold', color: '#e67e22', marginRight: '0.5rem' }}>⚡</span>
+                                        <div className="cookies-box">
+                                            <div className="cookies-item">
+                                                <span className="cookies-icon-orange">⚡</span>
                                                 <strong>Performance Cookies:</strong>
-                                                <span style={{ color: CookieService.isAllowed('performance') ? '#27ae60' : '#e74c3c', marginLeft: '0.5rem' }}>
+                                                <span className={`status ${CookieService.isAllowed('performance') ? 'status-green' : 'status-red'}`}>
                                                     {CookieService.isAllowed('performance') ? 'Active' : 'Inactive'}
                                                 </span>
                                             </div>
-                                            <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', paddingLeft: '1.8rem' }}>
+                                            <p className="cookies-subtext">
                                                 Help us improve website speed and optimize your experience. Tracks page load times and browser capabilities.
                                             </p>
                                         </div>
 
                                         {/* Analytics Cookies */}
-                                        <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                                <span style={{ fontWeight: 'bold', color: '#3498db', marginRight: '0.5rem' }}>📊</span>
+                                        <div className="cookies-box">
+                                            <div className="cookies-item">
+                                                <span className="cookies-icon-blue">📊</span>
                                                 <strong>Analytics Cookies:</strong>
-                                                <span style={{ color: CookieService.isAllowed('analytics') ? '#27ae60' : '#e74c3c', marginLeft: '0.5rem' }}>
+                                                <span className={`status ${CookieService.isAllowed('analytics') ? 'status-green' : 'status-red'}`}>
                                                     {CookieService.isAllowed('analytics') ? 'Active' : 'Inactive'}
                                                 </span>
                                             </div>
-                                            <p style={{ margin: '0', fontSize: '0.9rem', color: '#6c757d', paddingLeft: '1.8rem' }}>
+                                            <p className="cookies-subtext">
                                                 Help us understand how visitors interact with our website. Tracks visits, page views, and user behavior.
                                             </p>
                                         </div>
-
-
-
-
                                     </div>
 
                                     <button
-                                        onMouseEnter={(e) => { e.target.style.backgroundColor = '#2c3e50'; }}
-                                        onMouseLeave={(e) => { e.target.style.backgroundColor = '#34495e'; }}
                                         onClick={() => {
                                             localStorage.removeItem('cookieConsent');
                                             window.location.reload();
                                         }}
-                                        style={{
-                                            padding: '0.8rem 1.5rem',
-                                            backgroundColor: '#34495e',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            transition: '0.3s ease',
-                                            fontWeight: 'bold',
-                                            width: '100%'
-                                        }}
+                                        className="btn btn-secondary"
                                     >
                                         Manage cookies
                                     </button>
 
                                     {/* Analytics Data Preview */}
                                     {CookieService.isAllowed('analytics') && (
-                                        <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#e8f4fd', borderRadius: '8px' }}>
-                                            <h4 style={{ color: '#2980b9', marginBottom: '0.5rem' }}>📈 Your Analytics Data</h4>
-                                            <div style={{ fontSize: '0.9rem', color: '#2c3e50' }}>
+                                        <div className="analytics-preview">
+                                            <h4 className="analytics-title">📈 Your Analytics Data</h4>
+                                            <div className="analytics-text">
                                                 <p>Visits: {CookieService.getAnalyticsData().visitCount} (how many days you visited this website)</p>
                                                 <p>Page views today: {CookieService.getAnalyticsData().pageViews}</p>
                                                 <p>Time spent today: {CookieService.getAnalyticsData().formattedTimeSpent}</p>
@@ -1048,103 +726,45 @@ function Settings() {
 
                             {/* Delete Account Tab */}
                             {activeTab === 'delete' && (
-                                <div
-                                    style={{
-                                        backgroundColor: 'white',
-                                        width: '100%',
-                                        maxWidth: '500px',
-                                        fontFamily: 'Arial, sans-serif',
-                                        padding: '2rem',
-                                        borderRadius: '15px',
-                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                    }}
-                                >
-                                    <h2 style={{ color: 'red', marginBottom: '1.5rem', fontWeight: 'bold' }}>
-                                        Delete Account
-                                    </h2>
+                                <div className="card small">
+                                    <h2 className="title-danger">Delete Account</h2>
                                     {isGoogleUser && (
-                                        <div style={{
-                                            color: '#e65100',
-                                            marginBottom: '1rem',
-                                            padding: '0.5rem',
-                                            backgroundColor: '#fff3e0',
-                                            borderRadius: '4px',
-                                            border: '1px solid #ffb74d'
-                                        }}>
+                                        <div className="notice notice-warning">
                                             <strong>Google Account:</strong> You signed in with Google.
                                             Click the button below to confirm account deletion.
                                         </div>
                                     )}
 
                                     {deleteError && (
-                                        <div style={{
-                                            color: 'red',
-                                            marginBottom: '1rem',
-                                            padding: '0.5rem',
-                                            backgroundColor: '#ffeeee',
-                                            borderRadius: '4px'
-                                        }}>
-                                            {deleteError}
-                                        </div>
+                                        <div className="notice notice-error">{deleteError}</div>
                                     )}
 
                                     {deleteSuccess && (
-                                        <div style={{
-                                            color: 'green',
-                                            marginBottom: '1rem',
-                                            padding: '0.5rem',
-                                            backgroundColor: '#eeffee',
-                                            borderRadius: '4px'
-                                        }}>
-                                            {deleteSuccess}
-                                        </div>
+                                        <div className="notice notice-success">{deleteSuccess}</div>
                                     )}
 
-                                    <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', color: '#666' }}>
-                                        <strong style={{ color: 'red' }}>Warning:</strong> This action is irreversible.
+                                    <p className="paragraph text-muted">
+                                        <strong className="text-danger">Warning:</strong> This action is irreversible.
                                         All your data, including models, favorites, and profile information will be permanently deleted.
                                     </p>
 
                                     {!isGoogleUser && (
-                                        <div style={{ marginBottom: '1.5rem' }}>
-                                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-                                                Enter your password to confirm:
-                                            </label>
+                                        <div className="form-group">
+                                            <label className="label">Enter your password to confirm:</label>
                                             <input
                                                 type="password"
                                                 value={deletePassword}
                                                 onChange={(e) => setDeletePassword(e.target.value)}
                                                 placeholder="Your current password"
-                                                style={{
-                                                    padding: '0.5rem',
-                                                    border: '1px solid #ccc',
-                                                    borderRadius: '4px',
-                                                    width: '100%'
-                                                }}
+                                                className="input"
                                             />
                                         </div>
                                     )}
 
                                     <button
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#b10000ff';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = 'red';
-                                        }}
                                         onClick={handleDeleteAccount}
                                         disabled={isDeleting}
-                                        style={{
-                                            transition: '0.3s ease',
-                                            padding: '0.7rem 1.5rem',
-                                            backgroundColor: isDeleting ? '#ccc' : 'red',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '5px',
-                                            cursor: isDeleting ? 'not-allowed' : 'pointer',
-                                            fontWeight: 'bold',
-                                            width: '100%'
-                                        }}
+                                        className={isDeleting ? 'btn btn-disabled' : 'btn btn-danger'}
                                     >
                                         {isDeleting ? 'Deleting Account...' : 'Permanently Delete My Account'}
                                     </button>

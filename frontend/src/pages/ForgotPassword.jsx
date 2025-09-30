@@ -160,7 +160,7 @@ function ForgotPassword() {
 
                 <button style={buttonStyle1}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(194, 87, 0, 1)';
+                        e.currentTarget.style.backgroundColor = 'rgba(228, 102, 0, 1)';
 
                     }}
                     onMouseLeave={(e) => {

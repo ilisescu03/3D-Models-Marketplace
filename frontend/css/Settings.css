@@ -1,0 +1,214 @@
+/* Page layout */
+.settings-page {
+  background: #eee;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.settings-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.page-title {
+  font-family: Arial, sans-serif;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+.settings-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.settings-layout {
+  width: 100%;
+  display: flex;
+  gap: 2rem;
+}
+.settings-layout.mobile { flex-direction: column; }
+.settings-layout.desktop { flex-direction: row; }
+
+/* Tabs and cards */
+.tabs-container {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+}
+.tabs-container.mobile {
+  flex-direction: row;
+  flex-wrap: wrap;
+  max-width: 100%;
+  justify-content: center;
+}
+.tabs-container.desktop {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  max-width: 250px;
+  justify-content: flex-start;
+}
+
+.tab-button {
+  height: 35px;
+  min-width: 100px;
+  cursor: pointer;
+  border-radius: 5px;
+  border: none;
+  background-color: transparent;
+  color: black;
+  font-weight: bold;
+  margin: 0.5rem 0;
+  width: 100%;
+  text-align: left;
+  padding: 0 1rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.tab-button.active { background-color: #e99700ff; color: white; }
+.tab-button.delete { background-color: transparent; color: black; }
+.tab-button.delete.active { background-color: #e70000ff; color: white; }
+
+.tab-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  background-color: white;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.card.profile { max-width: 700px; }
+.card.small { max-width: 500px; }
+.card.cookies { max-width: 600px; }
+.card.center { text-align: center; }
+
+/* Section title */
+.settings-section-title { color: #333; margin-bottom: 1.5rem; }
+
+/* Profile picture upload */
+.profile-pic-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+.profile-pic {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.profile-pic-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.profile-pic-wrapper:hover .profile-pic-overlay { opacity: 1; }
+.profile-pic-overlay-text { color: white; font-size: 12px; text-align: center; }
+
+/* Form elements */
+.hidden-input { display: none; }
+
+.form-group { margin-top: 1.5rem; }
+.form-col { display: flex; flex-direction: column; gap: 0.5rem; }
+.label { color: black; font-weight: bold; }
+.input, .select, .textarea {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
+.textarea { resize: vertical; font-family: Arial, sans-serif; font-size: 0.9rem; }
+.links-input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; width: 100%; }
+
+.skills-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.skill-chip {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ccc;
+  background-color: white;
+  color: black;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+.skill-chip:hover { background-color: #e2e2e2ff; }
+.skill-chip.available { border: none; background-color: #c5c5c5ff; }
+.skill-chip.available:hover { background-color: #7a7a7aff; }
+
+/* Buttons */
+.btn {
+  transition: 0.3s ease;
+  padding: 0.7rem 1.5rem;
+  background-color: #eb8d00ff;
+  color: white;
+  margin-top:15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+}
+.btn:hover { background-color: #b16a00ff; }
+.btn-lg { padding: 1rem 2rem; font-size: 1.25rem; margin-top:15px; border-radius: 4px; }
+.btn-danger { background-color: red; }
+.btn-danger:hover { background-color: #b10000ff; }
+.btn-secondary { background-color: #34495e; }
+.btn-secondary:hover { background-color: #2c3e50; }
+.btn-disabled { background-color: #ccc; cursor: not-allowed; }
+
+/* Notices and info boxes */
+.notice { margin-bottom: 1rem; padding: 0.5rem; border-radius: 4px; }
+.notice-error { color: red; background-color: #ffeeee; }
+.notice-success { color: green; background-color: #eeffee; }
+.notice-warning { color: #e65100; background-color: #fff3e0; border: 1px solid #ffb74d; }
+
+.info-box { margin-bottom: 1rem; padding: 1rem; background-color: #f9f9f9; border-radius: 4px; }
+.info-muted { color: #666; font-style: italic; }
+
+/* Cookies and analytics */
+.cookies-box { margin-bottom: 1rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; }
+.cookies-item { display: flex; align-items: center; margin-bottom: 0.5rem; }
+.cookies-icon-green { font-weight: bold; color: #27ae60; margin-right: 0.5rem; }
+.cookies-icon-orange { font-weight: bold; color: #e67e22; margin-right: 0.5rem; }
+.cookies-icon-blue { font-weight: bold; color: #3498db; margin-right: 0.5rem; }
+.cookies-subtext { margin: 0; font-size: 0.9rem; color: #6c757d; padding-left: 1.8rem; }
+
+.analytics-preview { margin-top: 2rem; padding: 1rem; background-color: #e8f4fd; border-radius: 8px; }
+.analytics-title { color: #2980b9; margin-bottom: 0.5rem; }
+.analytics-text { font-size: 0.9rem; color: #2c3e50; }
+
+/* Utility and additional styles used by Settings.jsx */
+.title-danger { color: red; margin-bottom: 1.5rem; font-weight: bold; }
+.paragraph { margin-bottom: 1.5rem; line-height: 1.6; }
+.mb-2 { margin-bottom: 2rem; }
+.section-subtitle { color: #555; margin-bottom: 1rem; }
+.settings-section-title-lg { font-size: 1.7rem; }
+.text-muted { color: #666; }
+.status { margin-left: 0.5rem; }
+.status-green { color: #27ae60; }
+.status-red { color: #e74c3c; }

@@ -327,7 +327,7 @@ function Header() {
                                 </div>
                                 <button
                                     onClick={() => window.location.href = '/upload'}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(170, 99, 6, 1)'; }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(218, 129, 14, 1)'; }}
                                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 145, 0, 1)'; }}
                                     style={buttonStyle2}
                                 >
@@ -349,7 +349,7 @@ function Header() {
                                 {/* If the user is not logged in the login and sign up buttons are displayed*/}
                                 <button
                                     onClick={() => window.location.href = '/login'}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)'; }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(117, 117, 117, 1)'; }}
                                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 1)'; }}
                                     style={buttonStyle1}
                                 >
@@ -357,7 +357,7 @@ function Header() {
                                 </button>
                                 <button
                                     onClick={() => window.location.href = '/signup'}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)'; }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(224, 108, 0, 1)'; }}
                                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)'; }}
                                     style={buttonStyle}
                                 >

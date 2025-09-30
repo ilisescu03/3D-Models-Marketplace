@@ -331,14 +331,15 @@ export const getModels = async (filters = {}, lastDoc = null, limitCount = 12) =
             const creatorData = creatorSnap.data();
             return {
               ...model,
-              creatorUsername: creatorData.username || creatorData.email || 'Unknown'
+              creatorUsername: creatorData.username || creatorData.email || 'Unknown',
+              creatorProfilePicture: creatorData.profilePicture || ''
             };
           }
           
-          return { ...model, creatorUsername: 'Unknown' };
+          return { ...model, creatorUsername: 'Unknown', creatorProfilePicture: '' };
         } catch (error) {
           console.error(`Error fetching creator for model ${model.id}:`, error);
-          return { ...model, creatorUsername: 'Unknown' };
+          return { ...model, creatorUsername: 'Unknown', creatorProfilePicture: ''  };
         }
       })
     );
@@ -411,7 +412,7 @@ export const getSoftwareOptions = () => {
   return Object.keys(SUPPORTED_EXTENSIONS);
 };
 
-// În backend/models.js - adaugă această funcție:
+
 
 // Toggle favorite model (add/remove from favorites)
 export const toggleFavoriteModel = async (modelId) => {
@@ -545,12 +546,15 @@ export const getUserFavoriteModels = async (userId) => {
             if (creatorSnap.exists()) {
               const creatorData = creatorSnap.data();
               modelData.creatorUsername = creatorData.username || creatorData.email || 'Unknown';
+              modelData.creatorProfilePicture = creatorData.profilePicture || '';
             } else {
               modelData.creatorUsername = 'Unknown';
+              modelData.creatorProfilePicture = '';
             }
           } catch (error) {
             console.error('Error fetching creator info:', error);
             modelData.creatorUsername = 'Unknown';
+            modelData.creatorProfilePicture = '';
           }
           
           favoriteModels.push(modelData);
@@ -852,7 +856,7 @@ export const addReply = async (modelId, commentId, replyText, repliedToUsername 
                     username: userData.username || userData.email || 'Unknown',
                     profilePicture: userData.profilePicture || '',
                     text: replyText.trim(),
-                    repliedTo: repliedToUsername, // Adăugăm câmpul repliedTo
+                    repliedTo: repliedToUsername, 
                     createdAt: new Date()
                 };
                 

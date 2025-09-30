@@ -6,6 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doSignInWithEmailAndPassword, doSignOut,  doSignInWithGoogle } from "/backend/auth.js";
 import { useNavigate } from "react-router-dom";
 import CookiesBanner from '../UI+UX/CookiesBanner';
+import LoadingScreen from "../UI+UX/LoadingScreen";
 
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
@@ -197,7 +198,7 @@ function LogIn() {
         try {
             const result = await doSignInWithGoogle();
             
-            // VerificÄƒ È™i aici proprietatea 'success'
+        
             if (result.success) {
                 navigate("/");
             } else {
@@ -210,24 +211,10 @@ function LogIn() {
             setIsSubmitting(false);
         }
     }
-
+   
     // Show loading while checking authentication state
     if (isLoading) {
-        return (
-            <div style={{
-                ...backgroundStyle,
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}>
-                <div style={{
-                    color: 'white',
-                    fontSize: '1.5rem',
-                    fontFamily: 'RaleWay, sans-serif'
-                }}>
-                    Loading...
-                </div>
-            </div>
-        );
+         return <LoadingScreen />;
     }
 
     // Don't render the form if user is already logged in
@@ -235,21 +222,7 @@ function LogIn() {
         return null; // Component will unmount as navigate('/') is called in useEffect
     }
     if (isSubmitting) {
-        return (
-            <div style={{
-                ...backgroundStyle,
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}>
-                <div style={{
-                    color: 'white',
-                    fontSize: '1.5rem',
-                    fontFamily: 'RaleWay, sans-serif'
-                }}>
-                    Loading...
-                </div>
-            </div>
-        );
+        return <LoadingScreen />;
     }
     return (
         <div style={backgroundStyle}>
@@ -329,7 +302,7 @@ function LogIn() {
                     disabled={isSubmitting}
                     onMouseEnter={(e) => {
                         if (!isSubmitting) {
-                            e.currentTarget.style.backgroundColor = 'rgba(92, 92, 92, 1)';
+                            e.currentTarget.style.backgroundColor = 'rgba(116, 116, 116, 1)';
                         }
                     }}
                     onMouseLeave={(e) => {
@@ -368,7 +341,7 @@ function LogIn() {
                     type="button"
                     onClick={() => window.location.href = '/signup'}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)';
+                        e.currentTarget.style.backgroundColor = 'rgba(230, 111, 0, 1)';
                     }}
                     onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)';
@@ -384,7 +357,7 @@ function LogIn() {
                     disabled={isSubmitting}
                     onMouseEnter={(e) => {
                         if (!isSubmitting) {
-                            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.15)';
+                            e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
                         }
                     }}
                     onMouseLeave={(e) => {

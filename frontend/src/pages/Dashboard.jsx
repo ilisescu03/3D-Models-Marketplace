@@ -5,237 +5,13 @@ import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { getUserFavoriteModels, getModelsByCreator } from '/backend/models.js'; 
+import { getUserFavoriteModels, getModelsByCreator } from '/backend/models.js';
 import '/frontend/css/App.css'
 import {
-    getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
-    updateUsername, updateUserData
+    getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser
 } from '/backend/users.js';
-import '/frontend/css/App.css';
-
-// Summary container style
-const summaryContainerStyle = {
-    backgroundColor: 'white',
-    padding: '2rem',
-    borderRadius: '10px',
-    marginTop: '2rem',
-    fontFamily: 'Arial, sans-serif',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    width: '70%',
-    maxWidth: '800px',
-    marginLeft: 'auto',
-    marginRight: 'auto'
-};
-
-// Section title style
-const sectionTitleStyle = {
-    color: '#333',
-    fontSize: '1.2rem',
-    fontWeight: 'bold',
-    marginBottom: '1rem',
-    borderBottom: '2px solid #eb8d00ff',
-    paddingBottom: '0.5rem'
-};
-
-// Skills labels style
-const skillStyle = {
-    padding: '0.4rem 0.8rem',
-    backgroundColor: '#f0f0f0',
-    color: '#333',
-    borderRadius: '15px',
-    fontSize: '0.85rem',
-    display: 'inline-block',
-    margin: '0.2rem'
-};
-
-// Background Style
-const backgroundStyle = {
-    backgroundImage: `url(/background1.jpg)`,
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundSize: "cover",
-    minHeight: "100vh",
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-};
-
-// Profile container style
-const profileContainerStyle = {
-    display: 'flex',
-    alignItems: 'flex-start',
-    marginTop: '8rem',
-    width: '100%',
-    paddingLeft: '1.2rem',
-    flexWrap: 'wrap'
-};
-
-// Text container style (username, followers, following)
-const textContainerStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    marginLeft: '1rem',
-    marginTop: '1rem',
-    alignItems: 'flex-start',
-};
-
-// Profile picture style
-const imageStyle = {
-    width: '100px',
-    height: '100px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-};
-
-// Username style
-const usernameStyle = {
-    color: 'white',
-    fontWeight: 'bold',
-    fontFamily: 'Arial, sans-serif',
-    fontSize: '1.2rem',
-    margin: 0,
-};
-
-// Edit button style
-const buttonStyle = {
-    height: '30px',
-    width: '70px',
-    marginTop: '0.5rem',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    border: 'none',
-    backgroundColor: '#575757ff',
-    color: 'white',
-    fontWeight: 'bold',
-    transition: '0.3s ease',
-};
-
-// Navigation button style
-const getTabButtonStyle = (isActive) => ({
-    height: '35px',
-    minWidth: '100px',
-    marginLeft: '1rem',
-    cursor: 'pointer',
-    borderRadius: '5px',
-    border: 'none',
-    backgroundColor: isActive ? '#e99700ff' : 'transparent',
-    color: isActive ? 'white' : 'black',
-    fontWeight: 'bold',
-});
-
-// Style for followers and following texts
-const followersStyle = {
-    color: 'white',
-    fontWeight: 'bold',
-    fontFamily: 'Arial, sans-serif',
-    fontSize: '0.7rem',
-    marginTop: '0.5rem',
-    cursor: 'pointer',
-};
-
-// Base model card styling
-const modelCardStyle = {
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)',
-    transition: 'all 0.3s ease',
-    cursor: 'pointer',
-    border: '1px solid rgba(0, 0, 0, 0.05)',
-    width: '280px',
-    fontFamily: 'Arial, sans-serif',
-    display: 'flex',
-    flexDirection: 'column'
-};
-// Compatible software section styling
-const compatibleSoftwaresStyle = {
-    marginTop: '8px',
-    paddingTop: '8px',
-    borderTop: '1px solid #f0f0f0'
-};
-// Software list container styling
-const softwaresListStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '3px',
-    marginTop: '4px'
-};
-// Individual software badge styling
-const softwareBadgeStyle = {
-    display: 'inline-block',
-    backgroundColor: '#fdf0e8ff',
-    color: '#cc4b00ff',
-    padding: '1px 6px',
-    borderRadius: '6px',
-    fontSize: '0.6rem',
-    fontWeight: '500'
-};
-// Hover state for model card
-const modelCardHoverStyle = {
-    ...modelCardStyle,
-    transform: 'translateY(-5px)',
-    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.15)'
-};
-// Model image styling
-const modelImageStyle = {
-    width: '100%',
-    height: '300px',
-    objectFit: 'cover',
-    transition: 'transform 0.3s ease',
-    aspectRatio: '1/1'
-};
-
-// Hover state for model image
-const modelImageHoverStyle = {
-    ...modelImageStyle,
-    transform: 'scale(1.05)'
-};
-
-// Content area inside model card
-const modelContentStyle = {
-    padding: '15px',
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    gap: '8px',
-};
-// Model title styling
-const modelTitleStyle = {
-    fontSize: '1rem',
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: '8px',
-    lineHeight: '1.3',
-    display: '-webkit-box',
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
-    overflow: 'hidden'
-};
-
-// Model metadata styling
-const modelMetaStyle = {
-    fontSize: '0.7rem',
-    color: '#666',
-    marginBottom: '6px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px'
-};
-
-// Category badge styling
-const categoryBadgeStyle = {
-    display: 'inline-block',
-    backgroundColor: '#ff7b00',
-    color: 'white',
-    padding: '3px 8px',
-    borderRadius: '10px',
-    fontSize: '0.8rem',
-    width: '25%',
-    textAlign: 'center',
-    fontWeight: '500',
-    marginTop: '8px'
-};
+import '/frontend/css/Dashboard.css';
+import { Mosaic } from "react-loading-indicators";
 function Dashboard() {
     const [userModels, setUserModels] = useState([]);
     const [userModelsLoading, setUserModelsLoading] = useState(false);
@@ -244,7 +20,6 @@ function Dashboard() {
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState("");
     const [activeIndex, setActiveIndex] = useState(5);
-    // Track which card is hovered
     const [hoveredCard, setHoveredCard] = useState(null);
     const [userStats, setUserStats] = useState({
         followers: 0,
@@ -257,58 +32,51 @@ function Dashboard() {
         accountType: "individual",
         role: "other",
         links: ["", "", "", ""],
-        skills: []
+        skills: [],
+        createdAt: null
     });
     const [loading, setLoading] = useState(true);
     const [followersData, setFollowersData] = useState([]);
     const [followingData, setFollowingData] = useState([]);
-    const [selectedSkills, setSelectedSkills] = useState([]);
 
-    const [availableSkills] = useState([
-        "Blender", "Cinema4d", "AutoCAD", "ArhiCAD", "Maya",
-        "3ds Max", "ZBrush", "Substance Painter", "Photoshop",
-        "Godot", "Unity", "Unreal Engine"
-    ]);
     const navigate = useNavigate();
 
-    const [accountType, setAccountType] = useState('individual');
+    const formatFirebaseTimestamp = (timestamp) => {
+        try {
+            if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
+                return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } else if (timestamp instanceof Date || typeof timestamp === 'number') {
+                return new Date(timestamp).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            } else if (typeof timestamp === 'string') {
+                const date = new Date(timestamp);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                }
+            }
+            return 'Unknown';
+        } catch (error) {
+            console.error('Error formatting timestamp:', error, timestamp);
+            return 'Unknown';
+        }
+    };
 
-    // Individual role options
-    const individualRoles = [
-        { value: 'other', label: 'Other' },
-        { value: 'student', label: 'Student' },
-        { value: 'web-developer', label: 'Web developer' },
-        { value: 'software-engineer', label: 'Software developer' },
-        { value: 'game-developer', label: 'Game Developer' },
-        { value: 'graphic-designer', label: 'Graphic Designer' },
-        { value: '3d-scanning', label: '3D scanning enthusiast' },
-        { value: '3d-printing', label: '3D printing enthusiast' },
-        { value: 'animator', label: 'Animator' },
-        { value: 'architect', label: 'Architect' },
-        { value: 'scientist', label: 'Scientist' },
-    ];
-
-    // Organization role options
-    const organizationRoles = [
-        { value: 'other', label: 'Other' },
-        { value: 'school', label: 'School' },
-        { value: '3d-studio', label: '3D Creation Studio' },
-        { value: 'game-studio', label: 'Game Studio' },
-        { value: 'brand', label: 'Brand' },
-        { value: 'non-profit', label: 'Non Profit Organization' },
-        { value: 'university', label: 'University' },
-        { value: 'tech-company', label: 'Tech Company' },
-        { value: 'research-lab', label: 'Research Lab' },
-    ];
-
-    // Determine which roles to show based on account type
-    const roles = accountType === 'individual' ? individualRoles : organizationRoles;
-    // Handle click on model card to navigate to model details
     const handleCardClick = (modelId) => {
         console.log("Navigating to model:", modelId);
         navigate(`/model/${modelId}`);
     };
-    //Function to load the models made by this user
+
     const loadUserModels = useCallback(async () => {
         if (!user) {
             setUserModels([]);
@@ -333,42 +101,7 @@ function Dashboard() {
             setUserModelsLoading(false);
         }
     }, [user]);
-    const formatFirebaseTimestamp = (timestamp) => {
-        try {
-            // If timestamp is a firebase object in seconds
-            if (timestamp && typeof timestamp === 'object' && 'seconds' in timestamp) {
-                return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
-            // If timestamp is a Date object with numeric value
-            else if (timestamp instanceof Date || typeof timestamp === 'number') {
-                return new Date(timestamp).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
-            // If timestamp is a string that can be converted to date
-            else if (typeof timestamp === 'string') {
-                const date = new Date(timestamp);
-                if (!isNaN(date.getTime())) {
-                    return date.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                }
-            }
-            return 'Unknown';
-        } catch (error) {
-            console.error('Error formatting timestamp:', error, timestamp);
-            return 'Unknown';
-        }
-    };
-    //Load favorite models function
+
     const loadFavoriteModels = useCallback(async () => {
         if (!user) return;
 
@@ -387,11 +120,10 @@ function Dashboard() {
             setFavoritesLoading(false);
         }
     }, [user]);
-    // Effect for check authentication and fetch user data
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                // User logged in
                 setUser(currentUser);
                 try {
                     const userDocRef = doc(db, "users", currentUser.uid);
@@ -405,14 +137,11 @@ function Dashboard() {
                     console.error("Error getting user data:", error);
                 }
 
-                // Listen to real-time user stats updates
                 const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
                     setUserStats(stats);
                     setUsername(stats.username);
-                    setSelectedSkills(stats.skills || [])
                     setLoading(false);
 
-                    // Fetch followers and following lists
                     const followers = await getFollowers(currentUser.uid);
                     setFollowersData(followers);
 
@@ -421,10 +150,8 @@ function Dashboard() {
                 });
                 loadUserModels();
                 loadFavoriteModels();
-                // Clean up listener on unmount
                 return () => stopListening();
             } else {
-                // User logged out
                 setUser(null);
                 setUsername("");
                 setUserStats({
@@ -438,11 +165,11 @@ function Dashboard() {
                     accountType: "individual",
                     role: "other",
                     links: ["", "", "", ""],
-                    skills: []
+                    skills: [],
+                    createdAt: null
                 })
-                setSelectedSkills([]);
-                setFavoriteModels([]); // Reset favorite models
-                setUserModels([]); // Reset user models
+                setFavoriteModels([]);
+                setUserModels([]);
                 setLoading(false);
                 navigate('/');
 
@@ -450,70 +177,66 @@ function Dashboard() {
         });
         return () => unsubscribe();
     }, [navigate, loadUserModels, loadFavoriteModels]);
-    // Get thumbnail image for model, fallback to default if not available
+
     const getModelThumbnail = (model) => {
         if (model.previewImages && model.previewImages.length > 0) {
             return model.previewImages[0];
         }
-        // Fallback to a default 3D model image
         return '/default-model-preview.png';
     };
 
     return (
-        <div style={backgroundStyle}>
+        <div className="dashboard-background">
             <Header />
             <CookiesBanner />
 
             {/* Profile header */}
-            <div style={profileContainerStyle}>
+            <div className="dashboard-profile">
                 {/* Profile pic */}
                 <img
-                    style={imageStyle}
+                    className="profile-image"
                     src={userStats.profilePicture}
                     alt="Profile"
                     onError={(e) => { e.target.src = "profile.png"; }}
                 />
 
                 {/* Username, edit button, followers/following */}
-                <div style={textContainerStyle}>
-                    <p style={usernameStyle}>{username}</p>
+                <div className="profile-text">
+                    <p className="profile-username">{username}</p>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                    <div className="profile-actions">
                         <button
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = '#2c2c2cff';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = '#575757ff';
-                            }}
+                            className="edit-button"
                             onClick={() => window.location.href = "/settings"}
-                            style={buttonStyle}>Edit</button>
-                        <span onClick={() => setActiveIndex(2)} style={followersStyle}>Followers: {userStats.followers}</span>
-                        <span onClick={() => setActiveIndex(3)} style={followersStyle}>Following: {userStats.following}</span>
+                        >
+                            Edit
+                        </button>
+                        <span onClick={() => setActiveIndex(2)} className="followers-text">Followers: {userStats.followers}</span>
+                        <span onClick={() => setActiveIndex(3)} className="followers-text">Following: {userStats.following}</span>
                     </div>
                 </div>
             </div>
 
             {/* Dashboard content */}
-            <div style={{ marginTop: '2rem', width: '100%' }}>
-                <section className="responsive-container" style={{ backgroundColor: '#f1f1f1ff', minHeight: '1000px' }}>
+            <div className="dashboard-content">
+                <section className="responsive-container dashboard-section">
                     {/* Navigation buttons */}
-                    <div style={{ display: 'flex', marginBottom: '4rem', alignItems: 'flex-start', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <div className="tabs-row">
                         <button
                             onClick={() => setActiveIndex(5)}
-                            style={getTabButtonStyle(activeIndex === 5)}
+                            className={`tab-btn ${activeIndex === 5 ? 'active' : ''}`}
                         >
                             Summary
                         </button>
                         <button
                             onClick={() => setActiveIndex(0)}
-                            style={getTabButtonStyle(activeIndex === 0)}
+                            className={`tab-btn ${activeIndex === 0 ? 'active' : ''}`}
                         >
                             Your work
                         </button>
                         <button
                             onClick={() => setActiveIndex(1)}
-                            style={getTabButtonStyle(activeIndex === 1)}
+                            className={`tab-btn ${activeIndex === 1 ? 'active' : ''}`}
                         >
                             Favourites
                         </button>
@@ -523,119 +246,85 @@ function Dashboard() {
                     {activeIndex === 0 && (
                         <>
                             {userModelsLoading ? (
-                                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
-                                    <div style={{ fontSize: '2rem', marginBottom: '15px' }}>⏳</div>
-                                    Loading your models...
+                                <div style={{ display: 'flex', marginTop: '5rem', justifySelf: 'center' }}
+                                >
+                                    <Mosaic color="#949494ff" size="small" text="" textColor="#f58800" />
                                 </div>
                             ) : userModels.length === 0 ? (
                                 <>
-                                    <h2 style={{
-                                        fontFamily: "Arial, sans-serif",
-                                        color: 'gray',
-                                        fontSize: '1.5rem',
-                                        textAlign: 'center',
-                                        fontWeight: 'normal',
-                                    }}>
-                                        Models: {userModels.length}
-                                    </h2>
-                                    <img src="/3d-model.png"
-                                        style={{
-                                            width: '150px',
-                                            marginTop: '3rem',
-                                            display: 'flex',
-                                            justifySelf: 'center',
-                                            filter: 'invert(1) brightness(50%)'
-                                        }}
-                                    />
-                                    <h2 style={{
-                                        fontFamily: "Arial, sans-serif",
-                                        color: 'gray',
-                                        fontSize: '1.5rem',
-                                        textAlign: 'center',
-                                        fontWeight: 'normal',
-                                    }}>
-                                        "Your Work" will show you all your models.
-                                    </h2>
-                                    <h2 style={{
-                                        fontFamily: "Arial, sans-serif",
-                                        marginTop: '0rem',
-                                        color: 'gray',
-                                        fontSize: '0.9rem',
-                                        textAlign: 'center',
-                                    }}>
-                                        You don't have models uploaded at the moment.
-                                    </h2>
+                                    <h2 className="empty-title">Models: {userModels.length}</h2>
+                                    <img src="/3d-model.png" className="empty-image" />
+                                    <h2 className="empty-title">"Your Work" will show you all your models.</h2>
+                                    <h2 className="empty-subtitle">You don't have models uploaded at the moment.</h2>
                                 </>
                             ) : (
                                 <>
-                                    <h2 style={{
-                                        fontFamily: "Arial, sans-serif",
-                                        color: 'gray',
-                                        fontSize: '1.5rem',
-                                        textAlign: 'center',
-                                        fontWeight: 'normal',
-                                        marginBottom: '30px'
-                                    }}>
-                                        Your Models ({userModels.length})
-                                    </h2>
+                                    <h2 className="empty-title grid-title">Your Models ({userModels.length})</h2>
 
-                                    <div style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 280px))',
-                                        gap: '20px',
-                                        justifyContent: 'center',
-                                        padding: '0 20px'
-                                    }}>
-                                        {userModels.map((model, index) => (
+
+                                    <div className="models-grid">
+                                        {userModels.map((model) => (
                                             <div
                                                 key={model.id}
-                                                style={hoveredCard === index ? modelCardHoverStyle : modelCardStyle}
+                                                className="model-card"
                                                 onClick={() => handleCardClick(model.id)}
-                                                onMouseEnter={() => setHoveredCard(index)}
-                                                onMouseLeave={() => setHoveredCard(null)}
                                             >
                                                 <img
                                                     src={getModelThumbnail(model)}
                                                     alt={model.title}
-                                                    style={hoveredCard === index ? modelImageHoverStyle : modelImageStyle}
+                                                    className="model-image"
                                                     onError={(e) => {
                                                         e.target.src = '/default-model-preview.png';
                                                     }}
                                                 />
 
-                                                <div style={modelContentStyle}>
-                                                    {/* Display category badge if available */}
-                                                    {model.category && (
-                                                        <div style={categoryBadgeStyle}>
-                                                            {model.category}
+                                                <div className="model-content">
+                                                    <div className="model-header">
+                                                        <div className="model-header-left">
+                                                            <img
+                                                                src={model.creatorProfilePicture || '/profile.png'}
+                                                                alt={model.creatorUsername}
+                                                                className="creator-avatar"
+                                                                onError={(e) => {
+                                                                    e.target.src = '/profile.png';
+                                                                }}
+                                                            />
+                                                            <h3 className="model-title-inline">
+                                                                {model.title}
+                                                            </h3>
                                                         </div>
-                                                    )}
-                                                    <h3 style={modelTitleStyle}>
-                                                        {model.title}
-                                                    </h3>
-                                                    {/* Creator information */}
-                                                    <div style={modelMetaStyle}>
-                                                        <span>Created by: <strong>{model.creatorUsername || 'Unknown'}</strong></span>
-                                                    </div>
 
-                                                    {/* Download and favorite counts */}
-                                                    <div style={modelMetaStyle}>
-                                                        <span>{model.downloads || 0} downloads</span>
-                                                        <span>{model.favorites || 0} favorites</span>
-                                                    </div>
-
-                                                    {/* Compatible software list */}
-                                                    {model.software && model.software.length > 0 && (
-                                                        <div style={compatibleSoftwaresStyle}>
-                                                            <div style={modelMetaStyle}>
-                                                                <span>Compatible with:</span>
+                                                        <div className="model-header-right">
+                                                            <div className="stat-item" title="Comments">
+                                                                <img src="/commentsIcon.png" alt="comments" className="stat-icon" />
+                                                                <span>{model.comments?.length || 0}</span>
                                                             </div>
-                                                            <div style={softwaresListStyle}>
-                                                                {model.software.map((software, idx) => (
-                                                                    <span key={idx} style={softwareBadgeStyle}>
+                                                            <div className="stat-item" title="Favorites">
+                                                                <img src="/favIcon.png" alt="favorites" className="stat-icon" />
+                                                                <span>{model.favorites || 0}</span>
+                                                            </div>
+                                                            <div className="stat-item" title="Downloads">
+                                                                <img src="/downloadsIcon.png" alt="downloads" className="stat-icon" />
+                                                                <span>{model.downloads || 0}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                   
+
+                                                    {model.software && model.software.length > 0 && (
+                                                        <div className="compatible-softwares">
+                                                            <div className="softwares-list">
+                                                                {model.software.slice(0, 3).map((software, idx) => (
+                                                                    <span key={idx} className="software-badge">
                                                                         {software}
                                                                     </span>
                                                                 ))}
+                                                                {model.software.length > 3 && (
+                                                                    <span className="software-badge">
+                                                                        +{model.software.length - 3}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     )}
@@ -652,119 +341,86 @@ function Dashboard() {
                     {activeIndex === 1 && (
                         <>
                             {favoritesLoading ? (
-                                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
-                                    <div style={{ fontSize: '2rem', marginBottom: '15px' }}>⏳</div>
-                                    Loading your favorite models...
+                                <div style={{ display: 'flex', marginTop: '5rem', justifySelf: 'center' }}
+                                >
+                                    <Mosaic color="#949494ff" size="small" text="" textColor="#f58800" />
                                 </div>
                             ) : favoriteModels.length === 0 ? (
                                 <>
-                                    <img src="/bookmark-star_2.png"
-                                        style={{
-                                            width: '150px',
-                                            marginTop: '3rem',
-                                            display: 'flex',
-                                            justifySelf: 'center',
-                                            filter: 'invert(1) brightness(50%)'
-                                        }}
-                                    />
-                                    <h2 style={{
-                                        fontFamily: "Arial, sans-serif",
-                                        color: 'gray',
-                                        fontSize: '1.5rem',
-                                        textAlign: 'center',
-                                        fontWeight: 'normal',
-                                    }}>
-                                        No favorite models yet
-                                    </h2>
-                                    <h2 style={{
-                                        fontFamily: "Arial, sans-serif",
-                                        color: 'gray',
-                                        fontSize: '0.9rem',
-                                        textAlign: 'center',
-                                    }}>
-                                        Models you favorite will appear here.
-                                    </h2>
+                                    <img src="/bookmark-star_2.png" className="empty-image" />
+                                    <h2 className="empty-title">No favorite models yet</h2>
+                                    <h2 className="empty-subtitle">Models you favorite will appear here.</h2>
                                 </>
                             ) : (
                                 <>
-                                    <h2 style={{
-                                        fontFamily: "Arial, sans-serif",
-                                        color: 'gray',
-                                        fontSize: '1.5rem',
-                                        textAlign: 'center',
-                                        fontWeight: 'normal',
-                                        marginBottom: '30px'
-                                    }}>
-                                        Your Favorite Models ({favoriteModels.length})
-                                    </h2>
+                                    <h2 className="empty-title grid-title">Your Favorite Models ({favoriteModels.length})</h2>
 
-                                    <div style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 280px))',
-                                        gap: '20px',
-                                        justifyContent: 'center',
-                                        padding: '0 20px'
-                                    }}>
-                                        {favoriteModels.map((model, index) => (
-                                            <div
+                                    <div className="models-grid">
+                                        {favoriteModels.map((model) => (
+                                           <div
                                                 key={model.id}
-                                                style={hoveredCard === index ? modelCardHoverStyle : modelCardStyle}
+                                                className="model-card"
                                                 onClick={() => handleCardClick(model.id)}
-                                                onMouseEnter={() => setHoveredCard(index)}
-                                                onMouseLeave={() => setHoveredCard(null)}
                                             >
                                                 <img
                                                     src={getModelThumbnail(model)}
                                                     alt={model.title}
-                                                    style={hoveredCard === index ? modelImageHoverStyle : modelImageStyle}
+                                                    className="model-image"
                                                     onError={(e) => {
                                                         e.target.src = '/default-model-preview.png';
                                                     }}
                                                 />
 
-                                                <div style={modelContentStyle}>
-                                                    {/* Display category badge if available */}
-                                                    {model.category && (
-                                                        <div style={categoryBadgeStyle}>
-                                                            {model.category}
+                                                <div className="model-content">
+                                                    <div className="model-header">
+                                                        <div className="model-header-left">
+                                                            <img
+                                                                src={model.creatorProfilePicture || '/profile.png'}
+                                                                alt={model.creatorUsername}
+                                                                className="creator-avatar"
+                                                                onError={(e) => {
+                                                                    e.target.src = '/profile.png';
+                                                                }}
+                                                            />
+                                                            <h3 className="model-title-inline">
+                                                                {model.title}
+                                                            </h3>
                                                         </div>
-                                                    )}
-                                                    <h3 style={modelTitleStyle}>
-                                                        {model.title}
-                                                    </h3>
-                                                    {/* Creator information */}
-                                                    <div style={modelMetaStyle}>
 
-                                                        <span>Created by: <strong>{model.creatorUsername || 'Unknown'}</strong></span>
-                                                    </div>
-
-
-                                                    {/* Download and favorite counts */}
-                                                    <div style={modelMetaStyle}>
-
-                                                        <span>{model.downloads || 0} downloads</span>
-
-                                                        <span>{model.favorites || 0} favorites</span>
-                                                    </div>
-                                                    {/* Compatible software list */}
-                                                    {model.software && model.software.length > 0 && (
-                                                        <div style={compatibleSoftwaresStyle}>
-                                                            <div style={modelMetaStyle}>
-
-                                                                <span>Compatible with:</span>
+                                                        <div className="model-header-right">
+                                                            <div className="stat-item" title="Comments">
+                                                                <img src="/commentsIcon.png" alt="comments" className="stat-icon" />
+                                                                <span>{model.comments?.length || 0}</span>
                                                             </div>
-                                                            <div style={softwaresListStyle}>
-                                                                {model.software.map((software, idx) => (
-                                                                    <span key={idx} style={softwareBadgeStyle}>
+                                                            <div className="stat-item" title="Favorites">
+                                                                <img src="/favIcon.png" alt="favorites" className="stat-icon" />
+                                                                <span>{model.favorites || 0}</span>
+                                                            </div>
+                                                            <div className="stat-item" title="Downloads">
+                                                                <img src="/downloadsIcon.png" alt="downloads" className="stat-icon" />
+                                                                <span>{model.downloads || 0}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                   
+
+                                                    {model.software && model.software.length > 0 && (
+                                                        <div className="compatible-softwares">
+                                                            <div className="softwares-list">
+                                                                {model.software.slice(0, 3).map((software, idx) => (
+                                                                    <span key={idx} className="software-badge">
                                                                         {software}
                                                                     </span>
                                                                 ))}
+                                                                {model.software.length > 3 && (
+                                                                    <span className="software-badge">
+                                                                        +{model.software.length - 3}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     )}
-
-
-
                                                 </div>
                                             </div>
 
@@ -778,20 +434,12 @@ function Dashboard() {
                     {/* Followers content*/}
                     {activeIndex === 2 && (
                         <>
-                            <h2 style={{
-                                fontFamily: "Arial, sans-serif",
-                                color: 'gray',
-                                fontSize: '1.5rem',
-                                textAlign: 'center',
-                                fontWeight: 'normal',
-                            }}>
-                                Followers:
-                            </h2>
+                            <h2 className="section-heading">Followers:</h2>
 
                             {/* Followers list */}
                             <div className="responsive-grid">
                                 {followersData.length === 0 ? (
-                                    <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray", gridColumn: "1 / -1" }}>No followers yet.</p>
+                                    <p className="muted-center full-row">No followers yet.</p>
                                 ) : (
                                     followersData.map((f) => (
                                         <div key={f.uid} className="user-card">
@@ -816,22 +464,10 @@ function Dashboard() {
                                                                 result = await doFollowUser(f.uid);
                                                             }
                                                             if (result.success) {
-                                                                // Update following list
-                                                                if (userStats.followingList.includes(f.uid)) {
-                                                                    setUserStats((prev) => ({
-                                                                        ...prev,
-                                                                        followingList: prev.followingList.filter((id) => id !== f.uid),
-                                                                        following: prev.following - 1
-                                                                    }));
-                                                                } else {
-                                                                    setUserStats((prev) => ({
-                                                                        ...prev,
-                                                                        followingList: [...prev.followingList, f.uid],
-                                                                        following: prev.following + 1
-                                                                    }));
-                                                                }
-                                                                const followers = await getFollowers(user.uid)
+                                                                const followers = await getFollowers(user.uid);
                                                                 setFollowersData(followers);
+                                                                const followings = await getFollowing(user.uid);
+                                                                setFollowingData(followings);
                                                             } else {
                                                                 console.log(result.message);
                                                             }
@@ -853,19 +489,11 @@ function Dashboard() {
                     {/* Following content */}
                     {activeIndex === 3 && (
                         <>
-                            <h2 style={{
-                                fontFamily: "Arial, sans-serif",
-                                color: 'gray',
-                                fontSize: '1.5rem',
-                                textAlign: 'center',
-                                fontWeight: 'normal',
-                            }}>
-                                Followed users:
-                            </h2>
+                            <h2 className="section-heading">Followed users:</h2>
 
                             <div className="responsive-grid">
                                 {followingData.length === 0 ? (
-                                    <p style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: 'gray', gridColumn: "1 / -1" }}>You're not following anyone.</p>
+                                    <p className="muted-center full-row">You're not following anyone.</p>
                                 ) : (
                                     followingData.map((f) => (
                                         <div key={f.uid} className="user-card">
@@ -890,21 +518,10 @@ function Dashboard() {
                                                                 result = await doFollowUser(f.uid);
                                                             }
                                                             if (result.success) {
-                                                                if (userStats.followingList.includes(f.uid)) {
-                                                                    setUserStats((prev) => ({
-                                                                        ...prev,
-                                                                        followingList: prev.followingList.filter((id) => id !== f.uid),
-                                                                        following: prev.following - 1
-                                                                    }));
-                                                                } else {
-                                                                    setUserStats((prev) => ({
-                                                                        ...prev,
-                                                                        followingList: [...prev.followingList, f.uid],
-                                                                        following: prev.following + 1
-                                                                    }));
-                                                                }
-                                                                const followers = await getFollowers(user.uid)
+                                                                const followers = await getFollowers(user.uid);
                                                                 setFollowersData(followers);
+                                                                const followings = await getFollowing(user.uid);
+                                                                setFollowingData(followings);
                                                             } else {
                                                                 console.log(result.message);
                                                             }
@@ -925,35 +542,31 @@ function Dashboard() {
 
                     {/* Summary tab */}
                     {activeIndex === 5 && (
-                        <div style={summaryContainerStyle}>
-                            <h2 style={{ color: '#333', marginBottom: '3rem', fontSize: '1.7rem' }}>Summary</h2>
+                        <div className="summary-container">
+                            <h2 className="summary-title">Summary</h2>
 
-                            {/* The time when this account was created*/}
-                            <div style={{ marginBottom: '3rem' }}>
+                            <div className="summary-block-lg">
                                 <strong>Member since:</strong> {userStats.createdAt ? formatFirebaseTimestamp(userStats.createdAt) : 'Unknown'}
                             </div>
 
-                            {/* Account Type */}
-                            <div style={{ marginBottom: '2rem' }}>
-                                <h3 style={sectionTitleStyle}>Account Type</h3>
-                                <p style={{ margin: 0 }}>
+                            <div className="summary-block-md">
+                                <h3 className="summary-section-title">Account Type</h3>
+                                <p className="summary-paragraph">
                                     {userStats.accountType === 'individual' ? 'Individual' : 'Organization'} -
-                                    {roles.find(role => role.value === userStats.role)?.label || 'Other'}
+                                    {userStats.role || 'other'}
                                 </p>
                             </div>
 
-                            {/* Bio */}
                             {userStats.bio && (
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <h3 style={sectionTitleStyle}>Bio</h3>
-                                    <p style={{ margin: 0, lineHeight: '1.5' }}>{userStats.bio}</p>
+                                <div className="summary-block-sm">
+                                    <h3 className="summary-section-title">Bio</h3>
+                                    <p className="summary-paragraph">{userStats.bio}</p>
                                 </div>
                             )}
 
-                            {/* Social Media Links */}
                             {userStats.links && userStats.links.some(link => link.trim() !== '') && (
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <h3 style={sectionTitleStyle}>Social Media Links</h3>
+                                <div className="summary-block-sm">
+                                    <h3 className="summary-section-title">Social Media Links</h3>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                         {userStats.links.map((link, index) => (
                                             link.trim() !== '' && (
@@ -962,7 +575,7 @@ function Dashboard() {
                                                     href={link.startsWith('http') ? link : `https://${link}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    style={{ color: '#eb8d00ff', textDecoration: 'none' }}
+                                                    className="summary-link"
                                                 >
                                                     {link}
                                                 </a>
@@ -972,13 +585,12 @@ function Dashboard() {
                                 </div>
                             )}
 
-                            {/* Software Skills */}
                             {userStats.skills && userStats.skills.length > 0 && (
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <h3 style={sectionTitleStyle}>Software Skills</h3>
+                                <div className="summary-block-sm">
+                                    <h3 className="summary-section-title">Software Skills</h3>
                                     <div style={{ display: 'flex', flexWrap: 'wrap' }}>
                                         {userStats.skills.map((skill, index) => (
-                                            <span key={index} style={skillStyle}>
+                                            <span key={index} className="summary-skill">
                                                 {skill}
                                             </span>
                                         ))}
@@ -986,11 +598,10 @@ function Dashboard() {
                                 </div>
                             )}
 
-                            {/* In the case the user didn't add any info */}
                             {!userStats.bio &&
                                 (!userStats.links || userStats.links.every(link => link.trim() === '')) &&
                                 (!userStats.skills || userStats.skills.length === 0) && (
-                                    <p style={{ color: '#666', fontStyle: 'italic' }}>
+                                    <p className="info-muted-italic">
                                         You didn't add any information yet.
                                     </p>
                                 )}
