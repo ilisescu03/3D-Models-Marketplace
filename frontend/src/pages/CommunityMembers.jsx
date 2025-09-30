@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { getUserStats, getFollowers, getFollowing, getUsers, listenToUserStats, doFollowUser, doUnfollowUser } from '/backend/users.js';
 import '/frontend/css/App.css'; 
 import '/frontend/css/CommunityMembers.css'; 
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
+
 function CommunityMembers() {
+    // State management for user data and authentication
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(true);
@@ -25,11 +27,62 @@ function CommunityMembers() {
     const [followingData, setFollowingData] = useState([]);
     const navigate = useNavigate();
 
+    // Fetches the latest public models for a given user
+    const fetchUserModels = async (userId) => {
+        try {
+            // Query to get user's public models from Firestore
+            const modelsQuery = query(
+                collection(db, "models"),
+                where("creatorUID", "==", userId),
+                where("isPublic", "==", true)
+            );
+            const snapshot = await getDocs(modelsQuery);
+            const models = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            // Sort models by creation date (newest first) and return first 2
+            return models
+                .sort((a, b) => {
+                    const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+                    const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+                    return dateB - dateA;
+                })
+                .slice(0, 2);
+        } catch (error) {
+            console.error("Error fetching user models:", error);
+            return [];
+        }
+    };
+
+    // Main useEffect for data initialization
     useEffect(() => {
+        // Fetches all users and their data including models, bio, and skills
         const fetchUsers = async () => {
             try {
                 const users = await getUsers();
-                setUsersData(users);
+                
+                // Enhance each user data with models, bio, and skills
+                const usersWithModels = await Promise.all(
+                    users.map(async (userData) => {
+                        const models = await fetchUserModels(userData.uid);
+                        
+                        // Get additional user profile data from Firestore
+                        const userDocRef = doc(db, "users", userData.uid);
+                        const userDocSnap = await getDoc(userDocRef);
+                        const fullUserData = userDocSnap.exists() ? userDocSnap.data() : {};
+                        
+                        return {
+                            ...userData,
+                            models: models,
+                            bio: fullUserData.bio || "",
+                            skills: fullUserData.skills || []
+                        };
+                    })
+                );
+                
+                setUsersData(usersWithModels);
             } catch (error) {
                 console.error("Error fetching users:", error);
             }
@@ -37,10 +90,12 @@ function CommunityMembers() {
 
         fetchUsers();
         
+        // Authentication state listener
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
                 try {
+                    // Get current user's profile data
                     const userDocRef = doc(db, "users", currentUser.uid);
                     const userDocSnap = await getDoc(userDocRef);
 
@@ -49,6 +104,7 @@ function CommunityMembers() {
                         setUsername(userData.username || userData.email);
                     }
                     
+                    // Set up real-time listener for user stats (followers/following)
                     const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
                         setUserStats(stats);
                         const followers = await getFollowers(currentUser.uid);
@@ -66,6 +122,7 @@ function CommunityMembers() {
                     setLoading(false);
                 }
             } else {
+                // Reset state if user is not authenticated
                 setUser(null);
                 setUsername("");
                 setUserStats({
@@ -82,68 +139,98 @@ function CommunityMembers() {
         return () => unsubscribe();
     }, [navigate]);
 
+    // Show loading screen while data is being fetched
     if (loading) {
-       return   <LoadingScreen />;
+       return <LoadingScreen />;
     }
 
-    const filteredUsers = usersData.filter(f => f.uid !== user?.uid);
+    // Sort users by follower count and take top 50
+    const filteredUsers = usersData
+        .sort((a, b) => b.followers - a.followers)
+        .slice(0, 50);
 
     return (
         <div className="comm-members-backgroundStyle">
             <Header />
             <CookiesBanner />
             <div className="comm-members-containerStyle">
-                <h2 style={{ fontWeight: 'normal', color: 'gray', textAlign: 'center', width: '100%' }}>Users</h2>
-                <div className="responsive-grid">
+                {/* Page header section */}
+                <div className="page-header">
+                    <h1 className="page-title">Most Popular Creators</h1>
+                    <p className="page-description">Discover and connect with the most followed creators in our community</p>
+                </div>
+                
+                {/* Creators grid layout */}
+                <div className="creators-grid">
                     {filteredUsers.length === 0 ? (
-                        <p style={{ textAlign: "center", fontFamily: 'Arial, sans-serif', fontWeight: 'bold', color: "gray", gridColumn: "1 / -1" }}>No other users yet.</p>
+                        <p className="no-users-message">No other users yet.</p>
                     ) : (
-                        filteredUsers.map((f) => (
-                            <div key={f.uid} className="user-card">
+                        // Map through filtered users and create creator cards
+                        filteredUsers.map((creator) => (
+                            <div key={creator.uid} className="creator-card">
+                                {/* Creator avatar with fallback image */}
                                 <img
-                                    onClick={() => window.location.href = `/user/${f.username}`}
-                                    src={f.profilePicture}
-                                    alt={f.username}
+                                    className="comm-creator-avatar"
+                                    src={creator.profilePicture}
+                                    alt={creator.username}
                                     onError={(e) => (e.target.src = "profile.png")}
                                 />
-                                <h3>{f.username}</h3>
-                                <p style={{fontSize:'0.7rem'}}>Followers: {f.followers} | Following: {f.following}</p>
+                                
+                                <div className="creator-header">
+                                    <div className="creator-info">
+                                        {/* Creator username */}
+                                        <h3 className="creator-name">
+                                            {creator.username}
+                                        </h3>
+                                        {/* Follower/Following stats */}
+                                        <div className="creator-stats">
+                                            <span>{creator.followers} Followers</span>
+                                            <span className="stat-separator">•</span>
+                                            <span>{creator.following} Following</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Skills section - shows up to 3 skills */}
+                                {creator.skills && creator.skills.length > 0 && (
+                                    <div className="creator-skills">
+                                        {creator.skills.slice(0, 3).map((skill, index) => (
+                                            <span key={index} className="skill-tag">{skill}</span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Bio section */}
+                                {creator.bio && (
+                                    <p className="creator-bio">{creator.bio}</p>
+                                )}
+
+                                {/* Latest models preview - shows up to 2 models */}
+                                {creator.models && creator.models.length > 0 && (
+                                    <div className="creator-models">
+                                        {creator.models.map((model) => (
+                                            <div 
+                                                key={model.id} 
+                                                className="model-thumbnail"
+                                            >
+                                                <img
+                                                    src={model.previewImages?.[0] || 'placeholder.png'}
+                                                    alt={model.title}
+                                                    onError={(e) => (e.target.src = 'placeholder.png')}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* View Profile button - navigates to user's profile or dashboard */}
                                 <button
-                                    className={`follow-button ${user && userStats.followingList.includes(f.uid) ? 'unfollow' : 'follow'}`}
-                                    onClick={async () => {
-                                        if (!user) navigate('/login');
-                                        try {
-                                            let result;
-                                            if (userStats.followingList.includes(f.uid)) {
-                                                result = await doUnfollowUser(f.uid);
-                                            } else {
-                                                result = await doFollowUser(f.uid);
-                                            }
-                                            if (result.success) {
-                                                if (userStats.followingList.includes(f.uid)) {
-                                                    setUserStats((prev) => ({
-                                                        ...prev,
-                                                        followingList: prev.followingList.filter((id) => id !== f.uid),
-                                                        following: prev.following - 1
-                                                    }));
-                                                } else {
-                                                    setUserStats((prev) => ({
-                                                        ...prev,
-                                                        followingList: [...prev.followingList, f.uid],
-                                                        following: prev.following + 1
-                                                    }));
-                                                }
-                                                const followers = await getFollowers(user.uid);
-                                                setFollowersData(followers);
-                                            } else {
-                                                console.log(result.message);
-                                            }
-                                        } catch (err) {
-                                            console.error(err);
-                                        }
-                                    }}
+                                    className="creator-visit-button"
+                                    onClick={() => creator.uid !== user?.uid ? 
+                                        window.location.href = `/user/${creator.username}` : 
+                                        window.location.href='/dashboard'}
                                 >
-                                    {userStats.followingList.includes(f.uid) ? "Unfollow" : "Follow"}
+                                    View Profile
                                 </button>
                             </div>
                         ))
