@@ -149,7 +149,10 @@ function Header() {
                         <img src="/WebsiteLogo.png" alt="ShapeHive Logo" style={{ height: '100px' }} />
                     </button>
                     {/* Search button */}
-                    <button style={imageButtonStyle}>
+                    <button 
+                    onClick={() => navigate('/search')}
+                    style={imageButtonStyle}>
+                        
                         <img src='/SearchBtn.png' alt='Search' style={{ height: '40px', marginBottom: '40px' }} />
                     </button>
 
