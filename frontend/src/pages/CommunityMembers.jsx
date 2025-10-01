@@ -146,6 +146,7 @@ function CommunityMembers() {
 
     // Sort users by follower count and take top 50
     const filteredUsers = usersData
+        .filter(creator=>creator.models.length>0)
         .sort((a, b) => b.followers - a.followers)
         .slice(0, 50);
 

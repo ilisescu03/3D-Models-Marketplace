@@ -21,18 +21,6 @@
     flex-direction: column;
     align-items: center;
 }
-/* Container style for the main content area */
-.comm-members-containerStyle {
-    margin-top: 6rem;
-    padding: 2rem 1rem;
-    font-size: 1.5rem;
-    font-family: 'Manrope', system-ui, sans-serif;
-    width: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
 
 /* Page header styles */
 .page-header {
@@ -65,7 +53,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 2rem;
-    width: 100%;
+    width: 80%;
     padding: 0 1rem;
 }
 

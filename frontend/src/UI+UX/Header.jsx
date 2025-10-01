@@ -3,6 +3,7 @@ import { doSignOut } from '/backend/auth.js';
 import { auth, db } from '/backend/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 import SideMenu from './SideMenu.jsx';
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
@@ -35,19 +36,19 @@ const buttonStyle2 = {
     backgroundColor: 'rgba(255, 145, 0, 1)',
     color: 'white',
     border: 'none',
-    
+
     marginRight: '0px',
     borderRadius: '5px',
     fontWeight: 'bold',
     padding: '7.5px 15px',
-    marginBottom:'2rem',
+    marginBottom: '0rem',
     transition: '0.3s ease',
     cursor: 'pointer'
 }
 const imageButtonStyle = {
-    position:'relative',
-    top:'1rem',
-    marginRight:'2rem',
+    position: 'relative',
+    
+    marginRight: '2rem',
     border: 'none',
     backgroundColor: 'transparent',
     cursor: 'pointer',
@@ -59,11 +60,24 @@ const imageButtonStyle1 = {
     cursor: 'pointer',
 }
 function Header() {
+    const [searchQuery, setSearchQuery] = useState('');
     const [menuOpen, setMenuOpen] = useState(false);//for side menu
     const [user, setUser] = useState(null);//for verifying if the user is logged in or not
     const [loading, setLoading] = useState(true);
     const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
     const [profilePicture, setProfilePicture] = useState("/profile.png"); // Default profile picture
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const navigate = useNavigate();
+
+    // Track window resize
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     //verify if the user is logged in
     useEffect(() => {
@@ -108,7 +122,7 @@ function Header() {
     }, []);
 
     //For mobile
-    if (window.innerWidth < 600) {
+    if (windowWidth < 1000) {
         return (<>
             <header style={{ position: 'fixed', top: '0px', left: '0px', width: '100%', zIndex: 1000 }}>
                 <nav
@@ -126,7 +140,7 @@ function Header() {
                 >
                     {/* Menu button */}
                     <button onClick={() => setMenuOpen(true)} style={imageButtonStyle}>
-                        <img src='/menu.png' alt='Menu' style={{ height: '35px', marginBottom:'40px' }} />
+                        <img src='/menu.png' alt='Menu' style={{ height: '35px', marginBottom: '40px' }} />
                     </button>
                     {/* Logo button */}
                     <button style={imageButtonStyle1}
@@ -136,7 +150,7 @@ function Header() {
                     </button>
                     {/* Search button */}
                     <button style={imageButtonStyle}>
-                        <img src='/SearchBtn.png' alt='Search' style={{ height: '40px', marginBottom:'40px' }} />
+                        <img src='/SearchBtn.png' alt='Search' style={{ height: '40px', marginBottom: '40px' }} />
                     </button>
 
                 </nav>
@@ -163,7 +177,12 @@ function Header() {
                         minHeight: '60px'
                     }}
                 >
-                    <div>
+                    <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        flex: windowWidth < 1200 ? '0 1 auto' : 1,
+                        minWidth: windowWidth < 1200 ? 'auto' : '0'
+                    }}>
                         {/* Logo button */}
                         <button style={imageButtonStyle1}
                             onClick={() => window.location.href = '/'}
@@ -173,7 +192,7 @@ function Header() {
                         {/* Explore menu button */}
                         <button style={{
                             position: 'relative',
-                            bottom: '2rem',
+                            bottom: '0rem',
                             cursor: 'pointer',
                             fontSize: '1rem',
                             backgroundColor: 'transparent',
@@ -182,6 +201,8 @@ function Header() {
                             left: '4rem',
                             color: exploreMenuOpen ? 'rgba(255, 123, 0, 1)' : 'rgba(82, 82, 82, 1)',
                             fontWeight: 'bold',
+                            whiteSpace: 'nowrap',
+                            display: windowWidth < 1200 ? 'none' : 'block'
                         }}
                             onMouseEnter={(e) => {
                                 setExploreMenuOpen(true);
@@ -201,7 +222,7 @@ function Header() {
                                 }}
                                 style={{
                                     position: 'absolute',
-                                    top: '80px',
+                                    top: '70px',
                                     left: '10rem',
                                     backgroundColor: 'rgba(255, 255, 255, 1)',
                                     boxShadow: ' 2px 4px 4px rgba(0, 0, 0, 0.23)',
@@ -237,11 +258,58 @@ function Header() {
                             </div>
                         )}
                     </div>
+                    
+                    {/* Search input - Se adaptează la dimensiunea ecranului */}
+                    <div
+                    onClick={() => navigate('/search')}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        maxWidth: windowWidth < 1200 ? '400px' : '700px',
+                        minWidth: windowWidth < 1200 ? '250px' : '300px',
+                        margin: windowWidth < 1200 ? '0 20px' : '0',
+                        position: 'relative',
+                        bottom: '0rem',
+                        flex: windowWidth < 1200 ? '0 1 auto' : 1,
+                        justifyContent: 'center'
+                    }}>
+                        <button style={{
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '8px 12px',
+                            position: 'absolute',
+                            left: '0',
+                            zIndex: 1
+                        }}>
+                            <img src="/SearchBtn.png" alt="Search" style={{ height: '20px' }} />
+                        </button>
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '8px 12px 8px 40px',
+                                borderRadius: '5px',
+                                border: '1px solid #ccc',
+                                fontSize: '1rem',
+                                outline: 'none'
+                            }}
+                        />
+                    </div>
+
                     {/* User authentication section */}
                     {!loading && (
                         user ? (
                             // User is logged in - show profile picture, dropdown and upload button
-                            <div>
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center',
+                                flex: windowWidth < 1200 ? '0 1 auto' : 'none'
+                            }}>
 
                                 <div
                                     style={{ position: 'relative', display: 'inline-block' }}
@@ -267,7 +335,7 @@ function Header() {
                                         <div
                                             style={{
                                                 position: 'absolute',
-                                                top: '60px',
+                                                top: '50px',
                                                 right: 0,
                                                 backgroundColor: 'rgba(255, 255, 255, 1)',
                                                 borderRadius: '3px',
@@ -332,20 +400,24 @@ function Header() {
                                     style={buttonStyle2}
                                 >
                                     <img src="/UploadButton.png"
-                                    style={{
-                                        width:'15px',
-                                        right:'5px',
-                                        position:'relative',
-                                        top:'2px',
-                                        filter: 'invert(1)',
-                                        padding:'0',
-                                    }}/>
+                                        style={{
+                                            width: '15px',
+                                            right: '5px',
+                                            position: 'relative',
+                                            top: '2px',
+                                            filter: 'invert(1)',
+                                            padding: '0',
+                                        }} />
                                     Upload
                                 </button>
                             </div>
 
                         ) : (
-                            <div>
+                            <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center',
+                                flex: windowWidth < 1200 ? '0 1 auto' : 'none'
+                            }}>
                                 {/* If the user is not logged in the login and sign up buttons are displayed*/}
                                 <button
                                     onClick={() => window.location.href = '/login'}

@@ -213,17 +213,16 @@ export const doSignInWithGoogle = async () => {
   }
 }
 
-// Funcție helper pentru a încărca imaginea de profil de la Google în Storage
+// Upload google profile image to storage
 const uploadGoogleProfileImageToStorage = async (photoURL, uid) => {
   try {
-    // Soluție 1: Încercăm direct cu fetch (poate funcționa pentru unele URL-uri Google)
+   
     try {
       const response = await fetch(photoURL);
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
       
       const blob = await response.blob();
-      
-      // Extragem extensia din URL
+  
       const urlObj = new URL(photoURL);
       const pathname = urlObj.pathname;
       let extension = 'jpg';
@@ -235,28 +234,26 @@ const uploadGoogleProfileImageToStorage = async (photoURL, uid) => {
       } else if (pathname.includes('.gif')) {
         extension = 'gif';
       }
-      
-      // Creăm referința în Storage
+ 
       const storageRef = ref(storage, `profilePictures/${uid}.${extension}`);
-      
-      // Încărcăm imaginea
+
       const snapshot = await uploadBytes(storageRef, blob, {
         contentType: blob.type
       });
       
-      // Returnăm URL-ul de download
+   
       return await getDownloadURL(snapshot.ref);
     } catch (fetchError) {
       console.log("Direct fetch failed, trying CORS proxy:", fetchError);
       
-      // Soluție 2: Folosim un CORS proxy dacă fetch-ul direct eșuează
+    
       const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(photoURL)}`;
       const response = await fetch(corsProxyUrl);
       if (!response.ok) throw new Error(`CORS proxy HTTP error: ${response.status}`);
       
       const blob = await response.blob();
       
-      // Determinăm extensia din tipul blob
+ 
       let extension = 'jpg';
       if (blob.type === 'image/png') {
         extension = 'png';
@@ -264,15 +261,15 @@ const uploadGoogleProfileImageToStorage = async (photoURL, uid) => {
         extension = 'gif';
       }
       
-      // Creăm referința în Storage
+ 
       const storageRef = ref(storage, `profilePictures/${uid}.${extension}`);
       
-      // Încărcăm imaginea
+     
       const snapshot = await uploadBytes(storageRef, blob, {
         contentType: blob.type
       });
       
-      // Returnăm URL-ul de download
+
       return await getDownloadURL(snapshot.ref);
     }
   } catch (error) {
