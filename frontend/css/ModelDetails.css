@@ -121,15 +121,32 @@
 /* Creator info */
 .creatorStyle {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
     margin-bottom: 20px;
     color: #666;
     cursor: pointer;
 }
+.creatorUsernameLine {
+    display: flex;
+    align-items: center;
+}
+
+.creatorButtonLine {
+    display: flex;
+    align-items: center;
+}
+
+.creatorInfoStyle {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
 .avatarStyle {
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -624,3 +641,32 @@
 /* Disabled buttons styling */
 .replySubmitStyle:disabled { background-color: #ccc; cursor: not-allowed; }
 .commentSubmitStyle:disabled { background-color: #ccc; cursor: not-allowed; }
+
+/* Follow button styling */
+.follow-button {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+}
+
+.follow-button.follow {
+    background-color: #333;
+}
+
+.follow-button.unfollow {
+    background-color: #ff4444;
+}
+
+.follow-button:hover {
+    opacity: 0.9;
+}
+
+.follow-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

@@ -201,8 +201,15 @@ function Dashboard() {
                 />
 
                 {/* Username, edit button, followers/following */}
-                <div className="profile-text">
+                <div className="profile-text" style={{marginTop:'0.9rem'}}>
                     <p className="profile-username">{username}</p>
+
+                    
+
+                    <div className="profile-stats">
+                        <span onClick={() => setActiveIndex(2)} className="followers-text">Followers: {userStats.followers}</span>
+                        <span onClick={() => setActiveIndex(3)} className="followers-text">Following: {userStats.following}</span>
+                    </div>
 
                     <div className="profile-actions">
                         <button
@@ -211,8 +218,6 @@ function Dashboard() {
                         >
                             Edit
                         </button>
-                        <span onClick={() => setActiveIndex(2)} className="followers-text">Followers: {userStats.followers}</span>
-                        <span onClick={() => setActiveIndex(3)} className="followers-text">Following: {userStats.following}</span>
                     </div>
                 </div>
             </div>
@@ -310,7 +315,7 @@ function Dashboard() {
                                                         </div>
                                                     </div>
 
-                                                   
+
 
                                                     {model.software && model.software.length > 0 && (
                                                         <div className="compatible-softwares">
@@ -357,7 +362,7 @@ function Dashboard() {
 
                                     <div className="models-grid">
                                         {favoriteModels.map((model) => (
-                                           <div
+                                            <div
                                                 key={model.id}
                                                 className="model-card"
                                                 onClick={() => handleCardClick(model.id)}
@@ -403,7 +408,7 @@ function Dashboard() {
                                                         </div>
                                                     </div>
 
-                                                   
+
 
                                                     {model.software && model.software.length > 0 && (
                                                         <div className="compatible-softwares">

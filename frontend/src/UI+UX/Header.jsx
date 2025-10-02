@@ -140,7 +140,7 @@ function Header() {
                 >
                     {/* Menu button */}
                     <button onClick={() => setMenuOpen(true)} style={imageButtonStyle}>
-                        <img src='/menu.png' alt='Menu' style={{ height: '35px', marginBottom: '40px' }} />
+                        <img src='/menu.png' alt='Menu' style={{ height: '35px', marginBottom: '0px' }} />
                     </button>
                     {/* Logo button */}
                     <button style={imageButtonStyle1}
@@ -153,7 +153,7 @@ function Header() {
                     onClick={() => navigate('/search')}
                     style={imageButtonStyle}>
                         
-                        <img src='/SearchBtn.png' alt='Search' style={{ height: '40px', marginBottom: '40px' }} />
+                        <img src='/SearchBtn.png' alt='Search' style={{ height: '40px', marginBottom: '0px' }} />
                     </button>
 
                 </nav>
@@ -262,7 +262,7 @@ function Header() {
                         )}
                     </div>
                     
-                    {/* Search input - Se adaptează la dimensiunea ecranului */}
+                    {/* Search input*/}
                     <div
                     onClick={() => navigate('/search')}
                     style={{
@@ -332,6 +332,7 @@ function Header() {
                                                 setProfilePicture("/profile.png");
                                             }}
                                         />
+                                        
                                     </button>
                                     {/* User dropdown menu */}
                                     {menuOpen && (

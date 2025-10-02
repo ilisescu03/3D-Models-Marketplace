@@ -11,7 +11,9 @@ import '/frontend/css/App.css';
 import '/frontend/css/OtherDashboard.css';
 import { Mosaic } from 'react-loading-indicators';
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
+import { useNavigate } from 'react-router-dom';
 function OtherDashboard() {
+    const navigate = useNavigate();
     const [favoriteModels, setFavoriteModels] = useState([]);
     const [favoritesLoading, setFavoritesLoading] = useState(false);
     const { username } = useParams();
@@ -223,7 +225,7 @@ function OtherDashboard() {
     }, [currentUser]);
 
     if (loading) {
-       return <LoadingScreen />;
+        return <LoadingScreen />;
     }
 
     if (!profileUser) {
@@ -254,17 +256,62 @@ function OtherDashboard() {
                     }}
                 />
 
-                {/* Username, followers/following */}
-                <div className="profile-text">
-                    <p className="profile-username">{profileUser.username || profileUser.email}</p>
+                {/* Username, follow button, followers/following */}
+                <div className="profile-text"  style={{marginTop:'0.9rem'}}>
+                    <p className="profile-username" >{profileUser.username || profileUser.email}</p>
 
-                    <div className="profile-actions">
+                  
+
+                    <div className="profile-stats">
                         <span onClick={() => setActiveIndex(2)} className="followers-text">Followers: {userStats.followers}</span>
                         <span onClick={() => setActiveIndex(3)} className="followers-text">Following: {userStats.following}</span>
                     </div>
+
+                      <div className="profile-actions">
+                        {/* Butonul de Follow/Unfollow */}
+                        {currentUser?.uid !== profileUserId && (
+                            <button
+                                className={`edit-button ${viewerStats.followingList?.includes(profileUserId) ? 'unfollow' : 'follow'}`}
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if(!currentUser) {
+                                        navigate('/login');
+                                        return;
+                                    }
+                                    try {
+                                        
+                                        if (viewerStats.followingList?.includes(profileUserId)) {
+                                            await doUnfollowUser(profileUserId);
+                                        } else {
+                                            await doFollowUser(profileUserId);
+                                        }
+                                        // Reîncarcă datele pentru a actualiza butonul
+                                        const updatedStats = await getUserStats(profileUserId);
+                                        setUserStats(updatedStats);
+                                    } catch (err) {
+                                        console.error(err);
+                                    }
+                                }}
+                                style={{
+                                    backgroundColor: viewerStats.followingList?.includes(profileUserId) ? '#ff4444' : '#575757ff',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '8px 16px',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem',
+                                    fontWeight: 'bold',
+                                    height: '30px',
+                                    width: '100px',
+                                    transition: 'background-color 0.3s ease'
+                                }}
+                            >
+                                {viewerStats.followingList?.includes(profileUserId) ? 'Unfollow' : 'Follow'}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
-
             {/* Dashboard content */}
             <div className="dashboard-content">
                 <section className="responsive-container dashboard-section">
@@ -309,7 +356,7 @@ function OtherDashboard() {
                                 <>
                                     <h2 className="empty-title grid-title">Their Models ({userModels.length})</h2>
 
-                                   <div className="models-grid">
+                                    <div className="models-grid">
                                         {userModels.map((model) => (
                                             <div
                                                 key={model.id}
@@ -357,7 +404,7 @@ function OtherDashboard() {
                                                         </div>
                                                     </div>
 
-                                                   
+
 
                                                     {model.software && model.software.length > 0 && (
                                                         <div className="compatible-softwares">
@@ -401,10 +448,10 @@ function OtherDashboard() {
                                 <>
                                     <h2 className="empty-title grid-title">Favorite Models ({favoriteModels.length})</h2>
 
-                                  
+
                                     <div className="models-grid">
                                         {favoriteModels.map((model) => (
-                                           <div
+                                            <div
                                                 key={model.id}
                                                 className="model-card"
                                                 onClick={() => handleCardClick(model.id)}
@@ -450,7 +497,7 @@ function OtherDashboard() {
                                                         </div>
                                                     </div>
 
-                                                   
+
 
                                                     {model.software && model.software.length > 0 && (
                                                         <div className="compatible-softwares">
@@ -498,10 +545,14 @@ function OtherDashboard() {
                                             <h3>{f.username}</h3>
                                             <p>Followers: {f.followers} | Following: {f.following}</p>
 
-                                            {currentUser && f.uid !== currentUser.uid && (
+                                            { f.uid !== currentUser?.uid && (
                                                 <button
                                                     className={`follow-button ${viewerStats.followingList?.includes(f.uid) ? 'unfollow' : 'follow'}`}
                                                     onClick={async () => {
+                                                        if(!currentUser) {
+                                                            navigate('/login');
+                                                            return;
+                                                        }
                                                         try {
                                                             if (viewerStats.followingList?.includes(f.uid)) {
                                                                 await doUnfollowUser(f.uid);
@@ -542,10 +593,14 @@ function OtherDashboard() {
                                             <h3>{f.username}</h3>
                                             <p>Followers: {f.followers} | Following: {f.following}</p>
 
-                                            {currentUser && f.uid !== currentUser.uid && (
+                                            {f.uid !== currentUser?.uid && (
                                                 <button
                                                     className={`follow-button ${viewerStats.followingList?.includes(f.uid) ? 'unfollow' : 'follow'}`}
                                                     onClick={async () => {
+                                                        if(!currentUser) {
+                                                            navigate('/login');
+                                                            return;
+                                                        }
                                                         try {
                                                             if (viewerStats.followingList?.includes(f.uid)) {
                                                                 await doUnfollowUser(f.uid);

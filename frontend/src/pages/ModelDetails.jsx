@@ -1,4 +1,5 @@
 import { toggleFavoriteModel, isModelFavorited, addComment, addReply } from '/backend/models.js';
+import { doFollowUser, doUnfollowUser, getFollowing } from '/backend/users.js';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../UI+UX/Header";
@@ -7,6 +8,7 @@ import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getModelById } from '/backend/models.js';
 import { downloadModel } from '/backend/models.js';
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
+import { useNavigate } from 'react-router-dom';
 import '/frontend/css/ModelDetails.css'
 
 // Screen size handle
@@ -27,6 +29,9 @@ const useScreenSize = () => {
 };
 
 function ModelDetails() {
+    const [isFollowingCreator, setIsFollowingCreator] = useState(false); //State for checking if the creator is followed or not
+    const [followLoading, setFollowLoading] = useState(false); //State for follow/unfollow loading
+    const [followingList, setFollowingList] = useState([]); //State for following list
     const [downloadLoading, setDownloadLoading] = useState(false); // State that shows if the model is downloading or not
     const [downloadProgress, setDownloadProgress] = useState({}); // Download progress state
     const [showDownloadOptions, setShowDownloadOptions] = useState(false); // Download options state
@@ -163,7 +168,12 @@ function ModelDetails() {
 
         loadModelDetails();
     }, [modelId]);
-
+    // Use effect for updating folloed status
+    useEffect(() => {
+        if (model && currentUser) {
+            checkIfFollowingCreator();
+        }
+    }, [model, currentUser]);
     const loadModelDetails = async () => {
         try {
             setLoading(true);
@@ -223,7 +233,58 @@ function ModelDetails() {
             setCommentLoading(false);
         }
     };
+    //Check if the creator is followed
+    const checkIfFollowingCreator = async () => {
+        if (!currentUser || !model) return;
 
+        try {
+            const result = await getFollowing(currentUser.uid);
+            if (result && Array.isArray(result)) {
+                setFollowingList(result);
+                const isFollowing = result.some(user => user.uid === model.creatorUID);
+                setIsFollowingCreator(isFollowing);
+            }
+        } catch (error) {
+            console.error("Error checking follow status:", error);
+        }
+    };
+    const navigate = useNavigate();
+    //Handler for follow/unfollow toggle
+    const handleFollowToggle = async () => {
+        if (!currentUser || !model) {
+            navigate('/login');
+            return;
+        }
+
+        if (followLoading) return;
+
+        try {
+            setFollowLoading(true);
+            let result;
+
+            if (isFollowingCreator) {
+                result = await doUnfollowUser(model.creatorUID);
+            } else {
+                result = await doFollowUser(model.creatorUID);
+            }
+
+            if (result.success) {
+                setIsFollowingCreator(!isFollowingCreator);
+                // Update follwing list
+                const updatedFollowing = await getFollowing(currentUser.uid);
+                if (updatedFollowing && Array.isArray(updatedFollowing)) {
+                    setFollowingList(updatedFollowing);
+                }
+            } else {
+                alert(result.message || 'Failed to update follow status');
+            }
+        } catch (error) {
+            console.error("Error toggling follow:", error);
+            alert('Failed to update follow status');
+        } finally {
+            setFollowLoading(false);
+        }
+    };
     // Add reply
     const handleAddReply = async (targetId, targetType, parentCommentId, repliedToUsername = null) => {
         if (!replyText.trim()) {
@@ -417,7 +478,7 @@ function ModelDetails() {
 
     // Loading screen
     if (loading) {
-        return  <LoadingScreen />;
+        return <LoadingScreen />;
     }
 
     // Error screen
@@ -517,12 +578,39 @@ function ModelDetails() {
                                         e.target.src = '/profile.png';
                                     }}
                                 />
-                                <span>Created by <strong>{model.creatorUsername}</strong></span>
+                                <div className="creatorInfoStyle">
+                                    <div className="creatorUsernameLine" style={{marginTop: currentUser?.uid===model.creatorUID ? '1rem': '0' }}>
+                                        <span>Created by <strong>{model.creatorUsername}</strong></span>
+                                    </div>
+                                     {currentUser?.uid !== model.creatorUID &&  (<div className="creatorButtonLine">
+                                       
+                                            <button
+                                                className={`follow-button ${isFollowingCreator ? 'unfollow' : 'follow'}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleFollowToggle();
+                                                }}
+                                                disabled={followLoading}
+                                                style={{
+                                                    backgroundColor: isFollowingCreator ? '#ff4444' : '#333',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    padding: '6px 16px',
+                                                    borderRadius: '6px',
+                                                    cursor: followLoading ? 'not-allowed' : 'pointer',
+                                                    fontSize: '0.7rem'
+                                                }}
+                                            >
+                                                {followLoading ? 'Processing...' : (isFollowingCreator ? 'Unfollow' : 'Follow')}
+                                            </button>
+                                        
+                                    </div>)}
+                                </div>
                             </div>
                             {/* Stats */}
                             <div className={isLargeScreen ? 'statsStyle' : 'statsStyleMobile'}>
                                 <div className="statItemStyle">
-                      
+
                                     <span className={isLargeScreen ? 'statValueStyle' : 'statValueStyleMobile'}>
                                         {model.downloads || 0}
                                     </span>
@@ -534,7 +622,7 @@ function ModelDetails() {
                                     </span>
                                     <span className="statLabelStyle">Favorites</span>
                                 </div>
-                                
+
                             </div>
 
                             {/* Description */}
@@ -627,7 +715,7 @@ function ModelDetails() {
                                 {downloadLoading ? 'DOWNLOADING...' : 'DOWNLOAD NOW'}
                             </button>
 
-                           
+
 
                             <div className={isLargeScreen ? 'actionButtonsStyle' : 'actionButtonsStyleMobile'}>
                                 {/* Favorite toggle and Share buttons */}
