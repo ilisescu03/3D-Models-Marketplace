@@ -270,7 +270,6 @@ export const uploadModel = async (modelData, files, previewImages) => {
     };
   }
 };
-
 // Get models with pagination and filters for display
 export const getModels = async (filters = {}, lastDoc = null, limitCount = 12) => {
   try {
@@ -299,9 +298,21 @@ export const getModels = async (filters = {}, lastDoc = null, limitCount = 12) =
       q = query(q, where("isPublic", "==", true));
     }
 
-    // Order by
-    const orderField = filters.orderBy || 'createdAt';
-    const orderDirection = filters.orderDirection || 'desc';
+    // Order by popularity (downloads + favorites) or other field
+    let orderField = 'createdAt'; // default
+    let orderDirection = 'desc'; // default
+    
+    if (filters.orderBy === 'popularity') {
+      // For popularity, we'll sort by a combination of downloads and favorites
+      // Since Firestore doesn't support computed fields, we'll sort by downloads first
+      // then by favorites as a secondary sort
+      orderField = 'downloads';
+      orderDirection = filters.orderDirection || 'desc';
+    } else if (filters.orderBy) {
+      orderField = filters.orderBy;
+      orderDirection = filters.orderDirection || 'desc';
+    }
+    
     q = query(q, orderBy(orderField, orderDirection));
 
     // Pagination
@@ -319,6 +330,15 @@ export const getModels = async (filters = {}, lastDoc = null, limitCount = 12) =
     snapshot.forEach((docSnapshot) => {
       models.push({ id: docSnapshot.id, ...docSnapshot.data() });
     });
+
+    // If sorting by popularity, sort by downloads + favorites
+    if (filters.orderBy === 'popularity') {
+      models.sort((a, b) => {
+        const popularityA = (a.downloads || 0) + (a.favorites || 0);
+        const popularityB = (b.downloads || 0) + (b.favorites || 0);
+        return orderDirection === 'desc' ? popularityB - popularityA : popularityA - popularityB;
+      });
+    }
 
     // Fetch creator usernames for all models
     const modelsWithCreators = await Promise.all(

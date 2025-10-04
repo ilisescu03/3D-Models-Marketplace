@@ -580,7 +580,7 @@ function ModelDetails() {
                                 />
                                 <div className="creatorInfoStyle">
                                     <div className="creatorUsernameLine" style={{marginTop: currentUser?.uid===model.creatorUID ? '1rem': '0' }}>
-                                        <span>Created by <strong>{model.creatorUsername}</strong></span>
+                                        <span> <strong>{model.creatorUsername}</strong></span>
                                     </div>
                                      {currentUser?.uid !== model.creatorUID &&  (<div className="creatorButtonLine">
                                        

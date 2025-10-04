@@ -5,6 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import SideMenu from './SideMenu.jsx';
+
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, doUpdateProfilePicture,
     updateUsername, updateUserData
@@ -47,7 +48,7 @@ const buttonStyle2 = {
 }
 const imageButtonStyle = {
     position: 'relative',
-    
+
     marginRight: '2rem',
     border: 'none',
     backgroundColor: 'transparent',
@@ -60,6 +61,7 @@ const imageButtonStyle1 = {
     cursor: 'pointer',
 }
 function Header() {
+
     const [searchQuery, setSearchQuery] = useState('');
     const [menuOpen, setMenuOpen] = useState(false);//for side menu
     const [user, setUser] = useState(null);//for verifying if the user is logged in or not
@@ -149,10 +151,10 @@ function Header() {
                         <img src="/WebsiteLogo.png" alt="ShapeHive Logo" style={{ height: '100px' }} />
                     </button>
                     {/* Search button */}
-                    <button 
-                    onClick={() => navigate('/search')}
-                    style={imageButtonStyle}>
-                        
+                    <button
+                        onClick={() => navigate('/search')}
+                        style={imageButtonStyle}>
+
                         <img src='/SearchBtn.png' alt='Search' style={{ height: '40px', marginBottom: '0px' }} />
                     </button>
 
@@ -180,9 +182,9 @@ function Header() {
                         minHeight: '60px'
                     }}
                 >
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
                         flex: windowWidth < 1200 ? '0 1 auto' : 1,
                         minWidth: windowWidth < 1200 ? 'auto' : '0'
                     }}>
@@ -207,6 +209,7 @@ function Header() {
                             whiteSpace: 'nowrap',
                             display: windowWidth < 1200 ? 'none' : 'block'
                         }}
+                            onClick={() => navigate('/3d-models')}
                             onMouseEnter={(e) => {
                                 setExploreMenuOpen(true);
                             }}
@@ -228,55 +231,232 @@ function Header() {
                                     top: '70px',
                                     left: '10rem',
                                     backgroundColor: 'rgba(255, 255, 255, 1)',
-                                    boxShadow: ' 2px 4px 4px rgba(0, 0, 0, 0.23)',
+                                    boxShadow: '2px 4px 4px rgba(0, 0, 0, 0.23)',
                                     borderRadius: '3px',
                                     display: 'flex',
-                                    flexDirection: 'column',
-                                    padding: '0px',
-                                    minWidth: '150px',
-                                    zIndex: 2000
+                                    padding: '20px',
+                                    minWidth: '600px',
+                                    maxWidth: '700px',
+                                    zIndex: 2000,
+                                    maxHeight: '500px',
+                                    overflowY: 'auto'
                                 }}
                             >
-                                <button
-                                    onClick={() => window.location.href = '/community-members'}
-                                    style={{
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: 'black',
-                                        cursor: 'pointer',
-                                        padding: '8px 12px',
-                                        width: '100%',
-                                        textAlign: 'center',
-                                        borderRadius: '5px'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.color = 'black';
-                                    }}
-                                >
-                                    Community members
-                                </button>
+                                {/* Models and user links */}
+                                <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    flex: '0 0 180px',
+                                    paddingRight: '20px'
+                                }}>
+                                    <button
+                                        onClick={() => window.location.href = '/3d-models'}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'gray',
+                                            cursor: 'pointer',
+                                            padding: '8px 12px',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            borderRadius: '5px',
+                                            
+                                            fontSize: '0.9rem'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+                                        
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = 'gray';
+                                         
+                                        }}
+                                    >
+                                        3D Models
+                                    </button>
+                                    <button
+                                        onClick={() => window.location.href = '/heroes'}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'gray',
+                                            cursor: 'pointer',
+                                            padding: '8px 12px',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            borderRadius: '5px',
+                                            
+                                            fontSize: '0.9rem'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+                                        
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = 'gray';
+                                         
+                                        }}
+                                    >
+                                        Hive Heroes
+                                    </button>
+                                      
+                                </div>
+
+                                {/* Vertical line */}
+                                <div style={{
+                                    width: '1px',
+                                    backgroundColor: 'rgba(92, 92, 92, 0.3)',
+                                    margin: '0 20px',
+                                    height: 'auto'
+                                }}></div>
+
+                                {/* Model categories */}
+                                <div style={{
+                                    display: 'flex',
+                                    flex: 1,
+                                    gap: '20px'
+                                }}>
+                                    {/* First 8 categories */}
+                                    <div style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        flex: 1
+                                    }}>
+                                        {[
+                                            { name: 'Architecture', icon: '/architectureIcon.svg' },
+                                            { name: 'Character', icon: '/characterIcon.png' },
+                                            { name: 'Vehicle', icon: '/vehicleIcon.svg' },
+                                            { name: 'Environment', icon: '/lanscape.svg' },
+                                            { name: 'Furniture', icon: '/furniture.svg' },
+                                            { name: 'Electronics', icon: '/electronicsIcon.svg' },
+                                            { name: 'Jewelry', icon: '/jewelryIcon.svg' },
+                                            { name: 'Weapons', icon: '/weaponsIcon.svg' }
+                                        ].map((category) => (
+                                            <button
+                                                key={category.name}
+                                                onClick={() => {
+                                                    localStorage.setItem('autoFilterCategory', category.name);
+                                                    window.location.href = '/3d-models';
+                                                }}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'gray',
+                                                    cursor: 'pointer',
+                                                    padding: '8px 12px',
+                                                    width: '100%',
+                                                    textAlign: 'left',
+                                                    borderRadius: '5px',
+                                                    fontSize: '0.9rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+                                                    e.currentTarget.querySelector('img').style.filter = 'invert(44%) sepia(85%) saturate(1352%) hue-rotate(360deg) brightness(101%) contrast(101%)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.color = 'gray';
+                                                    e.currentTarget.querySelector('img').style.filter = 'invert(50%)';
+                                                }}
+                                            >
+                                                <img
+                                                    src={category.icon}
+                                                    alt={category.name}
+                                                    style={{
+                                                        width: '16px',
+                                                        height: '16px',
+                                                        filter: 'invert(50%)',
+                                                   
+                                                    }}
+                                                />
+                                                {category.name}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Last 8 categories */}
+                                    <div style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        flex: 1
+                                    }}>
+                                        {[
+                                            { name: 'Food & Drink', icon: '/foodDrinkIcon.svg' },
+                                            { name: 'Plants', icon: '/plantsIcon.svg' },
+                                            { name: 'Animals', icon: '/animalsIcon.svg' },
+                                            { name: 'Abstract', icon: '/artIcon.svg' },
+                                            { name: 'Mechanical', icon: '/mechanicalIcon.svg' },
+                                            { name: 'Fashion & Style', icon: '/fashionIcon.svg' },
+                                            { name: 'Sports', icon: '/sportsIcon.svg' },
+                                            { name: 'Culture & History', icon: '/cultureIcon.svg' },
+                                        
+                                        ].map((category) => (
+                                            <button
+                                                key={category.name}
+                                                onClick={() => {
+                                                    localStorage.setItem('autoFilterCategory', category.name);
+                                                    window.location.href = '/3d-models';
+                                                }}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'gray',
+                                                    cursor: 'pointer',
+                                                    padding: '8px 12px',
+                                                    width: '100%',
+                                                    textAlign: 'left',
+                                                    borderRadius: '5px',
+                                                    fontWeight: category.name === 'Other' ? 'bold' : 'normal',
+                                                    fontSize: '0.9rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+                                                    e.currentTarget.querySelector('img').style.filter = 'invert(44%) sepia(85%) saturate(1352%) hue-rotate(360deg) brightness(101%) contrast(101%)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.color = 'gray';
+                                                    e.currentTarget.querySelector('img').style.filter = 'invert(50%)';
+                                                }}
+                                            >
+                                                {category.name!=='Other' &&(<img
+                                                    src={category.icon}
+                                                    alt={category.name}
+                                                    style={{
+                                                        width: '16px',
+                                                        height: '16px',
+                                                        filter: 'invert(50%)',
+                                                        
+                                                    }}
+                                                />)}
+                                                {category.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
-                    
+
                     {/* Search input*/}
                     <div
-                    onClick={() => navigate('/search')}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        maxWidth: windowWidth < 1200 ? '400px' : '700px',
-                        minWidth: windowWidth < 1200 ? '250px' : '300px',
-                        margin: windowWidth < 1200 ? '0 20px' : '0',
-                        position: 'relative',
-                        bottom: '0rem',
-                        flex: windowWidth < 1200 ? '0 1 auto' : 1,
-                        justifyContent: 'center'
-                    }}>
+                        onClick={() => navigate('/search')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            width: '100%',
+                            maxWidth: windowWidth < 1200 ? '400px' : '700px',
+                            minWidth: windowWidth < 1200 ? '250px' : '300px',
+                            margin: windowWidth < 1200 ? '0 20px' : '0',
+                            position: 'relative',
+                            bottom: '0rem',
+                            flex: windowWidth < 1200 ? '0 1 auto' : 1,
+                            justifyContent: 'center'
+                        }}>
                         <button style={{
                             backgroundColor: 'transparent',
                             border: 'none',
@@ -308,8 +488,8 @@ function Header() {
                     {!loading && (
                         user ? (
                             // User is logged in - show profile picture, dropdown and upload button
-                            <div style={{ 
-                                display: 'flex', 
+                            <div style={{
+                                display: 'flex',
                                 alignItems: 'center',
                                 flex: windowWidth < 1200 ? '0 1 auto' : 'none'
                             }}>
@@ -332,7 +512,7 @@ function Header() {
                                                 setProfilePicture("/profile.png");
                                             }}
                                         />
-                                        
+
                                     </button>
                                     {/* User dropdown menu */}
                                     {menuOpen && (
@@ -417,8 +597,8 @@ function Header() {
                             </div>
 
                         ) : (
-                            <div style={{ 
-                                display: 'flex', 
+                            <div style={{
+                                display: 'flex',
                                 alignItems: 'center',
                                 flex: windowWidth < 1200 ? '0 1 auto' : 'none'
                             }}>

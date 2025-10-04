@@ -5,7 +5,9 @@ import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getModels } from '/backend/models.js';
 import '/frontend/css/Home.css';
 import { Mosaic } from "react-loading-indicators";
+import { useNavigate } from "react-router-dom";
 function Home() {
+    const navigate = useNavigate();
     // Authentication state and user data
     const { currentUser, userLogedIn } = useAuth();
     // State for storing models data
@@ -31,11 +33,15 @@ function Home() {
             setError(null);
 
             console.log("Loading models for home page...");
-            // Fetch public models with limit of 12
+            // Fetch public models sorted by popularity with limit of 8
             const result = await getModels(
-                { isPublic: true }, // Only public models
+                {
+                    isPublic: true,
+                    orderBy: 'popularity', // Sort by popularity
+                    orderDirection: 'desc' // Descending order (most popular first)
+                },
                 null, // No pagination yet
-                12 // Load 12 models initially
+                8 // Load only 8 models
             );
 
             if (result.success) {
@@ -155,7 +161,7 @@ function Home() {
                                                 <img
                                                     src={model.creatorProfilePicture || '/profile.png'}
                                                     alt={model.creatorUsername}
-                                                    className="creator-avatar"
+                                                    className="model-creator-avatar"
                                                     onError={(e) => {
                                                         e.target.src = '/profile.png';
                                                     }}
@@ -210,8 +216,7 @@ function Home() {
                             <button
                                 className="load-more-btn"
                                 onClick={() => {
-                                    // TODO: Implement load more functionality
-                                    alert('Load more functionality will be implemented soon!');
+                                    navigate('/3d-models');
                                 }}
                             >
                                 Load More Models

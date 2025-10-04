@@ -1,4 +1,4 @@
-.comm-members-backgroundStyle {
+.hero-members-backgroundStyle {
     background-color: rgba(238, 238, 238, 1);
     background-position: center;
     background-repeat: no-repeat;
@@ -10,7 +10,7 @@
 }
 
 /* Container style for the main content area */
-.comm-members-containerStyle {
+.hero-members-containerStyle {
     margin-top: 6rem;
     padding: 2rem 1rem;
     font-size: 1.5rem;
@@ -90,7 +90,7 @@
     align-items: center;
     gap: 1rem;
 }
-.comm-creator-avatar {
+.hero-creator-avatar {
     position: absolute;
     top: -60px;                     
     left: 50%;

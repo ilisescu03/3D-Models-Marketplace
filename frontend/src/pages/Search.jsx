@@ -4,11 +4,16 @@ import { auth, db } from '/backend/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { getUsers, listenToUserStats } from '/backend/users.js';
-import '/frontend/css/CommunityMembers.css';
+import { getModels } from '/backend/models.js';
+import '/frontend/css/Heroes.css';
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner.jsx';
 
 function Search() {
+    const [type, setType] = useState('All');
+    const [date, setDate] = useState('');
+    const [selectedSoftware, setSelectedSoftware] = useState([]);
+
     const navigate = useNavigate();
     const location = useLocation();
     const [searchQuery, setSearchQuery] = useState('');
@@ -18,12 +23,14 @@ function Search() {
     const [role, setRole] = useState('');
     const [selectedSkills, setSelectedSkills] = useState([]);
 
-    // State for user data and authentication
+
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(true);
     const [usersData, setUsersData] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
+    const [filteredModels, setFilteredModels] = useState([]);
+    const [modelsData, setModelsData] = useState([]);
     const [userStats, setUserStats] = useState({
         followers: 0,
         following: 0,
@@ -32,13 +39,25 @@ function Search() {
         profilePicture: ""
     });
     const [searchPerformed, setSearchPerformed] = useState(false);
+    const types = ['All', 'Model', 'Package'];
 
-        const [headerHeight, setHeaderHeight] = useState(140); 
+    const dateOptions = [
+        'Newest', 'Oldest', 'Last Week', 'Last Month', 'Last Year'
+    ];
+
+    const softwareOptions = [
+        "Blender", "Cinema4D", "AutoCAD", "ArchiCAD", "Maya",
+        "3ds Max", "ZBrush", "Substance Painter", "Photoshop",
+        "Godot", "Unity", "Unreal Engine"
+    ];
+
+    const [headerHeight, setHeaderHeight] = useState(140);
     const headerRef = useRef(null);
     // Data for dropdowns
     const categories = [
-        'Architecture', 'Characters', 'Vehicles', 'Nature',
-        'Electronics', 'Furniture', 'Weapons', 'Other'
+        'Architecture', 'Character', 'Vehicle', 'Environment', 'Furniture',
+        'Electronics', 'Jewelry', 'Weapons', 'Food & Drink', 'Plants', 'Animals',
+        'Abstract', 'Mechanical', 'Fashion & Style', 'Sports', 'Culture & History', 'Other'
     ];
 
     const accountTypes = ['individual', 'company'];
@@ -76,9 +95,74 @@ function Search() {
         "3ds Max", "ZBrush", "Substance Painter", "Photoshop",
         "Godot", "Unity", "Unreal Engine"
     ];
-      const [showFixedHeader, setShowFixedHeader] = useState(false);
-    
+    const [showFixedHeader, setShowFixedHeader] = useState(false);
+    const toggleSoftware = (software) => {
+        setSelectedSoftware(prev => {
+            if (prev.includes(software)) {
+                return prev.filter(s => s !== software);
+            } else {
+                return [...prev, software];
+            }
+        });
+    };
+    const filterModels = (modelsToFilter) => {
+        let filtered = [...modelsToFilter];
 
+        // Apply type filter
+        if (type !== 'All') {
+            filtered = filtered.filter(model => model.type === type);
+        }
+
+        // Apply category filter
+        if (category) {
+            filtered = filtered.filter(model => model.category === category);
+        }
+
+        // Apply date filter
+        if (date) {
+            const now = new Date();
+
+            if (date !== 'Newest' && date !== 'Oldest') {
+                filtered = filtered.filter(model => {
+                    const modelDate = model.createdAt?.toDate?.() || new Date(model.createdAt);
+
+                    switch (date) {
+                        case 'Last Week':
+                            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            return modelDate >= weekAgo;
+                        case 'Last Month':
+                            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                            return modelDate >= monthAgo;
+                        case 'Last Year':
+                            const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                            return modelDate >= yearAgo;
+                        default:
+                            return true;
+                    }
+                });
+            }
+
+            if (date === 'Newest' || date === 'Oldest') {
+                filtered = [...filtered].sort((a, b) => {
+                    const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+                    const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+                    return date === 'Newest' ? dateB - dateA : dateA - dateB;
+                });
+            }
+        }
+
+        // Apply software filter
+        if (selectedSoftware.length > 0) {
+            filtered = filtered.filter(model => {
+                const modelSoftware = model.software || [];
+                return selectedSoftware.some(software =>
+                    modelSoftware.includes(software)
+                );
+            });
+        }
+
+        return filtered;
+    };
     // Toggle skill selection
     const toggleSkill = (skill) => {
         setSelectedSkills(prev => {
@@ -149,7 +233,7 @@ function Search() {
         if (filters.selectedSkills.length > 0) {
             filtered = filtered.filter(userData => {
                 const userSkills = userData.skills || [];
-                return filters.selectedSkills.every(skill =>
+                return filters.selectedSkills.some(skill =>
                     userSkills.includes(skill)
                 );
             });
@@ -165,11 +249,13 @@ function Search() {
     const hasActiveSearch = () => {
         if (searchType === 'user') {
             return searchQuery.trim() || accountType || role || selectedSkills.length > 0;
+        } else if (searchType === 'model') {
+            return searchQuery.trim() || type !== 'All' || category || date || selectedSoftware.length > 0;
         }
         return false;
     };
-    
-     // Calculate header's height
+
+    // Calculate header's height
     useEffect(() => {
         const updateHeaderHeight = () => {
             if (headerRef.current) {
@@ -178,13 +264,13 @@ function Search() {
             }
         };
 
-        
+
         updateHeaderHeight();
 
- 
+
         window.addEventListener('resize', updateHeaderHeight);
-        
-   
+
+
         const resizeObserver = new ResizeObserver(updateHeaderHeight);
         if (headerRef.current) {
             resizeObserver.observe(headerRef.current);
@@ -198,7 +284,7 @@ function Search() {
     // Main useEffect for data initialization
     useEffect(() => {
         // Fetch all users with their complete data
-        const fetchUsers = async () => {
+        const fetchUsersAndModels = async () => {
             try {
                 const users = await getUsers();
 
@@ -232,7 +318,33 @@ function Search() {
                 const initialAccountType = urlParams.get('accountType');
                 const initialRole = urlParams.get('role');
                 const initialSkills = urlParams.get('skills');
+                // Fetch models
+                const result = await getModels(
+                    {
+                        isPublic: true,
+                        orderBy: 'popularity',
+                        orderDirection: 'desc'
+                    },
+                    null,
+                    100
+                );
 
+                if (result.success) {
+                    setModelsData(result.models);
+
+                    // Apply initial filters if exist
+                    const urlParams = new URLSearchParams(location.search);
+                    const initialSearch = urlParams.get('q');
+                    const initialType = urlParams.get('type') || 'model';
+
+                    if (initialType === 'model' && initialSearch) {
+                        const filtered = result.models.filter(model =>
+                            model.title.toLowerCase().includes(initialSearch.toLowerCase())
+                        );
+                        setFilteredModels(filtered);
+                        setSearchPerformed(true);
+                    }
+                }
                 if (initialType === 'user') {
                     setSearchType(initialType);
                     if (initialSearch) setSearchQuery(initialSearch);
@@ -256,7 +368,7 @@ function Search() {
             }
         };
 
-        fetchUsers();
+        fetchUsersAndModels();
 
         // Authentication state listener
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -322,6 +434,10 @@ function Search() {
             return;
         }
 
+        if (searchType === 'model' && !hasActiveSearch()) {
+            return;
+        }
+
         // Build search parameters
         const searchParams = new URLSearchParams();
         searchParams.set('type', searchType);
@@ -330,8 +446,11 @@ function Search() {
             searchParams.set('q', searchQuery.trim());
         }
 
-        if (searchType === 'model' && category) {
-            searchParams.set('category', category);
+        if (searchType === 'model') {
+            if (type !== 'All') searchParams.set('typeFilter', type);
+            if (category) searchParams.set('category', category);
+            if (date) searchParams.set('date', date);
+            if (selectedSoftware.length > 0) searchParams.set('software', selectedSoftware.join(','));
         } else if (searchType === 'user') {
             if (accountType) searchParams.set('accountType', accountType);
             if (role) searchParams.set('role', role);
@@ -356,13 +475,40 @@ function Search() {
         setRole('');
         setSelectedSkills([]);
         setSearchQuery('');
+        setType('All');
+        setDate('');
+        setSelectedSoftware([]);
         setSearchPerformed(false);
         setFilteredUsers([]);
+        setFilteredModels([]);
     };
 
-    // Check if any filters are active
-    const hasActiveFilters = searchQuery || accountType || role || selectedSkills.length > 0;
+    // User filter for models
+    useEffect(() => {
+        if (searchType === 'model' && hasActiveSearch()) {
+            let filtered = modelsData;
 
+
+            if (searchQuery.trim()) {
+                const searchLower = searchQuery.toLowerCase().trim();
+                filtered = filtered.filter(model =>
+                    model.title.toLowerCase().includes(searchLower)
+                );
+            }
+
+            // Advanced filters
+            filtered = filterModels(filtered);
+
+            setFilteredModels(filtered);
+            setSearchPerformed(true);
+        } else if (searchType === 'model') {
+            setSearchPerformed(false);
+            setFilteredModels([]);
+        }
+    }, [searchQuery, searchType, modelsData, type, category, date, selectedSoftware]);
+    // Check if any filters are active
+    const hasActiveFilters = searchQuery || accountType || role || selectedSkills.length > 0 ||
+        type !== 'All' || category || date || selectedSoftware.length > 0;
     // Show loading screen while data is being fetched
     if (loading) {
         return <LoadingScreen />;
@@ -372,27 +518,31 @@ function Search() {
         <div style={{
             backgroundColor: '#f8f9fa',
             minHeight: '100vh',
-           
+            fontFamily: 'Arial, sans-serif'
+
         }}>
             {/* Search header */}
             <div style={{
-                position: 'relative',
-              
-                width: '97.5%',
+
                 backgroundColor: 'white',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                zIndex: 1000,
-                padding: '10px 25px',
-                borderBottom: '1px solid #e9ecef'
+
             }}>
                 {/* Search bar and buttons */}
                 <div style={{
+                    top: 0,
+                    padding: '10px 25px',
+                    zIndex: 1000,
+                    width: '97.5%',
+                    boxShadow: '0 1px 5px rgba(0,0,0,0.1)',
+                    backgroundColor: 'white',
+                    borderBottom: '1px solid #e9ecef',
+                    position: window.innerWidth >= 1000 ? 'fixed' : 'relative',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '15px',
                     marginBottom: '20px'
                 }}>
-                    {window.innerWidth>=1000&&(<button
+                    {window.innerWidth >= 1000 && (<button
                         onClick={() => navigate('/')}
                         style={{
                             border: 'none',
@@ -523,6 +673,14 @@ function Search() {
 
                 {/* Filters section */}
                 <div style={{
+                    width: '100%',
+                    backgroundColor: 'white',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    padding: '20px 25px',
+
+                    borderBottom: '1px solid #e9ecef',
+                    marginTop: window.innerWidth >= 1000 ? '120px' : '-20px',
+                    position: 'relative',
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '25px',
@@ -532,6 +690,7 @@ function Search() {
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: '140px' }}>
                         <label style={{
                             fontSize: '0.8rem',
+                            position: 'relative',
                             marginBottom: '6px',
                             fontWeight: '600',
                             color: '#495057',
@@ -579,47 +738,241 @@ function Search() {
 
                     {/* Model-specific filters */}
                     {searchType === 'model' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: '160px' }}>
-                            <label style={{
-                                fontSize: '0.8rem',
-                                marginBottom: '6px',
-                                fontWeight: '600',
-                                color: '#495057',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
-                                fontFamily: 'Arial, sans-serif'
+                        <>
+                            {/* Type filter */}
+                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '140px' }}>
+                                <label style={{
+                                    fontSize: '0.8rem',
+                                    marginBottom: '6px',
+                                    fontWeight: '600',
+                                    color: '#495057',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    fontFamily: 'Arial, sans-serif'
+                                }}>
+                                    Type
+                                </label>
+                                <select
+                                    value={type}
+                                    onChange={(e) => setType(e.target.value)}
+                                    style={{
+                                        padding: '10px 12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e9ecef',
+                                        fontSize: '0.9rem',
+                                        backgroundColor: '#fff',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        fontFamily: 'Arial, sans-serif',
+                                        outline: 'none'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = 'rgba(255, 123, 0, 0.8)';
+                                        e.target.style.boxShadow = '0 0 0 2px rgba(255, 123, 0, 0.1)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#e9ecef';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    {types.map(typeOption => (
+                                        <option key={typeOption} value={typeOption}>
+                                            {typeOption}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Category filter */}
+                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '160px' }}>
+                                <label style={{
+                                    fontSize: '0.8rem',
+                                    marginBottom: '6px',
+                                    fontWeight: '600',
+                                    color: '#495057',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    fontFamily: 'Arial, sans-serif'
+                                }}>
+                                    Category
+                                </label>
+                                <select
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    style={{
+                                        padding: '10px 12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e9ecef',
+                                        fontSize: '0.9rem',
+                                        backgroundColor: '#fff',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        fontFamily: 'Arial, sans-serif',
+                                        outline: 'none'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = 'rgba(255, 123, 0, 0.8)';
+                                        e.target.style.boxShadow = '0 0 0 2px rgba(255, 123, 0, 0.1)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#e9ecef';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    <option value="">All Categories</option>
+                                    {categories.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Date filter */}
+                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '160px' }}>
+                                <label style={{
+                                    fontSize: '0.8rem',
+                                    marginBottom: '6px',
+                                    fontWeight: '600',
+                                    color: '#495057',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    fontFamily: 'Arial, sans-serif'
+                                }}>
+                                    Date
+                                </label>
+                                <select
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    style={{
+                                        padding: '10px 12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e9ecef',
+                                        fontSize: '0.9rem',
+                                        backgroundColor: '#fff',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        fontFamily: 'Arial, sans-serif',
+                                        outline: 'none'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = 'rgba(255, 123, 0, 0.8)';
+                                        e.target.style.boxShadow = '0 0 0 2px rgba(255, 123, 0, 0.1)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#e9ecef';
+                                        e.target.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    <option value="">Any Date</option>
+                                    {dateOptions.map(dateOption => (
+                                        <option key={dateOption} value={dateOption}>
+                                            {dateOption}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Software Compatibility multi-select */}
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                minWidth: '200px',
+                                flex: '0 0 auto'
                             }}>
-                                Category
-                            </label>
-                            <select
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                style={{
-                                    padding: '10px 12px',
-                                    borderRadius: '6px',
+                                <label style={{
+                                    fontSize: '0.8rem',
+                                    marginBottom: '6px',
+                                    fontWeight: '600',
+                                    color: '#495057',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.5px',
+                                    fontFamily: 'Arial, sans-serif'
+                                }}>
+                                    Software Compatibility
+                                </label>
+                                <div style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '6px',
+                                    minWidth: '200px',
+                                    minHeight: '44px',
+                                    padding: '8px',
                                     border: '1px solid #e9ecef',
-                                    fontSize: '0.9rem',
-                                    backgroundColor: '#fff',
-                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    backgroundColor: 'white',
                                     transition: 'all 0.2s ease',
-                                    fontFamily: 'Arial, sans-serif',
-                                    outline: 'none'
+                                    cursor: 'pointer',
+                                    width: 'fit-content',
+                                    maxWidth: '400px'
                                 }}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = 'rgba(255, 123, 0, 0.8)';
-                                    e.target.style.boxShadow = '0 0 0 2px rgba(255, 123, 0, 0.1)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = '#e9ecef';
-                                    e.target.style.boxShadow = 'none';
-                                }}
-                            >
-                                <option value="">All Categories</option>
-                                {categories.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
-                            </select>
-                        </div>
+                                    onFocus={(e) => {
+                                        e.currentTarget.style.borderColor = 'rgba(255, 123, 0, 0.8)';
+                                        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 123, 0, 0.1)';
+                                    }}
+                                >
+                                    {selectedSoftware.map(software => (
+                                        <div
+                                            key={software}
+                                            onClick={() => toggleSoftware(software)}
+                                            style={{
+                                                backgroundColor: 'rgba(255, 123, 0, 0.1)',
+                                                color: '#d35400',
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                fontSize: '0.8rem',
+                                                cursor: 'pointer',
+                                                border: '1px solid rgba(255, 123, 0, 0.3)',
+                                                fontWeight: '500',
+                                                fontFamily: 'Arial, sans-serif',
+                                                transition: 'all 0.2s ease',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                flexShrink: 0
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 0.2)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 0.1)';
+                                            }}
+                                        >
+                                            {software}
+                                            <span style={{ fontSize: '12px', marginLeft: '2px' }}>×</span>
+                                        </div>
+                                    ))}
+                                    <select
+                                        value=""
+                                        onChange={(e) => {
+                                            if (e.target.value && !selectedSoftware.includes(e.target.value)) {
+                                                toggleSoftware(e.target.value);
+                                            }
+                                            e.target.value = '';
+                                        }}
+                                        style={{
+                                            border: 'none',
+                                            outline: 'none',
+                                            backgroundColor: 'transparent',
+                                            fontSize: '0.9rem',
+                                            minWidth: '120px',
+                                            cursor: 'pointer',
+                                            fontFamily: 'Arial, sans-serif',
+                                            color: '#6c757d',
+                                            flexShrink: 0
+                                        }}
+                                    >
+                                        <option value="">Add software...</option>
+                                        {softwareOptions
+                                            .filter(software => !selectedSoftware.includes(software))
+                                            .map(software => (
+                                                <option key={software} value={software}>
+                                                    {software}
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </>
                     )}
 
                     {/* User-specific filters */}
@@ -816,15 +1169,144 @@ function Search() {
             </div>
 
             {/* Search results */}
-            <div style={{ 
+            <div style={{
                 padding: '0px',
-              
+                marginTop: '-6rem',
                 width: '100%',
                 boxSizing: 'border-box',
-                
+
             }}>
+                {searchType === 'model' && searchPerformed ? (
+                    <div className="hero-members-containerStyle">
+                        <div style={{ width: '100%', marginLeft: '4rem', marginBottom: '2rem' }}>
+                            <h2 style={{
+                                fontSize: '1.5rem',
+                                fontWeight: '600',
+                                color: '#1f2937',
+                                marginBottom: '0.5rem'
+                            }}>
+                                Search Results for Models
+                            </h2>
+                            <p style={{
+                                color: '#6b7280',
+                                fontSize: '1rem',
+                                marginBottom: '1rem'
+                            }}>
+                                {filteredModels.length} {filteredModels.length === 1 ? 'model found' : 'models found'}
+                                {hasActiveFilters && ' with current filters'}
+                            </p>
+                        </div>
+
+                        {/* Models Grid */}
+                        <div className="models-grid" >
+                            {filteredModels.length === 0 ? (
+                                <div style={{
+                                    gridColumn: '1 / -1',
+                                    textAlign: 'center',
+                                    padding: '3rem',
+                                    color: '#6b7280'
+                                }}>
+                                    <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No models found</p>
+                                    <p style={{ fontSize: '0.9rem' }}>
+                                        {hasActiveFilters
+                                            ? 'No models match your search criteria. Try adjusting your filters.'
+                                            : 'No models available'
+                                        }
+                                    </p>
+                                </div>
+                            ) : (
+                                filteredModels.map((model) => (
+                                    <div
+                                        key={model.id}
+                                        className="model-card"
+                                        onClick={() => window.location.href = `/model/${model.id}`}
+
+                                    >
+                                        <img
+                                            src={model.previewImages?.[0] || '/default-model-preview.png'}
+                                            alt={model.title}
+                                           className="model-image"
+                                            onError={(e) => {
+                                                e.target.src = '/default-model-preview.png';
+                                            }}
+                                        />
+
+                                        <div className="model-content">
+                                            <div className="model-header">
+                                                <div className="model-header-left">
+                                                    <img
+                                                        src={model.creatorProfilePicture || '/profile.png'}
+                                                        alt={model.creatorUsername}
+                                                        className="model-creator-avatar"
+                                                        onError={(e) => {
+                                                            e.target.src = '/profile.png';
+                                                        }}
+                                                    />
+                                                    <h3 className="model-title-inline">
+                                                        {model.title}
+                                                    </h3>
+                                                </div>
+
+                                                <div className="model-header-right">
+                                                    <div className="stat-item" title="Comments">
+                                                        <img src="/commentsIcon.png" alt="comments" className="stat-icon" />
+                                                        <span>{model.comments?.length || 0}</span>
+                                                    </div>
+                                                    <div className="stat-item" title="Favorites">
+                                                        <img src="/favIcon.png" alt="favorites" className="stat-icon" />
+                                                        <span>{model.favorites || 0}</span>
+                                                    </div>
+                                                    <div className="stat-item" title="Downloads">
+                                                        <img src="/downloadsIcon.png" alt="downloads" className="stat-icon" />
+                                                        <span>{model.downloads || 0}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {model.software && model.software.length > 0 && (
+                                                <div className="compatible-softwares">
+                                                    <div className="softwares-list">
+                                                        {model.software.slice(0, 3).map((software, idx) => (
+                                                            <span key={idx} className="software-badge">
+                                                                {software}
+                                                            </span>
+                                                        ))}
+                                                        {model.software.length > 3 && (
+                                                            <span className="software-badge">
+                                                                +{model.software.length - 3}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                ) : searchType === 'model' ? (
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        marginTop: '5rem',
+                        padding: '100px',
+                        textAlign: 'center',
+                        color: '#6c757d',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                        border: '1px solid #e9ecef',
+                        fontFamily: 'Arial, sans-serif'
+                    }}>
+                        <div style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#495057' }}>
+                            🔍 Search Models
+                        </div>
+                        <div style={{ fontSize: '0.9rem', marginBottom: '20px' }}>
+                            Enter a model name in the search bar or apply filters to find models
+                        </div>
+                    </div>
+                ) : null}
                 {searchType === 'user' && searchPerformed ? (
-                    <div className="comm-members-containerStyle">
+                    <div className="hero-members-containerStyle">
                         {/* Results header */}
                         <div style={{ width: '100%', marginBottom: '4rem' }}>
                             <h2 style={{
@@ -848,7 +1330,7 @@ function Search() {
                         {/* Users grid - 4 cards per row */}
                         <div className="creators-grid" style={{
                             display: 'grid',
-                             gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                             gap: '1rem',
                             width: '100%',
                             margin: '0 auto'
@@ -1068,6 +1550,7 @@ function Search() {
                     <div style={{
                         backgroundColor: 'white',
                         borderRadius: '12px',
+                        marginTop: '5rem',
                         padding: '100px',
                         textAlign: 'center',
                         color: '#6c757d',
@@ -1082,61 +1565,9 @@ function Search() {
                             Enter a username in the search bar or apply filters to find users
                         </div>
                     </div>
-                ) : searchType === 'model' ? (
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '100px',
-                        textAlign: 'center',
-                        color: '#6c757d',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                        border: '1px solid #e9ecef',
-                        fontFamily: 'Arial, sans-serif'
-                    }}>
-                        <div style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#495057' }}>
-                            🔍 Search Results for Models
-                        </div>
-                        <div style={{ fontSize: '0.9rem' }}>
-                            Enter your search criteria above to find 3D models
-                        </div>
-                        {searchQuery && (
-                            <div style={{
-                                marginTop: '20px',
-                                padding: '15px',
-                                backgroundColor: 'rgba(255, 123, 0, 0.1)',
-                                borderRadius: '8px',
-                                border: '1px solid rgba(255, 123, 0, 0.3)'
-                            }}>
-                                <div style={{ fontWeight: '600', color: '#d35400', marginBottom: '5px' }}>
-                                    Ready to search for: "{searchQuery}"
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                                    Press Enter or click the search icon to see results
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '100px',
-                        textAlign: 'center',
-                        color: '#6c757d',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                        border: '1px solid #e9ecef',
-                        fontFamily: 'Arial, sans-serif'
-                    }}>
-                        <div style={{ fontSize: '1.2rem', marginBottom: '10px', color: '#495057' }}>
-                            🔍 Search
-                        </div>
-                        <div style={{ fontSize: '0.9rem' }}>
-                            Select a search type and enter your criteria to begin searching
-                        </div>
-                    </div>
-                )}
+                ) : null}
             </div>
-            <CookiesBanner/>
+            <CookiesBanner />
         </div>
     );
 }

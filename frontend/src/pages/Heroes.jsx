@@ -1,5 +1,5 @@
 import Header from '../UI+UX/Header.jsx';
-import CookiesBanner from '../UI+UX/CookiesBanner';
+import CookiesBanner from '../UI+UX/CookiesBanner.jsx';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect } from 'react';
@@ -7,10 +7,10 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { getUserStats, getFollowers, getFollowing, getUsers, listenToUserStats, doFollowUser, doUnfollowUser } from '/backend/users.js';
 import '/frontend/css/App.css'; 
-import '/frontend/css/CommunityMembers.css'; 
+import '/frontend/css/Heroes.css'; 
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 
-function CommunityMembers() {
+function Heroes() {
     // State management for user data and authentication
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState("");
@@ -151,10 +151,10 @@ function CommunityMembers() {
         .slice(0, 50);
 
     return (
-        <div className="comm-members-backgroundStyle">
+        <div className="hero-members-backgroundStyle">
             <Header />
             <CookiesBanner />
-            <div className="comm-members-containerStyle">
+            <div className="hero-members-containerStyle">
                 {/* Page header section */}
                 <div className="page-header">
                     <h1 className="page-title">Most Popular Creators</h1>
@@ -171,7 +171,7 @@ function CommunityMembers() {
                             <div key={creator.uid} className="creator-card">
                                 {/* Creator avatar with fallback image */}
                                 <img
-                                    className="comm-creator-avatar"
+                                    className="hero-creator-avatar"
                                     src={creator.profilePicture}
                                     alt={creator.username}
                                     onError={(e) => (e.target.src = "profile.png")}
@@ -242,4 +242,4 @@ function CommunityMembers() {
     );
 }
 
-export default CommunityMembers;
+export default Heroes;
