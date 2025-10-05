@@ -14,6 +14,7 @@ import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 import { useNavigate } from 'react-router-dom';
 function OtherDashboard() {
     const navigate = useNavigate();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [favoriteModels, setFavoriteModels] = useState([]);
     const [favoritesLoading, setFavoritesLoading] = useState(false);
     const { username } = useParams();
@@ -168,6 +169,15 @@ function OtherDashboard() {
     }, []);
 
     useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
         // Find user by username
         const findUserByUsername = async () => {
             try {
@@ -245,7 +255,7 @@ function OtherDashboard() {
             <CookiesBanner />
 
             {/* Profile header */}
-            <div className="dashboard-profile">
+            <div className="dashboard-profile" style={{marginTop: windowWidth <1000 ? '-6rem': '8rem'}}>
                 {/* Profile pic */}
                 <img
                     className="profile-image"
@@ -378,7 +388,7 @@ function OtherDashboard() {
                                                             <img
                                                                 src={model.creatorProfilePicture || '/profile.png'}
                                                                 alt={model.creatorUsername}
-                                                                className="creator-avatar"
+                                                                className="model-creator-avatar"
                                                                 onError={(e) => {
                                                                     e.target.src = '/profile.png';
                                                                 }}
@@ -471,7 +481,7 @@ function OtherDashboard() {
                                                             <img
                                                                 src={model.creatorProfilePicture || '/profile.png'}
                                                                 alt={model.creatorUsername}
-                                                                className="creator-avatar"
+                                                                className="model-creator-avatar"
                                                                 onError={(e) => {
                                                                     e.target.src = '/profile.png';
                                                                 }}

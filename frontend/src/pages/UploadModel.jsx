@@ -19,6 +19,7 @@ const TAG_OPTIONS = [
     'Sci-Fi', 'Medieval', 'Modern', 'Vintage', 'Industrial'
 ];
 function UploadModel() {
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const { currentUser, userLogedIn } = useAuth();
 
     // Form data state
@@ -54,7 +55,14 @@ function UploadModel() {
             window.location.href = '/login';
         }
     }, [userLogedIn, currentUser]);
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
 
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     // Clear messages after time
     useEffect(() => {
         if (error) {
@@ -260,7 +268,7 @@ function UploadModel() {
     return (
         <div className="upload-model-page">
             <Header />
-            <div className="upload-container">
+            <div className="upload-container" style={{marginTop: windowWidth<1000 ? '-6rem': '8rem'}}>
                 <h1 className="upload-title">Upload 3D Model</h1>
                 {error && <div className="alert error">{error}</div>}
                 {success && <div className="alert success">{success}</div>}

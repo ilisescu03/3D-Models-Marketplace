@@ -521,7 +521,7 @@ function ModelDetails() {
             <Header />
             <CookiesBanner />
 
-            <div className="containerStyle">
+            <div className="containerStyle" style={{marginTop: isLargeScreen? '0rem' : '-13rem'}}>
                 <div className={isLargeScreen ? 'contentStyleLarge responsiveFixStyle' : 'contentStyle responsiveFixStyle'}>
                     {/* Left Column - Model Preview and Details */}
                     <div className="leftColumnStyle responsiveFixStyle">

@@ -138,7 +138,16 @@ function Heroes() {
 
         return () => unsubscribe();
     }, [navigate]);
-
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+        // Track window resize
+        useEffect(() => {
+            const handleResize = () => {
+                setWindowWidth(window.innerWidth);
+            };
+    
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }, []);
     // Show loading screen while data is being fetched
     if (loading) {
        return <LoadingScreen />;
@@ -154,7 +163,7 @@ function Heroes() {
         <div className="hero-members-backgroundStyle">
             <Header />
             <CookiesBanner />
-            <div className="hero-members-containerStyle">
+            <div className="hero-members-containerStyle" style={{marginTop: windowWidth<1000 ? '-6rem' : '8rem'}}>
                 {/* Page header section */}
                 <div className="page-header">
                     <h1 className="page-title">Most Popular Creators</h1>

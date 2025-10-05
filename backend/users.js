@@ -480,16 +480,22 @@ export const getUsers = async () => {
       const data = doc.data();
 
 
-      return {
+     return {
         uid: doc.id,
         username: data.username || data.email,
         profilePicture: data.profilePicture || "profile.png",
         followers: (data.followersList || []).length,
         following: (data.followingList || []).length,
+        
+        accountType: data.accountType || "individual",
+        role: data.role || "other",
+        skills: data.skills || [],
+        bio: data.bio || "",
+        displayName: data.displayName || data.username || data.email,
+        organizationName: data.organizationName || "",
+        createdAt: data.createdAt || null
       };
-
-
-    })
+    });
 
 
     return usersData;

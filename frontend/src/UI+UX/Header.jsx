@@ -124,6 +124,7 @@ function Header() {
     }, []);
 
     //For mobile
+    //For mobile
     if (windowWidth < 1000) {
         return (<>
             <header style={{ position: 'fixed', top: '0px', left: '0px', width: '100%', zIndex: 1000 }}>
@@ -131,33 +132,65 @@ function Header() {
                     className="nav-header"
                     style={{
                         display: 'flex',
+                        marginTop: '20px',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0 10px',
-                        gap: '20px',
+                        padding: '0 15px',
+                        gap: '10px',
                         fontFamily: 'Arial, sans-serif',
                         flexWrap: 'nowrap',
                         minHeight: '60px'
                     }}
                 >
-                    {/* Menu button */}
+                    {/* Menu button*/}
                     <button onClick={() => setMenuOpen(true)} style={imageButtonStyle}>
-                        <img src='/menu.png' alt='Menu' style={{ height: '35px', marginBottom: '0px' }} />
-                    </button>
-                    {/* Logo button */}
-                    <button style={imageButtonStyle1}
-                        onClick={() => window.location.href = '/'}
-                    >
-                        <img src="/WebsiteLogo.png" alt="ShapeHive Logo" style={{ height: '100px' }} />
-                    </button>
-                    {/* Search button */}
-                    <button
-                        onClick={() => navigate('/search')}
-                        style={imageButtonStyle}>
-
-                        <img src='/SearchBtn.png' alt='Search' style={{ height: '40px', marginBottom: '0px' }} />
+                        <img src='/menu.png' alt='Menu' style={{ height: '30px', marginBottom: '0px' }} />
                     </button>
 
+                    {/* Logo*/}
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        position: 'absolute',
+                        left: '50%',
+                        transform: 'translateX(-50%)'
+                    }}>
+                        <button style={imageButtonStyle1}
+                            onClick={() => window.location.href = '/'}
+                        >
+                            <img src="/WebsiteLogo.png" alt="ShapeHive Logo" style={{ height: '100px' }} />
+                        </button>
+                    </div>
+
+
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        gap: '0px',
+                        position: 'relative',
+                        left: '2rem',
+                        paddingRight: '0px'
+                    }}>
+                        {/* Search button */}
+                        <button
+                            onClick={() => navigate('/search')}
+                            style={imageButtonStyle}>
+                            <img src='/SearchBtn.png' alt='Search' style={{ height: '30px', position: 'relative', left: '1rem', marginBottom: '0px' }} />
+                        </button>
+
+                        {/* Upload button */}
+                        <button style={imageButtonStyle}
+                            onClick={() => {
+                                if (user) {
+                                    navigate('/upload');
+                                }
+                            }}>
+                            <img src='/UploadButton.png' alt='Upload' style={{ height: '25px', marginBottom: '0px', filter: 'invert(0%)' }} />
+                        </button>
+
+
+                    </div>
                 </nav>
             </header>
             {/* Side menu component */}
@@ -185,8 +218,8 @@ function Header() {
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        flex: windowWidth < 1200 ? '0 1 auto' : 1,
-                        minWidth: windowWidth < 1200 ? 'auto' : '0'
+                        flex: '0 0 auto',
+                        minWidth: 'auto'
                     }}>
                         {/* Logo button */}
                         <button style={imageButtonStyle1}
@@ -207,7 +240,7 @@ function Header() {
                             color: exploreMenuOpen ? 'rgba(255, 123, 0, 1)' : 'rgba(82, 82, 82, 1)',
                             fontWeight: 'bold',
                             whiteSpace: 'nowrap',
-                            display: windowWidth < 1200 ? 'none' : 'block'
+                            display: windowWidth < 1000 ? 'none' : 'block'
                         }}
                             onClick={() => navigate('/3d-models')}
                             onMouseEnter={(e) => {
@@ -260,19 +293,44 @@ function Header() {
                                             width: '100%',
                                             textAlign: 'left',
                                             borderRadius: '5px',
-                                            
+
                                             fontSize: '0.9rem'
                                         }}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
-                                        
+
                                         }}
                                         onMouseLeave={(e) => {
                                             e.currentTarget.style.color = 'gray';
-                                         
+
                                         }}
                                     >
                                         3D Models
+                                    </button>
+                                     <button
+                                        onClick={() => window.location.href = '/members'}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'gray',
+                                            cursor: 'pointer',
+                                            padding: '8px 12px',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            borderRadius: '5px',
+
+                                            fontSize: '0.9rem'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = 'gray';
+
+                                        }}
+                                    >
+                                        Community Members
                                     </button>
                                     <button
                                         onClick={() => window.location.href = '/heroes'}
@@ -285,21 +343,21 @@ function Header() {
                                             width: '100%',
                                             textAlign: 'left',
                                             borderRadius: '5px',
-                                            
+
                                             fontSize: '0.9rem'
                                         }}
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
-                                        
+
                                         }}
                                         onMouseLeave={(e) => {
                                             e.currentTarget.style.color = 'gray';
-                                         
+
                                         }}
                                     >
                                         Hive Heroes
                                     </button>
-                                      
+
                                 </div>
 
                                 {/* Vertical line */}
@@ -368,7 +426,7 @@ function Header() {
                                                         width: '16px',
                                                         height: '16px',
                                                         filter: 'invert(50%)',
-                                                   
+
                                                     }}
                                                 />
                                                 {category.name}
@@ -391,7 +449,7 @@ function Header() {
                                             { name: 'Fashion & Style', icon: '/fashionIcon.svg' },
                                             { name: 'Sports', icon: '/sportsIcon.svg' },
                                             { name: 'Culture & History', icon: '/cultureIcon.svg' },
-                                        
+
                                         ].map((category) => (
                                             <button
                                                 key={category.name}
@@ -423,14 +481,14 @@ function Header() {
                                                     e.currentTarget.querySelector('img').style.filter = 'invert(50%)';
                                                 }}
                                             >
-                                                {category.name!=='Other' &&(<img
+                                                {category.name !== 'Other' && (<img
                                                     src={category.icon}
                                                     alt={category.name}
                                                     style={{
                                                         width: '16px',
                                                         height: '16px',
                                                         filter: 'invert(50%)',
-                                                        
+
                                                     }}
                                                 />)}
                                                 {category.name}
@@ -447,15 +505,13 @@ function Header() {
                         onClick={() => navigate('/search')}
                         style={{
                             display: 'flex',
-                            alignItems: 'center',
-                            width: '100%',
-                            maxWidth: windowWidth < 1200 ? '400px' : '700px',
-                            minWidth: windowWidth < 1200 ? '250px' : '300px',
-                            margin: windowWidth < 1200 ? '0 20px' : '0',
-                            position: 'relative',
-                            bottom: '0rem',
-                            flex: windowWidth < 1200 ? '0 1 auto' : 1,
-                            justifyContent: 'center'
+                            alignItems: 'right',
+                            flex: 1,
+                            justifySelf:'flex-end',
+                            maxWidth: '800px',
+                            minWidth: '10px',
+                            margin: '0px 100px',
+                            position: 'relative'
                         }}>
                         <button style={{
                             backgroundColor: 'transparent',
@@ -491,7 +547,7 @@ function Header() {
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                flex: windowWidth < 1200 ? '0 1 auto' : 'none'
+                                flex: '0 0 auto'
                             }}>
 
                                 <div

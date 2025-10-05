@@ -16,6 +16,7 @@ import UploadModel  from '/frontend/src/pages/UploadModel.jsx';
 import ModelDetails from '/frontend/src/pages/ModelDetails';
 import Search from '/frontend/src/pages/Search';
 import ModelsPage from '/frontend/src/pages/ModelsPage';
+import CommunityMembers from '/frontend/src/pages/CommunityMembers';
 function App() {
   const [hasInitialized, setHasInitialized] = useState(false);
   useEffect(() => {
@@ -49,6 +50,7 @@ function App() {
         <Route path="/model/:modelId" element={<ModelDetails />} />
         <Route path="/search" element={<Search />} />
         <Route path="/3d-models" element={<ModelsPage />} />
+        <Route path="/members" element={<CommunityMembers />} />
       </Routes>
     </>
   )

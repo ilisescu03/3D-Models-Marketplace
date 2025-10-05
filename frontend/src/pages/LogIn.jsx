@@ -102,13 +102,21 @@ const buttonStyle2 = {
 
 function LogIn() {
     const [values, setValues] = useState({ email: "", password: "" }); //form values
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [errors, setErrors] = useState({}); //form errors
     const [loginError, setLoginError] = useState(""); //login error from firebase
     const [isLoggedIn, setIsLoggedIn] = useState(false); //auth state
     const [isLoading, setIsLoading] = useState(true); //loading state for auth check
     const [isSubmitting, setIsSubmitting] = useState(false); //loading state for login process
     const navigate = useNavigate(); //navigation hook
-    
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     // Check authentication state on component mount
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -224,13 +232,15 @@ function LogIn() {
     if (isSubmitting) {
         return <LoadingScreen />;
     }
+    
+    
     return (
         <div style={backgroundStyle}>
             <Header />
             <CookiesBanner/>
 
             {/* Log In Form */}
-            <form onSubmit={handleSubmit} style={formStyle} noValidate>
+            <form onSubmit={handleSubmit} style={{...formStyle, marginTop: windowWidth <1000 ? '-6rem': '8rem'}} noValidate>
                 <h2 style={{ fontSize: '2rem' }}>Log In</h2>
 
                 {/* Display login error if any */}

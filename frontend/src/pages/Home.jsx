@@ -71,14 +71,23 @@ function Home() {
         // Fallback to a default 3D model image
         return '/default-model-preview.png';
     };
-
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+        // Track window resize
+        useEffect(() => {
+            const handleResize = () => {
+                setWindowWidth(window.innerWidth);
+            };
+    
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }, []);
     return (
         <div className="home-background">
             <Header />
             <CookiesBanner />
 
             {/* Hero Section - Currently empty but styled for future content */}
-            <div className="hero-section">
+            <div className="hero-section" style={{marginTop: windowWidth<1000 ? '-6rem' : '0rem'}}>
 
             </div>
 
@@ -210,7 +219,7 @@ function Home() {
                             ))}
                         </div>
                     )}
-                    {/* Load More Button (for future implementation) */}
+                    {/* Load More Button   */}
                     {!loading && !error && models.length > 0 && (
                         <div className="load-more-container">
                             <button

@@ -122,6 +122,7 @@ function checkPasswordRules(password) {
 }
 
 function SignUp() {
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [values, setValues] = useState({
         email: "",
         userName: "",
@@ -138,6 +139,15 @@ function SignUp() {
     const navigate = useNavigate();
 
     const rules = checkPasswordRules(values.password);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    } , []);
 
     // Check authentication state on component mount
     useEffect(() => {
@@ -249,7 +259,7 @@ function SignUp() {
         <div style={backgroundStyle}>
             <Header />
             <CookiesBanner />
-            <form onSubmit={handleSubmit} style={formStyle} noValidate>
+            <form onSubmit={handleSubmit} style={{...formStyle, marginTop: windowWidth < 1000 ? '-6rem' : '8rem'}} noValidate>
                 <h2 style={{ fontSize: '2rem', marginBottom: '10px' }}>Sign Up</h2>
 
                 {backendError && (

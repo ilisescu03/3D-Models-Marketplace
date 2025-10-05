@@ -13,6 +13,7 @@ import CookiesBanner from '../UI+UX/CookiesBanner';
 import '/frontend/css/Settings.css';
 
 function Settings() {
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [userProvider, setUserProvider] = useState('password');
     const [isGoogleUser, setIsGoogleUser] = useState(false);
 
@@ -100,15 +101,14 @@ function Settings() {
     // Navigation hook
     const navigate = useNavigate();
 
-    // Effect to handle window resize for responsive layout
     useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth <= 768);
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+            const handleResize = () => {
+                setWindowWidth(window.innerWidth);
+            };
+    
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }, []);
 
     // Effect to check authentication and fetch user data
     useEffect(() => {
@@ -314,15 +314,15 @@ function Settings() {
         <div className="settings-page">
             <Header />
             <CookiesBanner />
-            <div className="settings-container">
-                <h1 className="page-title">Settings</h1>
+            <div className="settings-container" style={{marginTop: windowWidth<1000 ? '-7rem': '8rem'}}>
+         
 
                 <div className="settings-content">
                     {/* Main content layout - changes based on screen size */}
-                    <div className={`settings-layout ${isMobile ? 'mobile' : 'desktop'}`}>
+                    <div className={`settings-layout ${windowWidth<1000 ? 'mobile' : 'desktop'}`}>
 
                         {/* Navigation tabs - always displayed */}
-                        <div className={`tabs-container ${isMobile ? 'mobile' : 'desktop'}`}>
+                        <div className={`tabs-container ${windowWidth<1000 ? 'mobile' : 'desktop'}`}>
                             <button
                                 onClick={() => setActiveTab('profile')}
                                 className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}

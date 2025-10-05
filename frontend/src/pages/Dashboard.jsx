@@ -184,14 +184,23 @@ function Dashboard() {
         }
         return '/default-model-preview.png';
     };
-
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+        // Track window resize
+        useEffect(() => {
+            const handleResize = () => {
+                setWindowWidth(window.innerWidth);
+            };
+    
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }, []);
     return (
         <div className="dashboard-background">
             <Header />
             <CookiesBanner />
 
             {/* Profile header */}
-            <div className="dashboard-profile">
+            <div className="dashboard-profile" style={{marginTop: windowWidth<1000 ? '-6rem' : '8rem'}}>
                 {/* Profile pic */}
                 <img
                     className="profile-image"
@@ -289,7 +298,7 @@ function Dashboard() {
                                                             <img
                                                                 src={model.creatorProfilePicture || '/profile.png'}
                                                                 alt={model.creatorUsername}
-                                                                className="creator-avatar"
+                                                                className="model-creator-avatar"
                                                                 onError={(e) => {
                                                                     e.target.src = '/profile.png';
                                                                 }}
@@ -382,7 +391,7 @@ function Dashboard() {
                                                             <img
                                                                 src={model.creatorProfilePicture || '/profile.png'}
                                                                 alt={model.creatorUsername}
-                                                                className="creator-avatar"
+                                                                className="model-creator-avatar"
                                                                 onError={(e) => {
                                                                     e.target.src = '/profile.png';
                                                                 }}

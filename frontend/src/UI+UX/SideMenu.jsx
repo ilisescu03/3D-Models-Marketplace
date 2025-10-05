@@ -5,16 +5,16 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 // Style for Log Out button
-const logoutButtonStyle = { 
-    backgroundColor: 'red', 
-    color: 'white', 
-    padding: '7.5px 15px', 
-    borderRadius: '5px', 
-    marginTop: '20px', 
-    cursor: 'pointer', 
-    border: 'none', 
-    fontWeight: 'bold', 
-    width: '100%' 
+const logoutButtonStyle = {
+    backgroundColor: 'red',
+    color: 'white',
+    padding: '7.5px 15px',
+    borderRadius: '5px',
+    marginTop: '20px',
+    cursor: 'pointer',
+    border: 'none',
+    fontWeight: 'bold',
+    width: '100%'
 };
 // Style for Sign In
 const buttonStyle = {
@@ -198,12 +198,13 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                     onClick={onClose}
                     style={{
                         position: 'fixed',
-                        top: 0,
+                        top: '-2px',
                         left: 0,
                         width: '100vw',
                         height: '100vh',
                         backgroundColor: 'rgba(0,0,0,0.5)',
                         zIndex: 1001,
+                        overflowY: 'auto'
                     }}
                 />
             )}
@@ -247,54 +248,39 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                     >
                         ✕
                     </button>
-                     {/* User authentication section */}
+                    {/* User authentication section */}
                     {!loading && (user ? (
-                         // User is logged in
+                        // User is logged in
                         <>
-                            <button
-                                    onClick={() => window.location.href = '/upload'}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(207, 121, 8, 1)'; }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255, 145, 0, 1)'; }}
-                                    style={{...buttonStyle, marginTop:'50px'}}
-                                >
-                                    <img src="/UploadButton.png"
-                                    style={{
-                                        width:'15px',
-                                        right:'5px',
-                                        position:'relative',
-                                        top:'2px',
-                                        filter: 'invert(1)',
-                                        padding:'0',
-                                    }}/>
-                                    Upload
-                                </button>
+
                             <button
                                 onClick={() => toggleSubmenu('profile')}
                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
                                 style={{
                                     ...expandableButtonStyle,
+                                    marginTop: '2rem',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
-                                    
+
                                 }}
                             >
                                 <span
                                     style={{
-                                        margin: 0,
+                                        marginLeft: '20px',
                                         fontWeight: 'bold',
                                         textAlign: 'center',
                                         color: 'white',
                                         fontFamily: 'Arial, sans-serif',
                                         fontSize: '0.9rem',
-                                       
+
                                     }}
                                 />
-                                <div style={{ display: 'flex',  marginTop:'20px', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', marginTop: '20px', flexDirection: 'column', alignItems: 'center' }}>
                                     <img
                                         style={{
-                                            width: '50px',
-                                            height: '50px',
+                                            width: '60px',
+                                            height: '60px',
                                             borderRadius: '50%',
                                             marginBottom: '6px',
                                             objectFit: 'cover'
@@ -309,11 +295,11 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                     />
                                     <p
                                         style={{
-                                            margin: 0,
+                                            marginTop: '10px',
                                             fontWeight: 'bold',
                                             color: 'white',
                                             fontFamily: 'Arial, sans-serif',
-                                            fontSize: '0.8rem',
+                                            fontSize: '1rem',
                                             textAlign: 'center'
                                         }}
                                     >
@@ -330,7 +316,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                     ▼
                                 </span>
                             </button>
-                             {/* Profile submenu */}
+                            {/* Profile submenu */}
                             <div
                                 style={{
                                     ...submenuContainerStyle,
@@ -338,11 +324,11 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                     opacity: expandedSubmenus['profile'] ? 1 : 0,
                                 }}
                             >
-                                <hr></hr>
+                                <div style={{ border: '1px solid #555555ff' }} />
                                 <div style={{ padding: '10px' }}>
                                     <button
                                         onClick={() => window.location.href = '/dashboard'}
-                                        style={buttonStyle3}
+                                        style={{ ...buttonStyle3, fontWeight: '600', color: '#ddd' }}
                                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
                                     >
@@ -352,7 +338,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                 <div style={{ padding: '10px' }}>
                                     <button
                                         onClick={() => window.location.href = '/settings'}
-                                        style={buttonStyle3}
+                                        style={{ ...buttonStyle3, fontWeight: '600', color: '#ddd' }}
                                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
                                     >
@@ -360,7 +346,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                     </button>
                                 </div>
                                 <div style={{ padding: '10px' }}>
-                                    <button onClick={handleLogout} style={buttonStyle3}
+                                    <button onClick={handleLogout} style={{ ...buttonStyle3, fontWeight: '600', color: '#ddd' }}
                                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
                                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
                                     >
@@ -370,7 +356,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                             </div>
                         </>
                     ) : (
-                          // User is not logged in
+                        // User is not logged in
                         <>
                             <button
                                 onClick={() => window.location.href = '/login'}
@@ -387,7 +373,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                             >Sign Up</button>
                         </>
                     ))}
-                    <hr></hr>
+                    <div style={{ border: '1px solid #555555ff' }} />
                     {/* Explore menu section */}
                     <button
                         onClick={() => toggleSubmenu('explore')}
@@ -412,7 +398,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                 }}
                             />
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', }}>
                             <span
                                 style={{
                                     margin: 0,
@@ -421,6 +407,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                     color: 'white',
                                     fontFamily: 'Arial, sans-serif',
                                     fontSize: '0.9rem'
+
                                 }}
                             >
                                 Explore
@@ -437,28 +424,194 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                         </span>
                     </button>
                     {/* Explore submenu */}
+                    {/* Explore submenu */}
                     <div
                         style={{
                             ...submenuContainerStyle,
-                            maxHeight: expandedSubmenus['explore'] ? '200px' : '0px',
+                            maxHeight: expandedSubmenus['explore'] ? 'none' : '0px',
                             opacity: expandedSubmenus['explore'] ? 1 : 0,
                         }}
                     >
-                        <div style={{ padding: '0px' }}>
-                            <hr></hr>
+                        <div style={{ border: '1px solid #555555ff' }} />
+                        <div style={{padding:'10px'}}>
                             <button
-                                onClick={() => window.location.href = '/community-members'}
-                                style={buttonStyle3}
+                                onClick={() => window.location.href = '/members'}
+                                style={{ ...buttonStyle3, fontWeight: '600', color: '#ddd' }}
                                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
                             >
-                                Community members
+                                Community Members
+                            </button> 
+
+                        </div>
+                        <div style={{ padding: '10px' }}>
+                            
+                            <button
+                                onClick={() => window.location.href = '/heroes'}
+                                style={{ ...buttonStyle3, fontWeight: '600', color: '#ddd' }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
+                            >
+                                Hive Heroes
                             </button>
                         </div>
+                        <div style={{ padding: '10px' }}>
+                            <button
+                                onClick={() => window.location.href = '/3d-models'}
+                                style={{ ...buttonStyle3, fontWeight: '600', color: '#ddd' }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
+                            >
+                                3D Models
+                            </button>
+                        </div>
+                        <button
+                        onClick={() => toggleSubmenu('categories')}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.24)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(151, 151, 151, 0)'}
+                        style={{
+                            ...expandableButtonStyle,
+                            marginTop: '1rem',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}
+                    >
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <span
+                                style={{
+                                    margin: 0,
+                                    fontWeight: 'bold',
+                                    textAlign: 'center',
+                                    color: 'white',
+                                    fontFamily: 'Arial, sans-serif',
+                                    fontSize: '0.9rem'
+                                }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', }}>
+                            <span
+                                style={{
+                                    marginLeft: '5px',
+                                    fontWeight: 'bold',
+                                    textAlign: 'center',
+                                    color: '#ddd',
+                                    fontFamily: 'Arial, sans-serif',
+                                    fontSize: '0.8rem'
+
+                                }}
+                            >
+                                Categories
+                            </span>
+                        </div>
+
+                        <span
+                            style={{
+                                ...arrowStyle,
+                                color:'#ddd',
+                                transform: expandedSubmenus['categories'] ? 'rotate(180deg)' : 'rotate(0deg)'
+                            }}
+                        >
+                            ▼
+                        </span>
+                        
+                    </button>
                     </div>
-                    <hr></hr>
+                    <div style={{ border: '1px solid #555555ff', position:'relative', top:'7px' }} />
+                    {/* Categories submenu */}
+                    <div
+                        style={{
+                            ...submenuContainerStyle,
+                            maxHeight: expandedSubmenus['categories'] && expandedSubmenus['explore'] ? 'none' : '0px',
+                            opacity: expandedSubmenus['categories'] && expandedSubmenus['explore']? 1 : 0,
+                        }}
+                    >
+                        <div style={{ border: '1px solid #555555ff' }} />
+                        <div style={{ padding: '10px' }}>
+                            {/* Categories grid*/}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr',
+                                gap: '8px'
+                            }}>
+                                {[
+                                    { name: 'Architecture', icon: '/architectureIcon.svg' },
+                                    { name: 'Character', icon: '/characterIcon.png' },
+                                    { name: 'Vehicle', icon: '/vehicleIcon.svg' },
+                                    { name: 'Environment', icon: '/lanscape.svg' },
+                                    { name: 'Furniture', icon: '/furniture.svg' },
+                                    { name: 'Electronics', icon: '/electronicsIcon.svg' },
+                                    { name: 'Jewelry', icon: '/jewelryIcon.svg' },
+                                    { name: 'Weapons', icon: '/weaponsIcon.svg' },
+                                    { name: 'Food & Drink', icon: '/foodDrinkIcon.svg' },
+                                    { name: 'Plants', icon: '/plantsIcon.svg' },
+                                    { name: 'Animals', icon: '/animalsIcon.svg' },
+                                    { name: 'Abstract', icon: '/artIcon.svg' },
+                                    { name: 'Mechanical', icon: '/mechanicalIcon.svg' },
+                                    { name: 'Fashion & Style', icon: '/fashionIcon.svg' },
+                                    { name: 'Sports', icon: '/sportsIcon.svg' },
+                                    { name: 'Culture & History', icon: '/cultureIcon.svg' },
+                                ].map((category) => (
+                                    <button
+                                        key={category.name}
+                                        onClick={() => {
+                                            localStorage.setItem('autoFilterCategory', category.name);
+                                            window.location.href = '/3d-models';
+                                            onClose();
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: '#ddd',
+                                            cursor: 'pointer',
+                                            padding: '8px 12px',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            borderRadius: '5px',
+                                            fontSize: '0.8rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                           
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = 'rgba(255, 123, 0, 1)';
+                                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                                            if (category.icon) {
+                                                e.currentTarget.querySelector('img').style.filter = 'invert(44%) sepia(85%) saturate(1352%) hue-rotate(360deg) brightness(101%) contrast(101%)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = '#ddd';
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                            if (category.icon) {
+                                                e.currentTarget.querySelector('img').style.filter = 'invert(80%)';
+                                            }
+                                        }}
+                                    >
+                                        {category.icon && (
+                                            <img
+                                                src={category.icon}
+                                                alt={category.name}
+                                                style={{
+                                                    width: '14px',
+                                                    height: '14px',
+                                                    filter: 'invert(80%)',
+                                                   
+                                                }}
+                                            />
+                                        )}
+                                        {category.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+            <div style={{ border: '1px solid #555555ff' }} />
+            <div style={{ height: '15rem' }}></div>
+
+
         </>
     );
 }

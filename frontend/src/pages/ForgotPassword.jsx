@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import Header from "../UI+UX/Header";
 import { doPasswordReset } from "/backend/auth.js";
 import { useNavigate } from "react-router-dom";
@@ -114,12 +114,22 @@ function ForgotPassword() {
         }
 
     }
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    // Track window resize
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     return (
         <div style={backgroundStyle}>
             <Header />
             <CookiesBanner/>
             {/* Forgot password form */}
-            <form onSubmit={handleSubmit} style={formStyle} noValidate>
+            <form onSubmit={handleSubmit} style={{...formStyle, marginTop: windowWidth<1000? '-10rem':'0rem'}} noValidate>
                 <h2 style={{ textAlign: 'center' }}>Forgot Password</h2>
                 
                 {/* Error message */}

@@ -60,7 +60,7 @@ function Search() {
         'Abstract', 'Mechanical', 'Fashion & Style', 'Sports', 'Culture & History', 'Other'
     ];
 
-    const accountTypes = ['individual', 'company'];
+    const accountTypes = ['individual', 'organization'];
 
     const individualRoles = [
         { value: 'other', label: 'Other' },
@@ -691,7 +691,7 @@ function Search() {
                         <label style={{
                             fontSize: '0.8rem',
                             position: 'relative',
-                            marginBottom: '6px',
+                            marginBottom: '4px',
                             fontWeight: '600',
                             color: '#495057',
                             textTransform: 'uppercase',
@@ -712,7 +712,7 @@ function Search() {
                                 setSearchPerformed(false);
                             }}
                             style={{
-                                padding: '10px 12px',
+                                padding: '5px 8px',
                                 borderRadius: '6px',
                                 border: '1px solid #e9ecef',
                                 fontSize: '0.9rem',
@@ -743,7 +743,7 @@ function Search() {
                             <div style={{ display: 'flex', flexDirection: 'column', minWidth: '140px' }}>
                                 <label style={{
                                     fontSize: '0.8rem',
-                                    marginBottom: '6px',
+                                    marginBottom: '4px',
                                     fontWeight: '600',
                                     color: '#495057',
                                     textTransform: 'uppercase',
@@ -756,7 +756,7 @@ function Search() {
                                     value={type}
                                     onChange={(e) => setType(e.target.value)}
                                     style={{
-                                        padding: '10px 12px',
+                                        padding: '5px 8px',
                                         borderRadius: '6px',
                                         border: '1px solid #e9ecef',
                                         fontSize: '0.9rem',
@@ -787,7 +787,7 @@ function Search() {
                             <div style={{ display: 'flex', flexDirection: 'column', minWidth: '160px' }}>
                                 <label style={{
                                     fontSize: '0.8rem',
-                                    marginBottom: '6px',
+                                    marginBottom: '4px',
                                     fontWeight: '600',
                                     color: '#495057',
                                     textTransform: 'uppercase',
@@ -800,7 +800,7 @@ function Search() {
                                     value={category}
                                     onChange={(e) => setCategory(e.target.value)}
                                     style={{
-                                        padding: '10px 12px',
+                                        padding: '5px 8px',
                                         borderRadius: '6px',
                                         border: '1px solid #e9ecef',
                                         fontSize: '0.9rem',
@@ -830,7 +830,7 @@ function Search() {
                             <div style={{ display: 'flex', flexDirection: 'column', minWidth: '160px' }}>
                                 <label style={{
                                     fontSize: '0.8rem',
-                                    marginBottom: '6px',
+                                    marginBottom: '4px',
                                     fontWeight: '600',
                                     color: '#495057',
                                     textTransform: 'uppercase',
@@ -843,7 +843,7 @@ function Search() {
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
                                     style={{
-                                        padding: '10px 12px',
+                                        padding: '5px 7px',
                                         borderRadius: '6px',
                                         border: '1px solid #e9ecef',
                                         fontSize: '0.9rem',
@@ -876,12 +876,14 @@ function Search() {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 minWidth: '200px',
+                                maxWidth: '400px',
                                 flex: '0 0 auto'
                             }}>
                                 <label style={{
                                     fontSize: '0.8rem',
-                                    marginBottom: '6px',
+                                    marginBottom: '4px',
                                     fontWeight: '600',
+                                    
                                     color: '#495057',
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.5px',
@@ -894,7 +896,7 @@ function Search() {
                                     flexWrap: 'wrap',
                                     gap: '6px',
                                     minWidth: '200px',
-                                    minHeight: '44px',
+                                    minHeight: '5px',
                                     padding: '8px',
                                     border: '1px solid #e9ecef',
                                     borderRadius: '6px',
@@ -982,7 +984,7 @@ function Search() {
                             <div style={{ display: 'flex', flexDirection: 'column', minWidth: '160px' }}>
                                 <label style={{
                                     fontSize: '0.8rem',
-                                    marginBottom: '6px',
+                                    marginBottom: '4px',
                                     fontWeight: '600',
                                     color: '#495057',
                                     textTransform: 'uppercase',
@@ -998,7 +1000,7 @@ function Search() {
                                         setRole('');
                                     }}
                                     style={{
-                                        padding: '10px 12px',
+                                        padding: '5px 8px',
                                         borderRadius: '6px',
                                         border: '1px solid #e9ecef',
                                         fontSize: '0.9rem',
@@ -1030,7 +1032,7 @@ function Search() {
                             <div style={{ display: 'flex', flexDirection: 'column', minWidth: '180px' }}>
                                 <label style={{
                                     fontSize: '0.8rem',
-                                    marginBottom: '6px',
+                                    marginBottom: '4px',
                                     fontWeight: '600',
                                     color: '#495057',
                                     textTransform: 'uppercase',
@@ -1043,7 +1045,7 @@ function Search() {
                                     value={role}
                                     onChange={(e) => setRole(e.target.value)}
                                     style={{
-                                        padding: '10px 12px',
+                                        padding: '5px 8px',
                                         borderRadius: '6px',
                                         border: '1px solid #e9ecef',
                                         fontSize: '0.9rem',
@@ -1075,7 +1077,7 @@ function Search() {
                             <div style={{ display: 'flex', flexDirection: 'column', minWidth: '200px' }}>
                                 <label style={{
                                     fontSize: '0.8rem',
-                                    marginBottom: '6px',
+                                    marginBottom: '4px',
                                     fontWeight: '600',
                                     color: '#495057',
                                     textTransform: 'uppercase',
@@ -1089,7 +1091,7 @@ function Search() {
                                     flexWrap: 'wrap',
                                     gap: '6px',
                                     minWidth: '200px',
-                                    minHeight: '44px',
+                                    minHeight: '15px',
                                     padding: '8px',
                                     border: '1px solid #e9ecef',
                                     borderRadius: '6px',
