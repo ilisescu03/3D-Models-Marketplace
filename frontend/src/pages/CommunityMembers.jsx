@@ -11,7 +11,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 function CommunityMembers() {
 
     //Auth and user filter states
-    const [filteredUsers, setFilteredUsers] = useState([]); 
+    const [filteredUsers, setFilteredUsers] = useState([]);
     const { currentUser, userLogedIn } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -264,7 +264,7 @@ function CommunityMembers() {
         }
     };
 
-   
+
 
     // Get role label from value
     const getRoleLabel = (roleValue) => {
@@ -277,7 +277,29 @@ function CommunityMembers() {
         const sortObj = sortOptions.find(s => s.value === sortValue);
         return sortObj ? sortObj.label : 'Followers';
     };
+    // Functie pentru a construi query-ul URL
+    function buildUrlQuery({ accountType, role, selectedSkills, sortBy }) {
+        const params = new URLSearchParams(window.location.search);
 
+        if (accountType && accountType !== 'All') params.set('accountType', accountType);
+        else params.delete('accountType');
+
+        if (role) params.set('role', role);
+        else params.delete('role');
+
+        if (selectedSkills.length > 0) params.set('skills', selectedSkills.join(','));
+        else params.delete('skills');
+
+        if (sortBy && sortBy !== 'followers') params.set('sortBy', sortBy);
+        else params.delete('sortBy');
+
+        return params.toString();
+    }
+    useEffect(() => {
+        const queryStr = buildUrlQuery({ accountType, role, selectedSkills, sortBy });
+        const newUrl = `${window.location.pathname}${queryStr ? '?' + queryStr : ''}`;
+        window.history.replaceState(null, '', newUrl);
+    }, [accountType, role, selectedSkills, sortBy]);
     return (
         <div className="home-background" style={{ background: '#f3f3f3ff', minHeight: '100vh' }}>
             <Header />
@@ -291,7 +313,7 @@ function CommunityMembers() {
                     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                     padding: '0',
                     borderBottom: '1px solid #e9ecef',
-                    marginTop: '-140px',
+                    marginTop: '-155px',
                     position: 'relative'
                 }}>
                     {/* Main filter buttons row - Full width */}
@@ -400,7 +422,7 @@ function CommunityMembers() {
                                     setSkillsMenuOpen(false);
                                 }}
                                 style={{
-                                    backgroundColor: 'white', 
+                                    backgroundColor: 'white',
                                     color: '#495057',
                                     border: 'none',
                                     borderRadius: '0px',
@@ -789,10 +811,10 @@ function CommunityMembers() {
                 <div style={{
                     width: '100%',
                     backgroundColor: 'white',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                    padding: '20px 25px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                    padding: '15px 15px',
                     borderBottom: '1px solid #e9ecef',
-                    marginTop: '100px',
+                    marginTop: '80px',
                     position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
@@ -1097,7 +1119,7 @@ function CommunityMembers() {
             {/* Users Section */}
             <div className="hero-members-containerStyle" style={{
                 background: 'none',
-                marginTop: '2rem',
+                marginTop: '0rem',
                 padding: '0 2rem'
             }}>
                 {/* Title aligned to the left */}
@@ -1108,7 +1130,7 @@ function CommunityMembers() {
                 }}>
                     <p style={{
                         fontSize: '2.0rem',
-              
+
                         color: '#616161ff',
                         marginBottom: '0.5rem',
                         fontFamily: 'Arial, sans-serif',
@@ -1213,7 +1235,7 @@ function CommunityMembers() {
                                         cursor: 'pointer',
                                         transition: 'all 0.2s ease'
                                     }}
-                                        
+
                                         onMouseEnter={(e) => {
                                             e.currentTarget.style.transform = 'translateY(-2px)';
                                             e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
@@ -1378,7 +1400,7 @@ function CommunityMembers() {
                                                 </div>
                                             </div>
                                             <button
-                                                 onClick={() => creator.uid !== currentUser?.uid ?
+                                                onClick={() => creator.uid !== currentUser?.uid ?
                                                     window.location.href = `/user/${creator.username}` :
                                                     window.location.href = '/dashboard'}
                                                 style={{

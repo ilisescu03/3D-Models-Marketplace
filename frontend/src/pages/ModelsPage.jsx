@@ -218,6 +218,32 @@ function ModelsPage() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+    
+    function buildUrlQuery({ type, category, date, selectedSoftware }) {
+        const params = new URLSearchParams(window.location.search);
+
+        // Set/delete params by filters
+        if (type && type !== 'All') params.set('type', type);
+        else params.delete('type');
+
+        if (category) params.set('category', category);
+        else params.delete('category');
+
+        if (date) params.set('date', date);
+        else params.delete('date');
+
+        if (selectedSoftware.length > 0) params.set('software', selectedSoftware.join(','));
+        else params.delete('software');
+
+        return params.toString();
+    }
+
+    // Update URL if filters are applied
+    useEffect(() => {
+        const queryStr = buildUrlQuery({ type, category, date, selectedSoftware });
+        const newUrl = `${window.location.pathname}${queryStr ? '?' + queryStr : ''}`;
+        window.history.replaceState(null, '', newUrl);
+    }, [type, category, date, selectedSoftware]);
     return (
         <div className="home-background" style={{ background: '#f3f3f3ff', minHeight: '100vh' }}>
             <Header />
@@ -229,7 +255,7 @@ function ModelsPage() {
                     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                     padding: '0',
                     borderBottom: '1px solid #e9ecef',
-                    marginTop: '-140px', // Spațiu 0 cu header-ul
+                    marginTop: '-155px', // Spațiu 0 cu header-ul
                     position: 'relative'
                 }}>
                     {/* Main filter buttons row - Full width */}
@@ -818,10 +844,10 @@ function ModelsPage() {
             {windowWidth >= 1000 && (<div style={{
                 width: '100%',
                 backgroundColor: 'white',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                padding: '20px 25px',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                padding: '15px 25px',
                 borderBottom: '1px solid #e9ecef',
-                marginTop: window.innerWidth >= 1000 ? '100px' : '100px',
+                marginTop: '80px',
                 position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
@@ -831,6 +857,8 @@ function ModelsPage() {
                 {/* Main filters row */}
                 <div style={{
                     display: 'flex',
+                    position: 'relative',
+                    top: '5px',
                     alignItems: 'flex-start',
                     gap: '20px',
                     marginLeft: '2rem',
@@ -839,9 +867,10 @@ function ModelsPage() {
                     {/* Type filter */}
                     <div style={{ display: 'flex', flexDirection: 'column', minWidth: '140px' }}>
                         <label style={{
-                            fontSize: '0.75rem',
+                            fontSize: '0.8rem',
                             marginBottom: '4px',
                             fontWeight: '600',
+
                             color: '#495057',
                             textTransform: 'uppercase',
                             letterSpacing: '0.5px',
@@ -1015,7 +1044,7 @@ function ModelsPage() {
                                         color: '#d35400',
 
                                         borderRadius: '20px',
-                                        fontSize: '0.8rem',
+                                        fontSize: '0.6rem',
                                         cursor: 'pointer',
                                         border: '1px solid rgba(255, 123, 0, 0.3)',
                                         fontWeight: '500',
@@ -1127,8 +1156,8 @@ function ModelsPage() {
                         letterSpacing: '0.5px',
                         color: '#616161ff',
                         fontSize: '2.0rem',
-                        marginTop: '-3rem',
-                        marginBottom: '1rem'
+                        marginTop: '-5rem',
+                        marginBottom: '-1rem'
                     }}>
                         Models
                     </p>

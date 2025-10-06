@@ -509,11 +509,67 @@ function Search() {
     // Check if any filters are active
     const hasActiveFilters = searchQuery || accountType || role || selectedSkills.length > 0 ||
         type !== 'All' || category || date || selectedSoftware.length > 0;
+
+     function buildUrlQuery({
+        searchType,
+        searchQuery,
+        type,
+        category,
+        date,
+        selectedSoftware,
+        accountType,
+        role,
+        selectedSkills,
+    }) {
+        const params = new URLSearchParams();
+
+        params.set('type', searchType);
+
+        if (searchQuery && searchQuery.trim()) params.set('q', searchQuery.trim());
+
+        if (searchType === 'model') {
+            if (type && type !== 'All') params.set('typeFilter', type);
+            if (category) params.set('category', category);
+            if (date) params.set('date', date);
+            if (selectedSoftware.length > 0) params.set('software', selectedSoftware.join(','));
+        } else if (searchType === 'user') {
+            if (accountType) params.set('accountType', accountType);
+            if (role) params.set('role', role);
+            if (selectedSkills.length > 0) params.set('skills', selectedSkills.join(','));
+        }
+
+        return params.toString();
+    }
+    useEffect(() => {
+        const queryStr = buildUrlQuery({
+            searchType,
+            searchQuery,
+            type,
+            category,
+            date,
+            selectedSoftware,
+            accountType,
+            role,
+            selectedSkills
+        });
+        const newUrl = `${window.location.pathname}${queryStr ? '?' + queryStr : ''}`;
+        window.history.replaceState(null, '', newUrl);
+    }, [
+        searchType,
+        searchQuery,
+        type,
+        category,
+        date,
+        selectedSoftware,
+        accountType,
+        role,
+        selectedSkills
+    ]);
     // Show loading screen while data is being fetched
     if (loading) {
         return <LoadingScreen />;
     }
-
+   
     return (
         <div style={{
             backgroundColor: '#f8f9fa',
@@ -883,7 +939,7 @@ function Search() {
                                     fontSize: '0.8rem',
                                     marginBottom: '4px',
                                     fontWeight: '600',
-                                    
+
                                     color: '#495057',
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.5px',
@@ -1227,7 +1283,7 @@ function Search() {
                                         <img
                                             src={model.previewImages?.[0] || '/default-model-preview.png'}
                                             alt={model.title}
-                                           className="model-image"
+                                            className="model-image"
                                             onError={(e) => {
                                                 e.target.src = '/default-model-preview.png';
                                             }}

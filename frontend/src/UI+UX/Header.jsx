@@ -208,11 +208,12 @@ function Header() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        padding: '0 50px',
+                        padding: '0 20px',
                         gap: '20px',
                         fontFamily: 'Arial, sans-serif',
                         flexWrap: 'nowrap',
-                        minHeight: '60px'
+                        minHeight: '0px',
+                        maxHeight:'90px',
                     }}
                 >
                     <div style={{
@@ -225,7 +226,7 @@ function Header() {
                         <button style={imageButtonStyle1}
                             onClick={() => window.location.href = '/'}
                         >
-                            <img src="/WebsiteLogo.png" alt="ShapeHive Logo" style={{ height: '100px' }} />
+                            <img src="/WebsiteLogo.png" alt="ShapeHive Logo" style={{ height: '90px' }} />
                         </button>
                         {/* Explore menu button */}
                         <button style={{
@@ -261,7 +262,7 @@ function Header() {
                                 }}
                                 style={{
                                     position: 'absolute',
-                                    top: '70px',
+                                    top: '50px',
                                     left: '10rem',
                                     backgroundColor: 'rgba(255, 255, 255, 1)',
                                     boxShadow: '2px 4px 4px rgba(0, 0, 0, 0.23)',
