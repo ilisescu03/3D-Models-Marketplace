@@ -643,6 +643,7 @@ export const downloadModel = async (modelId, fileName = null) => {
     const userData = userDoc.data();
     const downloadedModels = userData.downloadedModels || [];
     const hasDownloaded = downloadedModels.includes(modelId);
+    const isFirstDownload = !hasDownloaded;
 
     // Update model download count
     if(!hasDownloaded){
@@ -706,7 +707,8 @@ export const downloadModel = async (modelId, fileName = null) => {
         : `Download initiated for ${filesToDownload.length} files!`,
       downloads: downloadResults,
       totalFiles: filesToDownload.length,
-      successfulDownloads: downloadResults.filter(r => r.success).length
+      successfulDownloads: downloadResults.filter(r => r.success).length,
+      isFirstDownload: isFirstDownload
     };
 
   } catch (error) {

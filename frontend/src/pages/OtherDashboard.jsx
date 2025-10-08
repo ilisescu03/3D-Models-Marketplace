@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getUserFavoriteModels, getModelsByCreator } from '/backend/models.js';
-import { getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser } from '/backend/users.js';
+import { getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, sendNotification } from '/backend/users.js';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import '/frontend/css/App.css';
 import '/frontend/css/OtherDashboard.css';
@@ -19,6 +19,7 @@ function OtherDashboard() {
     const [favoritesLoading, setFavoritesLoading] = useState(false);
     const { username } = useParams();
     const [currentUser, setCurrentUser] = useState(null);
+    const [currentUserUsername, setCurrentUserUsername] = useState('');
     const [profileUser, setProfileUser] = useState(null);
     const [profileUserId, setProfileUserId] = useState(null);
     const [userModels, setUserModels] = useState([]);
@@ -167,7 +168,33 @@ function OtherDashboard() {
             setFavoritesLoading(false);
         }
     }, []);
+    // Load current user's username
+    useEffect(() => {
+        const loadCurrentUsername = async () => {
+            if (!currentUser) {
+                setCurrentUserUsername('');
+                return;
+            }
 
+            try {
+                const { doc, getDoc } = await import('firebase/firestore');
+                const userDocRef = doc(db, 'users', currentUser.uid);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    setCurrentUserUsername(userData.username || userData.email || 'Someone');
+                } else {
+                    setCurrentUserUsername(currentUser.email || 'Someone');
+                }
+            } catch (error) {
+                console.error('Error loading username:', error);
+                setCurrentUserUsername('Someone');
+            }
+        };
+
+        loadCurrentUsername();
+    }, [currentUser]);
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -255,7 +282,7 @@ function OtherDashboard() {
             <CookiesBanner />
 
             {/* Profile header */}
-            <div className="dashboard-profile" style={{marginTop: windowWidth <1000 ? '-6rem': '8rem'}}>
+            <div className="dashboard-profile" style={{ marginTop: windowWidth < 1000 ? '-6rem' : '8rem' }}>
                 {/* Profile pic */}
                 <img
                     className="profile-image"
@@ -267,35 +294,46 @@ function OtherDashboard() {
                 />
 
                 {/* Username, follow button, followers/following */}
-                <div className="profile-text"  style={{marginTop:'0.9rem'}}>
+                <div className="profile-text" style={{ marginTop: '0.9rem' }}>
                     <p className="profile-username" >{profileUser.username || profileUser.email}</p>
 
-                  
+
 
                     <div className="profile-stats">
                         <span onClick={() => setActiveIndex(2)} className="followers-text">Followers: {userStats.followers}</span>
                         <span onClick={() => setActiveIndex(3)} className="followers-text">Following: {userStats.following}</span>
                     </div>
 
-                      <div className="profile-actions">
+                    <div className="profile-actions">
                         {/* Butonul de Follow/Unfollow */}
                         {currentUser?.uid !== profileUserId && (
                             <button
                                 className={`edit-button ${viewerStats.followingList?.includes(profileUserId) ? 'unfollow' : 'follow'}`}
                                 onClick={async (e) => {
                                     e.stopPropagation();
-                                    if(!currentUser) {
+                                    if (!currentUser) {
                                         navigate('/login');
                                         return;
                                     }
                                     try {
-                                        
+
                                         if (viewerStats.followingList?.includes(profileUserId)) {
                                             await doUnfollowUser(profileUserId);
                                         } else {
-                                            await doFollowUser(profileUserId);
+                                            const result = await doFollowUser(profileUserId);
+                                            if (result.success) {
+                                                // Notify the user 
+                                                await sendNotification(
+                                                    profileUserId,                           // receiver 
+                                                    currentUser.uid,                         // sender 
+                                                    "You have a new follower!",             // title
+                                                    `${currentUserUsername} started following you!`, // message 
+                                                    `/user/${currentUserUsername}`           // link to sender's profile
+                                                );
+                                            }
+
                                         }
-                                        // Reîncarcă datele pentru a actualiza butonul
+                                        // Reload data to update button
                                         const updatedStats = await getUserStats(profileUserId);
                                         setUserStats(updatedStats);
                                     } catch (err) {
@@ -555,28 +593,12 @@ function OtherDashboard() {
                                             <h3>{f.username}</h3>
                                             <p>Followers: {f.followers} | Following: {f.following}</p>
 
-                                            { f.uid !== currentUser?.uid && (
-                                                <button
-                                                    className={`follow-button ${viewerStats.followingList?.includes(f.uid) ? 'unfollow' : 'follow'}`}
-                                                    onClick={async () => {
-                                                        if(!currentUser) {
-                                                            navigate('/login');
-                                                            return;
-                                                        }
-                                                        try {
-                                                            if (viewerStats.followingList?.includes(f.uid)) {
-                                                                await doUnfollowUser(f.uid);
-                                                            } else {
-                                                                await doFollowUser(f.uid);
-                                                            }
-                                                        } catch (err) {
-                                                            console.error(err);
-                                                        }
-                                                    }}
-                                                >
-                                                    {viewerStats.followingList?.includes(f.uid) ? 'Unfollow' : 'Follow'}
-                                                </button>
-                                            )}
+                                            <button
+                                                className={`view-profile-button`}
+                                                onClick={() => currentUser.uid === f.uid ? navigate('/dashboard') : navigate(`/user/${f.username}`)}
+                                            >
+                                                View profile
+                                            </button>
                                         </div>
                                     ))
                                 )}
@@ -603,28 +625,12 @@ function OtherDashboard() {
                                             <h3>{f.username}</h3>
                                             <p>Followers: {f.followers} | Following: {f.following}</p>
 
-                                            {f.uid !== currentUser?.uid && (
-                                                <button
-                                                    className={`follow-button ${viewerStats.followingList?.includes(f.uid) ? 'unfollow' : 'follow'}`}
-                                                    onClick={async () => {
-                                                        if(!currentUser) {
-                                                            navigate('/login');
-                                                            return;
-                                                        }
-                                                        try {
-                                                            if (viewerStats.followingList?.includes(f.uid)) {
-                                                                await doUnfollowUser(f.uid);
-                                                            } else {
-                                                                await doFollowUser(f.uid);
-                                                            }
-                                                        } catch (err) {
-                                                            console.error(err);
-                                                        }
-                                                    }}
-                                                >
-                                                    {viewerStats.followingList?.includes(f.uid) ? 'Unfollow' : 'Follow'}
-                                                </button>
-                                            )}
+                                            <button
+                                                className={`view-profile-button`}
+                                                onClick={() => currentUser.uid === f.uid ? navigate('/dashboard') : navigate(`/user/${f.username}`)}
+                                            >
+                                                View profile
+                                            </button>
                                         </div>
                                     ))
                                 )}

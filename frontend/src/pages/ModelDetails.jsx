@@ -1,5 +1,5 @@
 import { toggleFavoriteModel, isModelFavorited, addComment, addReply } from '/backend/models.js';
-import { doFollowUser, doUnfollowUser, getFollowing } from '/backend/users.js';
+import { doFollowUser, doUnfollowUser, getFollowing, sendNotification } from '/backend/users.js';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../UI+UX/Header";
@@ -168,7 +168,7 @@ function ModelDetails() {
 
         loadModelDetails();
     }, [modelId]);
-    // Use effect for updating folloed status
+    // Use effect for updating followed status
     useEffect(() => {
         if (model && currentUser) {
             checkIfFollowingCreator();
@@ -222,6 +222,16 @@ function ModelDetails() {
                         ...prev,
                         comments: [result.comment, ...(prev.comments || [])]
                     }));
+
+                    if (model && currentUser.uid !== model.creatorUID) {
+                        await sendNotification(
+                            model.creatorUID,                  // receiver
+                            currentUser.uid,                   // sender
+                            "New comment on your model!",      // title
+                            `${username} commented: "${commentText}"`, // text 
+                            `/model/${modelId}`                // link to model
+                        );
+                    }
                 }
             } else {
                 alert(result.message || 'Failed to add comment');
@@ -266,6 +276,13 @@ function ModelDetails() {
                 result = await doUnfollowUser(model.creatorUID);
             } else {
                 result = await doFollowUser(model.creatorUID);
+                await sendNotification(
+                    model.creatorUID,
+                    currentUser.uid,
+                    "You have a new follower!", 
+                    `${username} started following you!`,
+                    `/user/${username}`
+                );
             }
 
             if (result.success) {
@@ -314,6 +331,33 @@ function ModelDetails() {
                         return dateB - dateA;
                     });
                     setComments(sortedComments);
+                    let replyToUserId = null;
+                    if (targetType === 'comment') {
+
+                        const comment = sortedComments.find(c => c.id === targetId);
+                        replyToUserId = comment?.userId || null;
+                    } else if (targetType === 'reply') {
+
+                        const parentComment = sortedComments.find(c => c.id === parentCommentId);
+                        if (parentComment && parentComment.replies) {
+                            const reply = parentComment.replies.find(r => r.id === targetId);
+                            replyToUserId = reply?.userId || null;
+                        }
+                    }
+
+
+                    if (
+                        replyToUserId &&
+                        replyToUserId !== currentUser.uid
+                    ) {
+                        await sendNotification(
+                            replyToUserId,
+                            currentUser.uid,
+                            "You received a reply!",
+                            `${username} replied: "${replyText}"`,
+                            `/model/${modelId}`
+                        );
+                    }
                 }
             } else {
                 alert(result.message || 'Failed to add reply');
@@ -386,6 +430,15 @@ function ModelDetails() {
             const result = await downloadModel(modelId, specificFileName);
 
             if (result.success) {
+                if (result.isFirstDownload && model && currentUser.uid !== model.creatorUID) {
+                    await sendNotification(
+                        model.creatorUID,                  
+                        currentUser.uid,                      
+                        "Your model was purchased!",          
+                        `${username} purchased your model "${model.title}"`, 
+                        `/model/${modelId}`                
+                    );
+                }
                 // Success message
                 if (result.downloads) {
                     const successful = result.downloads.filter(d => d.success);
@@ -452,6 +505,15 @@ function ModelDetails() {
 
             if (result.success) {
                 setIsFavorited(result.isFavorite);
+                if (result.action === 'added' && model && currentUser.uid !== model.creatorUID) {
+                    await sendNotification(
+                        model.creatorUID,                      
+                        currentUser.uid,                      
+                        "Your model was added to favorites!", 
+                        `${username} added your model "${model.title}" to favorites`,
+                        `/model/${modelId}`                   
+                    );
+                }
                 // Update model's favorites count in local state
                 setModel(prev => ({
                     ...prev,
@@ -521,7 +583,7 @@ function ModelDetails() {
             <Header />
             <CookiesBanner />
 
-            <div className="containerStyle" style={{marginTop: isLargeScreen? '0rem' : '-13rem'}}>
+            <div className="containerStyle" style={{ marginTop: isLargeScreen ? '0rem' : '-13rem' }}>
                 <div className={isLargeScreen ? 'contentStyleLarge responsiveFixStyle' : 'contentStyle responsiveFixStyle'}>
                     {/* Left Column - Model Preview and Details */}
                     <div className="leftColumnStyle responsiveFixStyle">
@@ -579,31 +641,31 @@ function ModelDetails() {
                                     }}
                                 />
                                 <div className="creatorInfoStyle">
-                                    <div className="creatorUsernameLine" style={{marginTop: currentUser?.uid===model.creatorUID ? '1rem': '0' }}>
+                                    <div className="creatorUsernameLine" style={{ marginTop: currentUser?.uid === model.creatorUID ? '1rem' : '0' }}>
                                         <span> <strong>{model.creatorUsername}</strong></span>
                                     </div>
-                                     {currentUser?.uid !== model.creatorUID &&  (<div className="creatorButtonLine">
-                                       
-                                            <button
-                                                className={`follow-button ${isFollowingCreator ? 'unfollow' : 'follow'}`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleFollowToggle();
-                                                }}
-                                                disabled={followLoading}
-                                                style={{
-                                                    backgroundColor: isFollowingCreator ? '#ff4444' : '#333',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    padding: '6px 16px',
-                                                    borderRadius: '6px',
-                                                    cursor: followLoading ? 'not-allowed' : 'pointer',
-                                                    fontSize: '0.7rem'
-                                                }}
-                                            >
-                                                {followLoading ? 'Processing...' : (isFollowingCreator ? 'Unfollow' : 'Follow')}
-                                            </button>
-                                        
+                                    {currentUser?.uid !== model.creatorUID && (<div className="creatorButtonLine">
+
+                                        <button
+                                            className={`follow-button ${isFollowingCreator ? 'unfollow' : 'follow'}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleFollowToggle();
+                                            }}
+                                            disabled={followLoading}
+                                            style={{
+                                                backgroundColor: isFollowingCreator ? '#ff4444' : '#333',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '6px 16px',
+                                                borderRadius: '6px',
+                                                cursor: followLoading ? 'not-allowed' : 'pointer',
+                                                fontSize: '0.7rem'
+                                            }}
+                                        >
+                                            {followLoading ? 'Processing...' : (isFollowingCreator ? 'Unfollow' : 'Follow')}
+                                        </button>
+
                                     </div>)}
                                 </div>
                             </div>

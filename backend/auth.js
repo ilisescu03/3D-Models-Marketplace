@@ -32,11 +32,22 @@ export const doCreateUserWithEmailAndPassword = async (username, email, password
       provider: "password",
       createdAt: new Date(),
       profilePicture: "",
-      favourites:[],
+      notifications: [
+        {
+          id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()).toString(),
+          read: false,
+          title: "Complete your profile!",
+          text: "Please complete your profile details in settings!",
+          from: "TMJG7K5rDMg94bfG3610M3oR2TC2",
+          date: new Date().toISOString(),
+          to:"/settings"
+        }
+      ],
+      favourites: [],
       followersList: [],
       followingList: [],
-      accountType: "individual", 
-        role: "other" ,
+      accountType: "individual",
+      role: "other",
       bio: "",
       links: ["", "", "", ""],
       skills: []
@@ -173,7 +184,7 @@ export const doSignInWithGoogle = async () => {
     // If user doesn't exist, add to Firestore DB
     if (emailSnap.empty) {
       let profilePictureURL = user.photoURL || "";
-      
+
       // If user has a photo from Google, try to upload it to Firebase Storage
       if (user.photoURL) {
         try {
@@ -193,10 +204,21 @@ export const doSignInWithGoogle = async () => {
         provider: "google",
         createdAt: new Date(),
         profilePicture: profilePictureURL,
-        favourites:[],
+        notifications: [
+          {
+            id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()).toString(),
+            read: false,
+            title: "Complete your profile!",
+            text: "Please complete your profile details in settings!",
+            from: "TMJG7K5rDMg94bfG3610M3oR2TC2",
+            date: new Date().toISOString(),
+          to:"/settings"
+          }
+        ],
+        favourites: [],
         followersList: [],
         followingList: [],
-        accountType: "individual", 
+        accountType: "individual",
         role: "other",
         bio: "",
         links: ["", "", "", ""],
@@ -216,17 +238,17 @@ export const doSignInWithGoogle = async () => {
 // Upload google profile image to storage
 const uploadGoogleProfileImageToStorage = async (photoURL, uid) => {
   try {
-   
+
     try {
       const response = await fetch(photoURL);
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-      
+
       const blob = await response.blob();
-  
+
       const urlObj = new URL(photoURL);
       const pathname = urlObj.pathname;
       let extension = 'jpg';
-      
+
       if (pathname.includes('.jpg') || pathname.includes('.jpeg')) {
         extension = 'jpg';
       } else if (pathname.includes('.png')) {
@@ -234,41 +256,41 @@ const uploadGoogleProfileImageToStorage = async (photoURL, uid) => {
       } else if (pathname.includes('.gif')) {
         extension = 'gif';
       }
- 
+
       const storageRef = ref(storage, `profilePictures/${uid}.${extension}`);
 
       const snapshot = await uploadBytes(storageRef, blob, {
         contentType: blob.type
       });
-      
-   
+
+
       return await getDownloadURL(snapshot.ref);
     } catch (fetchError) {
       console.log("Direct fetch failed, trying CORS proxy:", fetchError);
-      
-    
+
+
       const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(photoURL)}`;
       const response = await fetch(corsProxyUrl);
       if (!response.ok) throw new Error(`CORS proxy HTTP error: ${response.status}`);
-      
+
       const blob = await response.blob();
-      
- 
+
+
       let extension = 'jpg';
       if (blob.type === 'image/png') {
         extension = 'png';
       } else if (blob.type === 'image/gif') {
         extension = 'gif';
       }
-      
- 
+
+
       const storageRef = ref(storage, `profilePictures/${uid}.${extension}`);
-      
-     
+
+
       const snapshot = await uploadBytes(storageRef, blob, {
         contentType: blob.type
       });
-      
+
 
       return await getDownloadURL(snapshot.ref);
     }
@@ -285,9 +307,9 @@ export const doSignOut = async () => {
 //Password Reset & Update
 export const doPasswordReset = async (email) => {
   try {
-     await sendPasswordResetEmail(auth, email, {
-      url: `${window.location.origin}/password-reset`, 
-      handleCodeInApp: true 
+    await sendPasswordResetEmail(auth, email, {
+      url: `${window.location.origin}/password-reset`,
+      handleCodeInApp: true
     });
     return { success: true, message: "Password reset email sent." };
   } catch (error) {
@@ -320,16 +342,16 @@ export const doReauthenticate = async (password) => {
     if (!auth.currentUser) {
       throw new Error('No user is currently signed in.');
     }
-    
+
     const email = auth.currentUser.email;
     const tempAuth = getAuth();
-    
+
     // Reauth
     await signInWithEmailAndPassword(tempAuth, email, password);
-    
+
     // Return to the original user
     await auth.updateCurrentUser(auth.currentUser);
-    
+
     return { success: true, message: 'Reauthentication successful.' };
   } catch (error) {
     if (error.code === 'auth/wrong-password') {

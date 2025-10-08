@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { doSignOut } from '/backend/auth.js';
 import { auth, db } from '/backend/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -61,16 +61,21 @@ const imageButtonStyle1 = {
     cursor: 'pointer',
 }
 function Header() {
-
+    const [notifications, setNotifications] = useState([]);//notifications state
+    const [notificationUsers, setNotificationUsers] = useState({}); //state to get the correct user photo for notification
+    //Refs for notify menu and button
+    const notifyMenuRef = useRef(); 
+    const notifyButtonRef = useRef();
     const [searchQuery, setSearchQuery] = useState('');
     const [menuOpen, setMenuOpen] = useState(false);//for side menu
+    const [notifyMenu, setNotifyMenu] = useState(false); //for notifications menu
     const [user, setUser] = useState(null);//for verifying if the user is logged in or not
     const [loading, setLoading] = useState(true);
     const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
     const [profilePicture, setProfilePicture] = useState("/profile.png"); // Default profile picture
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const navigate = useNavigate();
-
+    const unreadCount = notifications.filter(n => n.read === false).length;
     // Track window resize
     useEffect(() => {
         const handleResize = () => {
@@ -80,7 +85,59 @@ function Header() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+    //Use effect for close notifications menu button
+    useEffect(() => {
+        function handleClickAnywhere(event) {
+            // Closes the menu if the user clicks outside the menu or button
+            if (
+                notifyMenuRef.current &&
+                !notifyMenuRef.current.contains(event.target) &&
+                notifyButtonRef.current &&
+                !notifyButtonRef.current.contains(event.target)
+            ) {
+                setNotifyMenu(false);
+            }
+        }
+        if (notifyMenu) {
+            document.addEventListener("mousedown", handleClickAnywhere);
+        }
+        return () => {
+            document.removeEventListener("mousedown", handleClickAnywhere);
+        };
+    }, [notifyMenu]);
+    // Fetch user profile pics for notification authors
+    useEffect(() => {
+        // Extract user uid 
+        const uids = [...new Set((notifications || []).map(n => n.from).filter(Boolean))];
+        if (uids.length === 0) return;
 
+        const fetchProfiles = async () => {
+            let usersMap = {};
+            await Promise.all(uids.map(async (uid) => {
+                // TRIM uid - removes spaces
+                const trimmedUid = uid.trim();
+                console.log("Fetching profile for UID:", trimmedUid);
+                try {
+                    const userDoc = await getDoc(doc(db, "users", trimmedUid));
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+                        usersMap[trimmedUid] = data.profilePicture || "/profile.png";
+                        console.log("Profile picture for", trimmedUid, ":", usersMap[trimmedUid]);
+                    } else {
+                        usersMap[trimmedUid] = "/profile.png";
+                        console.log("User not found for", trimmedUid);
+                    }
+                } catch (e) {
+                    usersMap[trimmedUid] = "/profile.png";
+                    console.log("Error fetching user", trimmedUid, e);
+                }
+            }));
+            console.log("Final usersMap:", usersMap);
+            setNotificationUsers(usersMap);
+        };
+
+        fetchProfiles();
+    }, [notifications]);
     //verify if the user is logged in
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -101,6 +158,7 @@ function Header() {
                         email: currentUser.email,
                         username: userData.username
                     });
+                    setNotifications(userData.notifications || []);
 
                     // Set profile picture if available
                     if (userData.profilePicture) {
@@ -122,8 +180,23 @@ function Header() {
 
         return () => unsubscribe();
     }, []);
-
-    //For mobile
+    const markAllNotificationsRead = () => {
+        // Update local state
+        setNotifications(prevNotifs =>
+            prevNotifs.map(n => ({ ...n, read: true }))
+        );
+        // Update în Firestore
+        if (user && user.uid) {
+            const userRef = doc(db, "users", user.uid);
+            // Update notifications field în Firestore
+            import("firebase/firestore").then(({ updateDoc }) => {
+                updateDoc(userRef, {
+                    notifications: notifications.map(n => ({ ...n, read: true }))
+                });
+            });
+        }
+    };
+    
     //For mobile
     if (windowWidth < 1000) {
         return (<>
@@ -213,7 +286,7 @@ function Header() {
                         fontFamily: 'Arial, sans-serif',
                         flexWrap: 'nowrap',
                         minHeight: '0px',
-                        maxHeight:'90px',
+                        maxHeight: '90px',
                     }}
                 >
                     <div style={{
@@ -308,7 +381,7 @@ function Header() {
                                     >
                                         3D Models
                                     </button>
-                                     <button
+                                    <button
                                         onClick={() => window.location.href = '/members'}
                                         style={{
                                             background: 'transparent',
@@ -508,7 +581,7 @@ function Header() {
                             display: 'flex',
                             alignItems: 'right',
                             flex: 1,
-                            justifySelf:'flex-end',
+                            justifySelf: 'flex-end',
                             maxWidth: '800px',
                             minWidth: '10px',
                             margin: '0px 100px',
@@ -550,7 +623,113 @@ function Header() {
                                 alignItems: 'center',
                                 flex: '0 0 auto'
                             }}>
+                                <div
+                                    style={{ position: 'relative', display: 'inline-block' }}
+                                >
+                                    <button
+                                        ref={notifyButtonRef}
+                                        style={imageButtonStyle}
+                                        onClick={() => {
+                                            if (!notifyMenu) {
+                                                setNotifyMenu(true);
+                                                markAllNotificationsRead();
+                                            } else {
+                                                setNotifyMenu(false);
+                                            }
+                                        }}
+                                    >
 
+                                        <img
+                                            src='/notificationsIcon3.svg'
+                                            style={{
+                                                width: "25px",
+                                                height: "25px",
+                                                filter: notifyMenu === true
+                                                    ? 'invert(44%) sepia(85%) saturate(1352%) hue-rotate(360deg) brightness(101%) contrast(101%)'
+                                                    : 'invert(25%)',
+                                                borderRadius: "50%",
+                                                objectFit: "cover"
+                                            }}
+                                        />
+                                        {/* Unread notifications number badge */}
+                                        {unreadCount > 0 && (
+                                            <span style={{
+                                                position: 'absolute',
+                                                top: '-5px',
+                                                right: '-5px',
+
+                                                background: 'red',
+                                                color: 'white',
+                                                borderRadius: '50%',
+                                                padding: '1px 5px',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 'bold',
+                                                zIndex: 1,
+
+                                                textAlign: 'center',
+                                                border: '2px solid white'
+                                            }}>
+                                                {unreadCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                    {/*Extended menu with notifications*/}
+                                    {notifyMenu && (
+                                        <div
+                                            ref={notifyMenuRef}
+                                            style={{
+                                                position: 'absolute',
+                                                top: '30px',
+                                                right: 0,
+                                                backgroundColor: 'rgba(255, 255, 255, 1)',
+                                                borderRadius: '3px',
+                                                boxShadow: '2px 4px 4px rgba(0, 0, 0, 0.23)',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                padding: '2px 4px',
+                                                minWidth: '250px',
+                                                minHeight: '250px',
+                                                maxHeight: '250px',
+                                                overflowY: 'auto',
+                                                zIndex: 2000
+                                            }}
+                                        >
+                                            {notifications.length === 0
+                                                ? <p style={{ fontSize: '0.8rem', textAlign: 'center' }}>No notifications yet!</p>
+                                                : notifications.map(n => (
+                                                    <div
+                                                        key={n.id}
+                                                        onClick={() => navigate(n.to)}
+                                                        style={{
+                                                            margin: '2px 0',
+                                                            padding: '8px',
+                                                            borderRadius: '3px',
+                                                            fontSize: '0.9rem',
+                                                            fontWeight: n.read ? 'normal' : 'bold',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'flex-start',
+                                                            gap: '10px'
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src={notificationUsers[n.from.trim()] || "/profile.png"}
+                                                            alt="notif"
+                                                            style={{ width: 40, height: 40, borderRadius: 5, objectFit: 'cover' }}
+                                                        />
+                                                        <div style={{ flex: 1 }}>
+                                                            <div style={{ fontWeight: 'bold', marginBottom: 2 }}>{n.title}</div>
+                                                            <div style={{ fontWeight: 'normal', marginBottom: 2 }}>{n.text}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: '#888', marginTop: 3 }}>
+                                                                {n.date && new Date(n.date).toLocaleString()}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    )}
+                                </div>
                                 <div
                                     style={{ position: 'relative', display: 'inline-block' }}
                                     onMouseEnter={() => setMenuOpen(true)}

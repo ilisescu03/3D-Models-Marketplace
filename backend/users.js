@@ -292,6 +292,7 @@ export const getUserStats = async (userId) => {
       followersList: userData.followersList || [],
       followingList: userData.followingList || [],
       profilePicture: userData.profilePicture || "",
+      notifications: userData.notifications || [],
       username: userData.username || userData.email || "",
       bio: userData.bio || "",
       accountType: userData.accountType || "individual",
@@ -445,6 +446,7 @@ export const listenToUserStats = (userId, callback) => {
           ? data.profilePicture
           : "profile.png",
         username: data.username || data.email || "",
+        notifications: data.notifications || [],
         bio: data.bio || "",
         accountType: data.accountType || "individual",
         role: data.role || "other",
@@ -577,5 +579,39 @@ export const doChangePassword = async (currentPassword, newPassword) => {
   } catch (error) {
     console.error("Error in doChangePassword:", error);
     return { success: false, message: error.message || 'Failed to change password.' };
+  }
+};
+//Send notification
+export const sendNotification = async (userid, senderid, title, text, to) => {
+  try {
+    const userRef = doc(db, "users", userid);
+
+    // Get current notifications (to not be overwritten)
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) throw new Error("User not found!");
+
+    const currentNotifications = userSnap.data().notifications || [];
+
+    // Create new notification
+    const newNotification = {
+      id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + Math.random()).toString(),
+      read: false,
+      title,
+      text,
+      from: senderid,
+      date: new Date().toISOString(),
+      to
+    };
+
+    // Add notification do the nofications array
+    const updatedNotifications = [newNotification, ...currentNotifications];
+
+    // Update Firestore
+    await updateDoc(userRef, { notifications: updatedNotifications });
+
+    return { success: true, message: "Notification sent." };
+  } catch (error) {
+    console.error("Failed to send notification:", error);
+    return { success: false, message: error.message || "Error sending notification." };
   }
 };

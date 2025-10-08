@@ -129,7 +129,20 @@
   background-color: #f58800;
   color: white;
 }
-
+.view-profile-button {
+    background-color: black;
+    transition: 0.3s ease;
+    margin-top: 0.5rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+}
+.view-profile-button:hover{
+  background-color: #333;
+}
 /* Loading */
 .loading-block {
   text-align: center;

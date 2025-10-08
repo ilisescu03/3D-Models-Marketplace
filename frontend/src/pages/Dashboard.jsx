@@ -8,7 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { getUserFavoriteModels, getModelsByCreator } from '/backend/models.js';
 import '/frontend/css/App.css'
 import {
-    getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser
+    getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, sendNotification
 } from '/backend/users.js';
 import '/frontend/css/Dashboard.css';
 import { Mosaic } from "react-loading-indicators";
@@ -185,22 +185,22 @@ function Dashboard() {
         return '/default-model-preview.png';
     };
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-        // Track window resize
-        useEffect(() => {
-            const handleResize = () => {
-                setWindowWidth(window.innerWidth);
-            };
-    
-            window.addEventListener('resize', handleResize);
-            return () => window.removeEventListener('resize', handleResize);
-        }, []);
+    // Track window resize
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     return (
         <div className="dashboard-background">
             <Header />
             <CookiesBanner />
 
             {/* Profile header */}
-            <div className="dashboard-profile" style={{marginTop: windowWidth<1000 ? '-6rem' : '8rem'}}>
+            <div className="dashboard-profile" style={{ marginTop: windowWidth < 1000 ? '-6rem' : '8rem' }}>
                 {/* Profile pic */}
                 <img
                     className="profile-image"
@@ -210,10 +210,10 @@ function Dashboard() {
                 />
 
                 {/* Username, edit button, followers/following */}
-                <div className="profile-text" style={{marginTop:'0.9rem'}}>
+                <div className="profile-text" style={{ marginTop: '0.9rem' }}>
                     <p className="profile-username">{username}</p>
 
-                    
+
 
                     <div className="profile-stats">
                         <span onClick={() => setActiveIndex(2)} className="followers-text">Followers: {userStats.followers}</span>
@@ -465,34 +465,14 @@ function Dashboard() {
                                             <h3>{f.username}</h3>
                                             <p>Followers: {f.followers} | Following: {f.following}</p>
 
-                                            {/* Follow/Unfollow button*/}
-                                            {user && (
-                                                <button
-                                                    className={`follow-button ${userStats.followingList.includes(f.uid) ? 'unfollow' : 'follow'}`}
-                                                    onClick={async () => {
-                                                        try {
-                                                            let result;
-                                                            if (userStats.followingList.includes(f.uid)) {
-                                                                result = await doUnfollowUser(f.uid);
-                                                            } else {
-                                                                result = await doFollowUser(f.uid);
-                                                            }
-                                                            if (result.success) {
-                                                                const followers = await getFollowers(user.uid);
-                                                                setFollowersData(followers);
-                                                                const followings = await getFollowing(user.uid);
-                                                                setFollowingData(followings);
-                                                            } else {
-                                                                console.log(result.message);
-                                                            }
-                                                        } catch (err) {
-                                                            console.error(err);
-                                                        }
-                                                    }}
-                                                >
-                                                    {userStats.followingList.includes(f.uid) ? "Unfollow" : "Follow"}
-                                                </button>
-                                            )}
+
+                                            <button
+                                                className={`view-profile-button`}
+                                                onClick={() => user.uid===f.uid ? navigate('/dashboard') : navigate(`/user/${f.username}`)}
+                                            >
+                                                View profile
+                                            </button>
+
                                         </div>
                                     ))
                                 )}
@@ -520,33 +500,14 @@ function Dashboard() {
                                             <p>Followers: {f.followers} | Following: {f.following}</p>
 
                                             {/* Follow/Unfollow button*/}
-                                            {user && (
-                                                <button
-                                                    className={`follow-button ${userStats.followingList.includes(f.uid) ? 'unfollow' : 'follow'}`}
-                                                    onClick={async () => {
-                                                        try {
-                                                            let result;
-                                                            if (userStats.followingList.includes(f.uid)) {
-                                                                result = await doUnfollowUser(f.uid);
-                                                            } else {
-                                                                result = await doFollowUser(f.uid);
-                                                            }
-                                                            if (result.success) {
-                                                                const followers = await getFollowers(user.uid);
-                                                                setFollowersData(followers);
-                                                                const followings = await getFollowing(user.uid);
-                                                                setFollowingData(followings);
-                                                            } else {
-                                                                console.log(result.message);
-                                                            }
-                                                        } catch (err) {
-                                                            console.error(err);
-                                                        }
-                                                    }}
-                                                >
-                                                    {userStats.followingList.includes(f.uid) ? "Unfollow" : "Follow"}
-                                                </button>
-                                            )}
+
+                                          <button
+                                                className={`view-profile-button`}
+                                                onClick={() => user.uid===f.uid ? navigate('/dashboard') : navigate(`/user/${f.username}`)}
+                                            >
+                                                View profile
+                                            </button>
+
                                         </div>
                                     ))
                                 )}
