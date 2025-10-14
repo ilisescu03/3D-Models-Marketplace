@@ -10,6 +10,8 @@ import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner.jsx';
 
 function Search() {
+    const [selectedTags, setSelectedTags] = useState([]);
+const [availableTags, setAvailableTags] = useState([]);
     const [type, setType] = useState('All');
     const [date, setDate] = useState('');
     const [selectedSoftware, setSelectedSoftware] = useState([]);
@@ -174,7 +176,9 @@ function Search() {
         });
     };
 
-    const placeholderText = searchType === 'model' ? 'Search models...' : 'Search users...';
+    const placeholderText = searchType === 'model' 
+    ? 'Search models by title or tags...' 
+    : 'Search users...';
 
     // Fetch user's latest public models
     const fetchUserModels = async (userId) => {
@@ -281,6 +285,18 @@ function Search() {
             resizeObserver.disconnect();
         };
     }, [searchType, accountType, role, selectedSkills])
+    //useEffect for searching by tags
+    useEffect(() => {
+    if (modelsData.length > 0 && searchType === 'model') {
+        const allTags = new Set();
+        modelsData.forEach(model => {
+            if (model.tags) {
+                model.tags.forEach(tag => allTags.add(tag.toLowerCase()));
+            }
+        });
+        setAvailableTags(Array.from(allTags));
+    }
+}, [modelsData, searchType]);
     // Main useEffect for data initialization
     useEffect(() => {
         // Fetch all users with their complete data
@@ -488,11 +504,13 @@ function Search() {
         if (searchType === 'model' && hasActiveSearch()) {
             let filtered = modelsData;
 
-
             if (searchQuery.trim()) {
                 const searchLower = searchQuery.toLowerCase().trim();
                 filtered = filtered.filter(model =>
-                    model.title.toLowerCase().includes(searchLower)
+                    model.title.toLowerCase().includes(searchLower) ||
+                    (model.tags && model.tags.some(tag =>
+                        tag.toLowerCase().includes(searchLower)
+                    ))
                 );
             }
 
@@ -510,7 +528,7 @@ function Search() {
     const hasActiveFilters = searchQuery || accountType || role || selectedSkills.length > 0 ||
         type !== 'All' || category || date || selectedSoftware.length > 0;
 
-     function buildUrlQuery({
+    function buildUrlQuery({
         searchType,
         searchQuery,
         type,
@@ -569,7 +587,7 @@ function Search() {
     if (loading) {
         return <LoadingScreen />;
     }
-   
+
     return (
         <div style={{
             backgroundColor: '#f8f9fa',

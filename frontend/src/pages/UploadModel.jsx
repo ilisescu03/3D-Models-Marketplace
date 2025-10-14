@@ -7,10 +7,28 @@ import '/frontend/css/UploadModel.css';
 
 
 // Constants
+// Supported file extensions for different 3D software
+const SUPPORTED_EXTENSIONS = {
+    'Blender': ['.blend', '.fbx', '.obj', '.dae', '.x3d'],
+    'Cinema4D': ['.c4d', '.fbx', '.obj', '.3ds'],
+    '3dsMax': ['.max', '.fbx', '.obj', '.3ds'],
+    'Maya': ['.mb', '.ma', '.fbx', '.obj'],
+    'AutoCAD': ['.dwg', '.dxf', '.3ds'],
+    'ArchiCAD': ['.pln', '.ifc', '.3ds'],
+    'Unity': ['.unity', '.prefab', '.fbx', '.obj'],
+    'Unreal Engine': ['.uasset', '.fbx', '.obj'],
+    'Godot': ['.tscn', '.tres', '.dae', '.obj'],
+    'SketchUp': ['.skp', '.dae', '.kmz'],
+    'Fusion360': ['.f3d', '.step', '.iges'],
+    'SolidWorks': ['.sldprt', '.sldasm', '.step'],
+    'Rhino': ['.3dm', '.obj', '.step'],
+    'ZBrush': ['.ztl', '.zpr', '.obj'],
+    'Houdini': ['.hip', '.hiplc', '.bgeo']
+};
 const CATEGORY_OPTIONS = [
     'Architecture', 'Character', 'Vehicle', 'Environment', 'Furniture',
     'Electronics', 'Jewelry', 'Weapons', 'Food & Drink', 'Plants', 'Animals',
-    'Abstract', 'Mechanical', 'Fashion & Style', 'Sports', 'Culture & History','Other'
+    'Abstract', 'Mechanical', 'Fashion & Style', 'Sports', 'Culture & History', 'Other'
 ];
 
 const TAG_OPTIONS = [
@@ -32,7 +50,7 @@ function UploadModel() {
         tags: [],
         isPublic: true
     });
-
+    const [customTagInput, setCustomTagInput] = useState('');
     // Files state
     const [modelFiles, setModelFiles] = useState([]);
     const [previewImages, setPreviewImages] = useState([]);
@@ -107,7 +125,56 @@ function UploadModel() {
                 : [...prev.tags, tag]
         }));
     };
+    // Handle custom tag input change
+    const handleCustomTagInputChange = (e) => {
+        setCustomTagInput(e.target.value);
+    };
 
+    // Add custom tag
+    const handleAddCustomTag = () => {
+        if (!customTagInput.trim()) {
+            setError('Please enter a tag name');
+            return;
+        }
+
+        const newTag = customTagInput.trim();
+
+        // Check if tag already exists (case insensitive)
+        const tagExists = formData.tags.some(
+            tag => tag.toLowerCase() === newTag.toLowerCase()
+        );
+
+        if (tagExists) {
+            setError(`Tag "${newTag}" already exists`);
+            return;
+        }
+
+        // Add to form data tags
+        setFormData(prev => ({
+            ...prev,
+            tags: [...prev.tags, newTag]
+        }));
+
+        // Clear input
+        setCustomTagInput('');
+        setError('');
+    };
+
+    // Remove tag (works for both predefined and custom tags)
+    const handleRemoveTag = (tagToRemove) => {
+        setFormData(prev => ({
+            ...prev,
+            tags: prev.tags.filter(tag => tag !== tagToRemove)
+        }));
+    };
+
+    // Handle Enter key in custom tag input
+    const handleCustomTagKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddCustomTag();
+        }
+    };
     // Handle file drag and drop
     const handleDrag = (e, active, setter) => {
         e.preventDefault();
@@ -247,17 +314,56 @@ function UploadModel() {
             setUploading(false);
         }
     };
+    // Adaugă aceste funcții în componenta UploadModel, după useState-urile existente
 
+    // Funcție pentru a obține extensiile permise bazate pe software-urile selectate
+    const getAllowedExtensions = (selectedSoftware) => {
+        if (selectedSoftware.length === 0) {
+            return []; // Nu permite niciun fișier dacă nu este selectat niciun software
+        }
+
+        // Intersecția extensiilor pentru toate software-urile selectate
+        let allowedExtensions = [...SUPPORTED_EXTENSIONS[selectedSoftware[0]]];
+
+        for (let i = 1; i < selectedSoftware.length; i++) {
+            const software = selectedSoftware[i];
+            const softwareExtensions = SUPPORTED_EXTENSIONS[software] || [];
+            allowedExtensions = allowedExtensions.filter(ext =>
+                softwareExtensions.includes(ext)
+            );
+        }
+
+        return allowedExtensions;
+    };
+
+    // Funcție pentru a formata accept attribute pentru input file
+    const getAcceptAttribute = (selectedSoftware) => {
+        const allowedExtensions = getAllowedExtensions(selectedSoftware);
+        return allowedExtensions.join(',');
+    };
+
+    // Funcție pentru a obține textul descriptiv al extensiilor permise
+    const getAllowedExtensionsText = (selectedSoftware) => {
+        const allowedExtensions = getAllowedExtensions(selectedSoftware);
+
+        if (allowedExtensions.length === 0) {
+            return selectedSoftware.length === 0
+                ? "Please select at least one software to upload files"
+                : "No common file formats between selected software";
+        }
+
+        return `Allowed formats: ${allowedExtensions.join(', ')}`;
+    };
     // Show loading if user data is still loading
     if (!currentUser && userLogedIn === undefined) {
         return (
             <div className="upload-model-page">
-                
+
                 <Header />
                 <div className="upload-container">
-                  
+
                     <div className="centered-loading">
-                       Loading...
+                        Loading...
                     </div>
                 </div>
             </div>
@@ -268,7 +374,7 @@ function UploadModel() {
     return (
         <div className="upload-model-page">
             <Header />
-            <div className="upload-container" style={{marginTop: windowWidth<1000 ? '-6rem': '8rem'}}>
+            <div className="upload-container" style={{ marginTop: windowWidth < 1000 ? '-6rem' : '8rem' }}>
                 <h1 className="upload-title">Upload 3D Model</h1>
                 {error && <div className="alert error">{error}</div>}
                 {success && <div className="alert success">{success}</div>}
@@ -356,41 +462,139 @@ function UploadModel() {
                     {/* Tags */}
                     <h2 className="section-title">Tags</h2>
                     <p className="muted-paragraph">
-                        Select tags that describe your model:
+                        Select tags that describe your model or add your own:
                     </p>
+
+                    {/* All Tags Display - Combined */}
                     <div className="tags-container">
-                        {TAG_OPTIONS.map(tag => (
+                        {/* Display selected tags (both predefined and custom) */}
+                        {formData.tags.map(tag => (
                             <button
                                 key={tag}
                                 type="button"
-                                onClick={() => !uploading && handleTagToggle(tag)}
-                                className={formData.tags.includes(tag) ? 'tag active' : 'tag'}
+                                onClick={() => !uploading && handleRemoveTag(tag)}
+                                className="tag active"
                                 disabled={uploading}
                             >
                                 {tag}
+                                <span className="tag-remove">×</span>
                             </button>
                         ))}
+
+                        {/* Display predefined tags that are not selected */}
+                        {TAG_OPTIONS
+                            .filter(tag => !formData.tags.includes(tag))
+                            .map(tag => (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() => !uploading && handleTagToggle(tag)}
+                                    className="tag"
+                                    disabled={uploading}
+                                >
+                                    {tag}
+                                </button>
+                            ))
+                        }
+                    </div>
+
+                    {/* Custom Tags Input */}
+                    <div className="custom-tags-section">
+                        <div className="custom-tags-input-group">
+                            <input
+                                type="text"
+                                value={customTagInput}
+                                onChange={handleCustomTagInputChange}
+                                onKeyPress={handleCustomTagKeyPress}
+                                placeholder="Add tag..."
+                                className="custom-tag-input"
+                                disabled={uploading}
+                                maxLength={30}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleAddCustomTag}
+                                className="add-custom-tag-button"
+                                disabled={uploading || !customTagInput.trim()}
+                            >
+                                Add
+                            </button>
+                        </div>
+                        <div className="custom-tags-hint">
+                            Press Enter or click "Add" to add tag (max 30 characters)
+                        </div>
                     </div>
 
                     {/* Model Files Upload */}
                     <h2 className="section-title">Model Files *</h2>
-                    <div
-                        className={dragActive ? 'file-upload-area active' : 'file-upload-area'}
-                        onDragEnter={(e) => !uploading && handleDrag(e, true, setDragActive)}
-                        onDragLeave={(e) => !uploading && handleDrag(e, false, setDragActive)}
-                        onDragOver={(e) => !uploading && handleDrag(e, true, setDragActive)}
-                        onDrop={!uploading ? handleModelDrop : undefined}
-                        onClick={() => !uploading && document.getElementById('modelFiles').click()}
-                    >
-                        <div className="upload-icon">📁</div>
-                        <div className="upload-text">
-                            {uploading ? 'Uploading...' : 'Drag & drop your 3D model files here, or click to browse'}
-                        </div>
-                        <div className="upload-subtext">
-                            Supported formats: .blend, .fbx, .obj, .c4d, .max, .ma, .mb, and more (max 100MB per file, 500MB total)
-                        </div>
-                    </div>
 
+                    {/* Informative message for selected software compatibilities */}
+                    {formData.software.length === 0 ? (
+                        <div className="software-required-message">
+                            <div className="warning-icon">⚠️</div>
+                            <div className="warning-text">
+                                Please select at least one software compatibility tag above to enable file upload
+                            </div>
+                        </div>
+                    ) : getAllowedExtensions(formData.software).length === 0 ? (
+                        <div className="software-required-message">
+                            <div className="warning-icon">⚠️</div>
+                            <div className="warning-text">
+                                No common file formats between the selected software. Please select different software combinations.
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="allowed-extensions-info">
+                            <div className="info-icon">ℹ️</div>
+                            <div className="info-text">
+                                {getAllowedExtensionsText(formData.software)}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Verify if there are valid extensions for the selected software compatibility */}
+                    {getAllowedExtensions(formData.software).length === 0 ? (
+                        <div className="file-upload-area disabled">
+                            <div className="upload-icon">📁</div>
+                            <div className="upload-text">
+                                Drag & drop your 3D model files here, or click to browse
+                            </div>
+                            <div className="upload-subtext">
+                                Supported formats based on selected software (max 100MB per file, 500MB total)
+                            </div>
+                        </div>
+                    ) : (
+                        <div
+                            className={
+                                dragActive
+                                    ? 'file-upload-area active'
+                                    : 'file-upload-area'
+                            }
+                            onDragEnter={(e) => !uploading && handleDrag(e, true, setDragActive)}
+                            onDragLeave={(e) => !uploading && handleDrag(e, false, setDragActive)}
+                            onDragOver={(e) => !uploading && handleDrag(e, true, setDragActive)}
+                            onDrop={!uploading ? handleModelDrop : undefined}
+                            onClick={() => !uploading && document.getElementById('modelFiles').click()}
+                        >
+                            <div className="upload-icon">📁</div>
+                            <div className="upload-text">
+                                {uploading ? 'Uploading...' : 'Drag & drop your 3D model files here, or click to browse'}
+                            </div>
+                            <div className="upload-subtext">
+                                Supported formats based on selected software (max 100MB per file, 500MB total)
+                            </div>
+                        </div>
+                    )}
+
+                    <input
+                        id="modelFiles"
+                        type="file"
+                        multiple
+                        accept={getAcceptAttribute(formData.software)}
+                        onChange={(e) => !uploading && getAllowedExtensions(formData.software).length > 0 && handleModelFiles(Array.from(e.target.files))}
+                        className="hidden-input"
+                        disabled={uploading || getAllowedExtensions(formData.software).length === 0}
+                    />
                     <input
                         id="modelFiles"
                         type="file"

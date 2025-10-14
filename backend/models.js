@@ -218,7 +218,7 @@ export const uploadModel = async (modelData, files, previewImages) => {
       likes: 0,
       favorites: 0,
       downloads: 0,
-      downloadedBy: [],
+      downloadedBy: [creatorUID],
       comments: [],
       previewImages: previewImageUrls,
       modelFiles: modelFiles,
@@ -240,14 +240,17 @@ export const uploadModel = async (modelData, files, previewImages) => {
 
     // Save model document to Firestore
     await setDoc(doc(db, "models", modelId), modelDoc);
-    console.log("Model document saved to Firestore");
-
+   
     // Update user's uploaded models array
     console.log("=== UPDATING USER DOCUMENT ===");
     const userRef = doc(db, "users", creatorUID);
     await updateDoc(userRef, {
       uploadedModels: arrayUnion(modelId)
     });
+     console.log("Model document saved to Firestore");
+    await updateDoc(userRef, {
+        downloadedModels: arrayUnion(modelId)
+      });
     console.log("User document updated with new model ID");
 
     console.log("=== MODEL UPLOAD SUCCESSFUL ===");
