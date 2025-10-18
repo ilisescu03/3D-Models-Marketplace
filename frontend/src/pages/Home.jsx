@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Footer from '../UI+UX/Footer.jsx';
 import Header from "../UI+UX/Header";
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner';
@@ -88,11 +89,14 @@ function Home() {
 
             {/* Hero Section - Currently empty but styled for future content */}
             <div className="hero-section" style={{marginTop: windowWidth<1000 ? '-6rem' : '0rem'}}>
-
+                <img style={{height:'70vh',
+                    display:'flex',
+                    justifySelf:'flex-end',
+                }}src="Home.png"/>
             </div>
 
             {/* Models Section */}
-            <div className="models-container">
+            <div className="models-container" style={{marginTop: windowWidth>1000? '-11rem':'-14rem'}}>
                 <div className="models-content">
                     <h2 className="home-section-title">Featured Models</h2>
                     <p className="section-subtitle">
@@ -234,6 +238,7 @@ function Home() {
                     )}
                 </div>
             </div>
+            <Footer/>
         </div>
     );
 }

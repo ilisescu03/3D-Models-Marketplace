@@ -104,7 +104,7 @@ function CookiesBanner() {
                 <h3>Cookie Settings</h3>
                 <p>
                     We use cookies to improve your experience, analyze traffic, and personalize content.
-                    By accepting, you agree to our use of cookies in accordance with our Cookie Policy.
+                    By accepting, you agree to our use of cookies in accordance with our <a style={{color:'orange'}}href="/cookie-policy">Cookie Policy</a>.
 
                 </p>
 

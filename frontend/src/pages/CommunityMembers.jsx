@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Header from "../UI+UX/Header";
+import Footer from '../UI+UX/Footer.jsx';
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getUsers } from '/backend/users.js';
@@ -1435,6 +1436,10 @@ function CommunityMembers() {
                     </>
                 )}
             </div>
+            {!loading && (<div style={{ marginTop: '4rem' , width:'100%'}}>
+                <Footer />
+            </div>)}
+
         </div>
     );
 }

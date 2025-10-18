@@ -1,4 +1,5 @@
 import Header from '../UI+UX/Header.jsx';
+import Footer from '../UI+UX/Footer.jsx';
 import { useParams } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect, useCallback } from 'react';
@@ -713,6 +714,9 @@ function OtherDashboard() {
                     )}
                 </section>
             </div>
+            {!loading && (<div style={{ marginTop: '0rem', width: '100%' }}>
+                <Footer />
+            </div>)}
         </div>
     );
 }

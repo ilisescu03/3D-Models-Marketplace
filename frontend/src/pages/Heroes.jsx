@@ -1,4 +1,5 @@
 import Header from '../UI+UX/Header.jsx';
+import Footer from '../UI+UX/Footer.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner.jsx';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
@@ -6,8 +7,8 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { getUserStats, getFollowers, getFollowing, getUsers, listenToUserStats, doFollowUser, doUnfollowUser } from '/backend/users.js';
-import '/frontend/css/App.css'; 
-import '/frontend/css/Heroes.css'; 
+import '/frontend/css/App.css';
+import '/frontend/css/Heroes.css';
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 
 function Heroes() {
@@ -41,7 +42,7 @@ function Heroes() {
                 id: doc.id,
                 ...doc.data()
             }));
-            
+
             // Sort models by creation date (newest first) and return first 2
             return models
                 .sort((a, b) => {
@@ -62,17 +63,17 @@ function Heroes() {
         const fetchUsers = async () => {
             try {
                 const users = await getUsers();
-                
+
                 // Enhance each user data with models, bio, and skills
                 const usersWithModels = await Promise.all(
                     users.map(async (userData) => {
                         const models = await fetchUserModels(userData.uid);
-                        
+
                         // Get additional user profile data from Firestore
                         const userDocRef = doc(db, "users", userData.uid);
                         const userDocSnap = await getDoc(userDocRef);
                         const fullUserData = userDocSnap.exists() ? userDocSnap.data() : {};
-                        
+
                         return {
                             ...userData,
                             models: models,
@@ -81,7 +82,7 @@ function Heroes() {
                         };
                     })
                 );
-                
+
                 setUsersData(usersWithModels);
             } catch (error) {
                 console.error("Error fetching users:", error);
@@ -89,7 +90,7 @@ function Heroes() {
         };
 
         fetchUsers();
-        
+
         // Authentication state listener
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
@@ -103,7 +104,7 @@ function Heroes() {
                         const userData = userDocSnap.data();
                         setUsername(userData.username || userData.email);
                     }
-                    
+
                     // Set up real-time listener for user stats (followers/following)
                     const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
                         setUserStats(stats);
@@ -139,23 +140,23 @@ function Heroes() {
         return () => unsubscribe();
     }, [navigate]);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-        // Track window resize
-        useEffect(() => {
-            const handleResize = () => {
-                setWindowWidth(window.innerWidth);
-            };
-    
-            window.addEventListener('resize', handleResize);
-            return () => window.removeEventListener('resize', handleResize);
-        }, []);
+    // Track window resize
+    useEffect(() => {
+        const handleResize = () => {
+            setWindowWidth(window.innerWidth);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     // Show loading screen while data is being fetched
     if (loading) {
-       return <LoadingScreen />;
+        return <LoadingScreen />;
     }
 
     // Sort users by follower count and take top 50
     const filteredUsers = usersData
-        .filter(creator=>creator.models.length>0)
+        .filter(creator => creator.models.length > 0)
         .sort((a, b) => b.followers - a.followers)
         .slice(0, 50);
 
@@ -163,13 +164,13 @@ function Heroes() {
         <div className="hero-members-backgroundStyle">
             <Header />
             <CookiesBanner />
-            <div className="hero-members-containerStyle" style={{marginTop: windowWidth<1000 ? '-6rem' : '8rem'}}>
+            <div className="hero-members-containerStyle" style={{ marginTop: windowWidth < 1000 ? '-6rem' : '8rem' }}>
                 {/* Page header section */}
                 <div className="page-header">
                     <h1 className="page-title">Most Popular Creators</h1>
                     <p className="page-description">Discover and connect with the most followed creators in our community</p>
                 </div>
-                
+
                 {/* Creators grid layout */}
                 <div className="creators-grid">
                     {filteredUsers.length === 0 ? (
@@ -185,7 +186,7 @@ function Heroes() {
                                     alt={creator.username}
                                     onError={(e) => (e.target.src = "profile.png")}
                                 />
-                                
+
                                 <div className="creator-header">
                                     <div className="creator-info">
                                         {/* Creator username */}
@@ -219,8 +220,8 @@ function Heroes() {
                                 {creator.models && creator.models.length > 0 && (
                                     <div className="creator-models">
                                         {creator.models.map((model) => (
-                                            <div 
-                                                key={model.id} 
+                                            <div
+                                                key={model.id}
                                                 className="model-thumbnail"
                                             >
                                                 <img
@@ -236,9 +237,9 @@ function Heroes() {
                                 {/* View Profile button - navigates to user's profile or dashboard */}
                                 <button
                                     className="creator-visit-button"
-                                    onClick={() => creator.uid !== user?.uid ? 
-                                        window.location.href = `/user/${creator.username}` : 
-                                        window.location.href='/dashboard'}
+                                    onClick={() => creator.uid !== user?.uid ?
+                                        window.location.href = `/user/${creator.username}` :
+                                        window.location.href = '/dashboard'}
                                 >
                                     View Profile
                                 </button>
@@ -247,6 +248,9 @@ function Heroes() {
                     )}
                 </div>
             </div>
+            {!loading && (<div style={{ marginTop: '4rem', width: '100%' }}>
+                <Footer />
+            </div>)}
         </div>
     );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Header from "../UI+UX/Header";
+import Footer from "../UI+UX/Footer.jsx";
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getModels } from '/backend/models.js';
@@ -218,7 +219,7 @@ function ModelsPage() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-    
+
     function buildUrlQuery({ type, category, date, selectedSoftware }) {
         const params = new URLSearchParams(window.location.search);
 
@@ -1310,6 +1311,9 @@ function ModelsPage() {
                     )}
                 </div>
             </div>
+            {!loading && (<div style={{ marginTop: '4rem', width: '100%' }}>
+                <Footer />
+            </div>)}
         </div >
     );
 }

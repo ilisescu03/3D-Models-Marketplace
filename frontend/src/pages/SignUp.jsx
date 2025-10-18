@@ -370,7 +370,7 @@ function SignUp() {
                         style={{ width: '16px', height: '16px' }}
                     />
                     <span style={{ fontSize: '0.8rem' }}>
-                        <a style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 'bold' }}>
+                        <a style={{ textDecoration: 'underline', cursor: 'pointer', color:'orange', fontWeight: 'bold' }} href="/terms&conditions">
                             I accept the terms and conditions
                         </a>
                     </span>

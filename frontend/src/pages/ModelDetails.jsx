@@ -3,6 +3,7 @@ import { doFollowUser, doUnfollowUser, getFollowing, sendNotification } from '/b
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../UI+UX/Header";
+import Footer from "../UI+UX/Footer.jsx";
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getModelById } from '/backend/models.js';
@@ -1047,7 +1048,9 @@ function ModelDetails() {
                     </div>
                 </div>
             )}
-
+              {!loading && (<div style={{ marginTop: '4rem' , width:'100%'}}>
+                            <Footer />
+                        </div>)}
         </div>
 
     );

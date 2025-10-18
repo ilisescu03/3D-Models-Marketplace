@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { doSignOut } from '/backend/auth.js';
 import { auth, db } from '/backend/firebase.js';
@@ -236,7 +237,7 @@ function Header() {
                         </button>
                     </div>
 
-
+                    
                     <div style={{
                         display: 'flex',
                         alignItems: 'flex-end',
@@ -245,113 +246,111 @@ function Header() {
                         left: '4rem',
                         paddingRight: '0px'
                     }}>
-                        <div
-                            style={{ position: 'relative', display: 'inline-block' }}
-                        >
-                            <button
-                                ref={notifyButtonRef}
-                                style={imageButtonStyle}
-                                onClick={() => {
-                                    if (!notifyMenu) {
-                                        setNotifyMenu(true);
-                                        markAllNotificationsRead();
-                                    } else {
-                                        setNotifyMenu(false);
-                                    }
-                                }}
-                            >
-
-                                <img
-                                    src='/notificationsIcon3.svg'
-                                    style={{
-                                        width: "30px",
-                                        height: "30px",
-                                        filter: notifyMenu === true
-                                            ? 'invert(44%) sepia(85%) saturate(1352%) hue-rotate(360deg) brightness(101%) contrast(101%)'
-                                            : 'invert(0%)',
-                                        borderRadius: "50%",
-                                        objectFit: "cover"
-                                    }}
-                                />
-                                {/* Unread notifications number badge */}
-                                {unreadCount > 0 && (
-                                    <span style={{
-                                        position: 'absolute',
-                                        top: '-5px',
-                                        right: '-5px',
-
-                                        background: 'red',
-                                        color: 'white',
-                                        borderRadius: '50%',
-                                        padding: '1px 5px',
-                                        fontSize: '0.8rem',
-                                        fontWeight: 'bold',
-                                        zIndex: 1,
-
-                                        textAlign: 'center',
-                                        border: '2px solid white'
-                                    }}>
-                                        {unreadCount}
-                                    </span>
-                                )}
-                            </button>
-                            {/*Extended menu with notifications*/}
-                            {notifyMenu && (
-                                <div
-                                    ref={notifyMenuRef}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '30px',
-                                        right: 0,
-                                        backgroundColor: 'rgba(255, 255, 255, 1)',
-                                        borderRadius: '3px',
-                                        boxShadow: '2px 4px 4px rgba(0, 0, 0, 0.23)',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        padding: '2px 4px',
-                                        minWidth: '250px',
-                                        minHeight: '250px',
-                                        maxHeight: '250px',
-                                        overflowY: 'auto',
-                                        zIndex: 2000
+                        {!loading && user ? (
+                            <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <button
+                                    ref={notifyButtonRef}
+                                    style={imageButtonStyle}
+                                    onClick={() => {
+                                        if (!notifyMenu) {
+                                            setNotifyMenu(true);
+                                            markAllNotificationsRead();
+                                        } else {
+                                            setNotifyMenu(false);
+                                        }
                                     }}
                                 >
-                                    {notifications.length === 0
-                                        ? <p style={{ fontSize: '0.8rem', textAlign: 'center' }}>No notifications yet!</p>
-                                        : notifications.map(n => (
-                                            <div
-                                                key={n.id}
-                                                onClick={() => navigate(n.to)}
-                                                style={{
-                                                    margin: '2px 0',
-                                                    padding: '8px',
-                                                    borderRadius: '3px',
-                                                    fontSize: '0.9rem',
-                                                    fontWeight: n.read ? 'normal' : 'bold',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'flex-start',
-                                                    gap: '10px'
-                                                }}
-                                            >
-                                                <img
-                                                    src={notificationUsers[n.from.trim()] || "/profile.png"}
-                                                    alt="notif"
-                                                    style={{ width: 40, height: 40, borderRadius: 5, objectFit: 'cover' }}
-                                                />
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 'bold', marginBottom: 2 }}>{n.title}</div>
-                                                    <div style={{ fontWeight: 'normal', marginBottom: 2 }}>{n.text}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: '#888', marginTop: 3 }}>
-                                                        {n.date && new Date(n.date).toLocaleString()}
+                                    <img
+                                        src='/notificationsIcon3.svg'
+                                        style={{
+                                            width: "30px",
+                                            height: "30px",
+                                            filter: notifyMenu === true
+                                                ? 'invert(44%) sepia(85%) saturate(1352%) hue-rotate(360deg) brightness(101%) contrast(101%)'
+                                                : 'invert(0%)',
+                                            borderRadius: "50%",
+                                            objectFit: "cover"
+                                        }}
+                                    />
+                                    {/* Unread notifications number badge */}
+                                    {unreadCount > 0 && (
+                                        <span style={{
+                                            position: 'absolute',
+                                            top: '-5px',
+                                            right: '-5px',
+                                            background: 'red',
+                                            color: 'white',
+                                            borderRadius: '50%',
+                                            padding: '1px 5px',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 'bold',
+                                            zIndex: 1,
+                                            textAlign: 'center',
+                                            border: '2px solid white'
+                                        }}>
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+                                {/*Extended menu with notifications*/}
+                                {notifyMenu && (
+                                    <div
+                                        ref={notifyMenuRef}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '30px',
+                                            right: 0,
+                                            backgroundColor: 'rgba(255, 255, 255, 1)',
+                                            borderRadius: '3px',
+                                            boxShadow: '2px 4px 4px rgba(0, 0, 0, 0.23)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            padding: '2px 4px',
+                                            minWidth: '250px',
+                                            minHeight: '250px',
+                                            maxHeight: '250px',
+                                            overflowY: 'auto',
+                                            zIndex: 2000
+                                        }}
+                                    >
+                                        {notifications.length === 0
+                                            ? <p style={{ fontSize: '0.8rem', textAlign: 'center' }}>No notifications yet!</p>
+                                            : notifications.map(n => (
+                                                <div
+                                                    key={n.id}
+                                                    onClick={() => navigate(n.to)}
+                                                    style={{
+                                                        margin: '2px 0',
+                                                        padding: '8px',
+                                                        borderRadius: '3px',
+                                                        fontSize: '0.9rem',
+                                                        fontWeight: n.read ? 'normal' : 'bold',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'flex-start',
+                                                        gap: '10px'
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={notificationUsers[n.from.trim()] || "/profile.png"}
+                                                        alt="notif"
+                                                        style={{ width: 40, height: 40, borderRadius: 5, objectFit: 'cover' }}
+                                                    />
+                                                    <div style={{ flex: 1 }}>
+                                                        <div style={{ fontWeight: 'bold', marginBottom: 2 }}>{n.title}</div>
+                                                        <div style={{ fontWeight: 'normal', marginBottom: 2 }}>{n.text}</div>
+                                                        <div style={{ fontSize: '0.75rem', color: '#888', marginTop: 3 }}>
+                                                            {n.date && new Date(n.date).toLocaleString()}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))
-                                    }
-                                </div>
-                            )}
-                        </div>
+                                            ))
+                                        }
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+
                         {/* Search button */}
                         <button
                             onClick={() => navigate('/search')}
@@ -359,17 +358,17 @@ function Header() {
                             <img src='/SearchBtn.png' alt='Search' style={{ height: '30px', position: 'relative', left: '-1rem', marginBottom: '0px' }} />
                         </button>
 
-                        {/* Upload button */}
-                        <button style={imageButtonStyle}
-                            onClick={() => {
-                                if (user) {
-                                    navigate('/upload');
-                                }
-                            }}>
-                            <img src='/UploadButton.png' alt='Upload' style={{ height: '25px', position:'relative', left:'-2rem', marginBottom: '0px', filter: 'invert(0%)' }} />
-                        </button>
-
-
+                        {!loading && user ? (
+                            /* Upload button */
+                            <button style={imageButtonStyle}
+                                onClick={() => {
+                                    if (user) {
+                                        navigate('/upload');
+                                    }
+                                }}>
+                                <img src='/UploadButton.png' alt='Upload' style={{ height: '25px', position:'relative', left:'-2rem', marginBottom: '0px', filter: 'invert(0%)' }} />
+                            </button>
+                        ) : null}
                     </div>
                 </nav>
             </header>

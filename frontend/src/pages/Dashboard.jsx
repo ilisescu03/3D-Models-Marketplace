@@ -1,4 +1,5 @@
 import Header from '../UI+UX/Header.jsx';
+import Footer from '../UI+UX/Footer.jsx';
 import { useNavigate } from 'react-router-dom';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { auth, db } from '/backend/firebase.js';
@@ -584,6 +585,9 @@ function Dashboard() {
                     )}
                 </section>
             </div>
+              {!loading && (<div style={{ marginTop: '0rem' , width:'100%'}}>
+                            <Footer />
+                        </div>)}
         </div>
     );
 }

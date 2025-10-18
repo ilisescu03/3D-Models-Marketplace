@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import { uploadModel, getSupportedExtensions, getSoftwareOptions } from '/backend/models.js';
 import Header from '../UI+UX/Header';
@@ -628,7 +629,7 @@ function UploadModel() {
                             ))}
                         </div>
                     )}
-
+                    
                     {/* Preview Images Upload */}
                     <h2 className="section-title">Preview Images *</h2>
                     <div

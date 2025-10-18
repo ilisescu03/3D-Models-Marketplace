@@ -17,6 +17,9 @@ import ModelDetails from '/frontend/src/pages/ModelDetails';
 import Search from '/frontend/src/pages/Search';
 import ModelsPage from '/frontend/src/pages/ModelsPage';
 import CommunityMembers from '/frontend/src/pages/CommunityMembers';
+import CookiePolicy from '/frontend/src/pages/CookiePolicy.jsx';
+import TermsAndConditions from '/frontend/src/pages/TermsAndConditions.jsx';
+import Contact from '/frontend/src/pages/Contact.jsx';
 function App() {
   const [hasInitialized, setHasInitialized] = useState(false);
   useEffect(() => {
@@ -51,6 +54,9 @@ function App() {
         <Route path="/search" element={<Search />} />
         <Route path="/3d-models" element={<ModelsPage />} />
         <Route path="/members" element={<CommunityMembers />} />
+        <Route path="/cookie-policy" element={<CookiePolicy />} />
+        <Route path="/terms&conditions" element={<TermsAndConditions />} />
+        <Route path="/contact" element={<Contact/>}></Route>
       </Routes>
     </>
   )
