@@ -9,6 +9,7 @@ import { getUserFavoriteModels, getModelsByCreator } from '/backend/models.js';
 import { getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, sendNotification } from '/backend/users.js';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import '/frontend/css/App.css';
+import '/frontend/css/Home.css'
 import '/frontend/css/OtherDashboard.css';
 import { Mosaic } from 'react-loading-indicators';
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
@@ -128,7 +129,7 @@ function OtherDashboard() {
 
         try {
             setUserModelsLoading(true);
-            const result = await getModelsByCreator(userId);
+            const result = await getModelsByCreator(userId, false);
 
             if (result.success) {
                 console.log('User models loaded:', result.models.length);
@@ -196,6 +197,22 @@ function OtherDashboard() {
 
         loadCurrentUsername();
     }, [currentUser]);
+    useEffect(() => {
+        
+        if (profileUser && profileUser.username) {
+           
+            document.title = `${profileUser.username}'s Profile - ShapeHive`;
+        } else if (!loading) {
+            
+            document.title = 'User Not Found - ShapeHive';
+        }
+
+     
+        return () => {
+            document.title = 'ShapeHive';
+        };
+
+    }, [profileUser, loading]);
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
@@ -714,9 +731,9 @@ function OtherDashboard() {
                     )}
                 </section>
             </div>
-            {!loading && (<div style={{ marginTop: '0rem', width: '100%' }}>
-                <Footer />
-            </div>)}
+             {!loading && (<div style={{ marginTop: '0rem', width: '100%', backgroundColor:'#f1f1f1ff' }}>
+                            <Footer />
+                        </div>)}
         </div>
     );
 }

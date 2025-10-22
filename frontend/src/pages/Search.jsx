@@ -49,7 +49,7 @@ const [availableTags, setAvailableTags] = useState([]);
 
     const softwareOptions = [
         "Blender", "Cinema4D", "AutoCAD", "ArchiCAD", "Maya",
-        "3ds Max", "ZBrush", "Substance Painter", "Photoshop",
+        "3dsMax", "ZBrush", "Substance Painter", "Photoshop",
         "Godot", "Unity", "Unreal Engine"
     ];
 
@@ -258,7 +258,11 @@ const [availableTags, setAvailableTags] = useState([]);
         }
         return false;
     };
-
+    useEffect(() => {
+         
+                    document.title = `ShapeHive`;
+                
+            }, []);
     // Calculate header's height
     useEffect(() => {
         const updateHeaderHeight = () => {

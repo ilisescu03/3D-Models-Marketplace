@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import { auth } from '/backend/firebase.js';
@@ -92,8 +92,12 @@ function PasswordReset() {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [email, setEmail] = useState('');
-
-    // Verificăm codul la montarea componentei
+    useEffect(() => {
+         
+                    document.title = `Password Reset - ShapeHive`;
+                
+            }, []);
+   
     useState(() => {
         if (oobCode) {
             verifyPasswordResetCode(auth, oobCode)

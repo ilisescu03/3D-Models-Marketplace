@@ -56,7 +56,11 @@ const listItemStyle = {
 
 function TermsAndConditions() {
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
+    useEffect(() => {
+         
+                    document.title = `Terms & Conditions - ShapeHive`;
+                
+            }, []);
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);

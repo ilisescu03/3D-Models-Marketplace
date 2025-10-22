@@ -5,9 +5,11 @@ import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getUsers } from '/backend/users.js';
 import '/frontend/css/Home.css';
+import '/frontend/css/Heroes.css'
 import { Mosaic } from "react-loading-indicators";
 import { auth, db } from '/backend/firebase.js';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+
 
 function CommunityMembers() {
 
@@ -100,7 +102,12 @@ function CommunityMembers() {
 
         return sorted;
     };
+    useEffect(() => {
+       
+            document.title = `Members - ShapeHive`;
+      
 
+    }, []);
     // Track window resize
     useEffect(() => {
         const handleResize = () => {
@@ -1119,6 +1126,7 @@ function CommunityMembers() {
 
             {/* Users Section */}
             <div className="hero-members-containerStyle" style={{
+               
                 background: 'none',
                 marginTop: '0rem',
                 padding: '0 2rem'

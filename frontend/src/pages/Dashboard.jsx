@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { getUserFavoriteModels, getModelsByCreator } from '/backend/models.js';
+import '/frontend/css/Home.css'
 import '/frontend/css/App.css'
 import {
     getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, sendNotification
@@ -86,7 +87,7 @@ function Dashboard() {
 
         try {
             setUserModelsLoading(true);
-            const result = await getModelsByCreator(user.uid);
+            const result = await getModelsByCreator(user.uid, true);
 
             if (result.success) {
                 console.log("User models loaded:", result.models.length);
@@ -121,7 +122,11 @@ function Dashboard() {
             setFavoritesLoading(false);
         }
     }, [user]);
-
+    useEffect(() => {
+ 
+            document.title = `Account Dashboard - ShapeHive`;
+        
+    }, []);
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
@@ -284,6 +289,11 @@ function Dashboard() {
                                                 className="model-card"
                                                 onClick={() => handleCardClick(model.id)}
                                             >
+                                                {model.isPublic === false && (
+                                                    <div className="private-badge" title="Private Model">
+                                                        <img src="/privateIcon.svg" alt="Private" />
+                                                    </div>
+                                                )}
                                                 <img
                                                     src={getModelThumbnail(model)}
                                                     alt={model.title}
@@ -469,7 +479,7 @@ function Dashboard() {
 
                                             <button
                                                 className={`view-profile-button`}
-                                                onClick={() => user.uid===f.uid ? navigate('/dashboard') : navigate(`/user/${f.username}`)}
+                                                onClick={() => user.uid === f.uid ? navigate('/dashboard') : navigate(`/user/${f.username}`)}
                                             >
                                                 View profile
                                             </button>
@@ -502,9 +512,9 @@ function Dashboard() {
 
                                             {/* Follow/Unfollow button*/}
 
-                                          <button
+                                            <button
                                                 className={`view-profile-button`}
-                                                onClick={() => user.uid===f.uid ? navigate('/dashboard') : navigate(`/user/${f.username}`)}
+                                                onClick={() => user.uid === f.uid ? navigate('/dashboard') : navigate(`/user/${f.username}`)}
                                             >
                                                 View profile
                                             </button>
@@ -585,9 +595,9 @@ function Dashboard() {
                     )}
                 </section>
             </div>
-              {!loading && (<div style={{ marginTop: '0rem' , width:'100%'}}>
-                            <Footer />
-                        </div>)}
+            {!loading && (<div style={{ marginTop: '0rem', width: '100%', backgroundColor:'#f1f1f1ff' }}>
+                <Footer />
+            </div>)}
         </div>
     );
 }

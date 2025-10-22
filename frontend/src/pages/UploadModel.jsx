@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import { uploadModel, getSupportedExtensions, getSoftwareOptions } from '/backend/models.js';
@@ -37,6 +36,7 @@ const TAG_OPTIONS = [
     'Game Ready', 'PBR', 'Stylized', 'Realistic', 'Fantasy',
     'Sci-Fi', 'Medieval', 'Modern', 'Vintage', 'Industrial'
 ];
+
 function UploadModel() {
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const { currentUser, userLogedIn } = useAuth();
@@ -65,9 +65,54 @@ function UploadModel() {
     const [success, setSuccess] = useState('');
 
     // Get supported extensions and software options
-    const [supportedExtensions] = useState(getSupportedExtensions());
-    const [softwareOptions] = useState(getSoftwareOptions());
 
+    const [softwareOptions] = useState(getSoftwareOptions());
+    // Create once all suported extensions list
+    const allSupportedExtensions = useMemo(() => {
+        const extensionSet = new Set();
+        Object.values(SUPPORTED_EXTENSIONS).forEach(extArray => {
+            extArray.forEach(ext => extensionSet.add(ext));
+        });
+        return Array.from(extensionSet);
+    }, []);
+
+    // Inverted mapping
+    const extensionToSoftwareMap = useMemo(() => {
+        const map = {};
+        Object.entries(SUPPORTED_EXTENSIONS).forEach(([software, extensions]) => {
+            extensions.forEach(ext => {
+                if (!map[ext]) {
+                    map[ext] = [];
+                }
+                map[ext].push(software);
+            });
+        });
+        return map;
+    }, []);
+
+    // Update software by files
+    const updateSoftwareFromFiles = (files) => {
+        const detectedSoftware = new Set();
+        files.forEach(file => {
+            const extension = '.' + file.name.split('.').pop().toLowerCase();
+            if (extensionToSoftwareMap[extension]) {
+                extensionToSoftwareMap[extension].forEach(software => {
+                    detectedSoftware.add(software);
+                });
+            }
+        });
+
+        setFormData(prev => ({
+            ...prev,
+            software: Array.from(detectedSoftware).sort()
+        }));
+    };
+
+    useEffect(() => {
+
+        document.title = `Upload Model - ShapeHive`;
+
+    }, []);
     // Redirect if not logged in
     useEffect(() => {
         if (!userLogedIn && !currentUser) {
@@ -107,15 +152,6 @@ function UploadModel() {
         setError(''); // Clear error when user types
     };
 
-    // Handle software selection
-    const handleSoftwareToggle = (software) => {
-        setFormData(prev => ({
-            ...prev,
-            software: prev.software.includes(software)
-                ? prev.software.filter(s => s !== software)
-                : [...prev.software, software]
-        }));
-    };
 
     // Handle tag selection
     const handleTagToggle = (tag) => {
@@ -196,6 +232,23 @@ function UploadModel() {
         const files = Array.from(e.dataTransfer.files);
         handleModelFiles(files);
     };
+    // Process model files
+    const handleModelFiles = (files) => {
+        const validFiles = files.filter(file => {
+            const extension = '.' + file.name.split('.').pop().toLowerCase();
+            return allSupportedExtensions.includes(extension);
+        });
+
+        if (validFiles.length !== files.length) {
+            setError('Some files were rejected. Please upload only supported 3D model formats.');
+        } else {
+            setError('');
+        }
+
+        const updatedFiles = [...modelFiles, ...validFiles];
+        setModelFiles(updatedFiles);
+        updateSoftwareFromFiles(updatedFiles); //Call detect function
+    };
 
     // Handle preview image drop
     const handlePreviewDrop = (e) => {
@@ -207,23 +260,9 @@ function UploadModel() {
         handlePreviewFiles(files);
     };
 
+
+
     // Process model files
-    const handleModelFiles = (files) => {
-        const validFiles = files.filter(file => {
-            const extension = '.' + file.name.split('.').pop().toLowerCase();
-            return supportedExtensions.includes(extension);
-        });
-
-        if (validFiles.length !== files.length) {
-            setError('Some files were rejected. Please upload only supported 3D model formats.');
-        } else {
-            setError('');
-        }
-
-        setModelFiles(prev => [...prev, ...validFiles]);
-    };
-
-    // Process preview images
     const handlePreviewFiles = (files) => {
         const imageFiles = files.filter(file => file.type.startsWith('image/'));
 
@@ -242,7 +281,9 @@ function UploadModel() {
 
     // Remove model file
     const removeModelFile = (index) => {
-        setModelFiles(prev => prev.filter((_, i) => i !== index));
+        const updatedFiles = modelFiles.filter((_, i) => i !== index);
+        setModelFiles(updatedFiles);
+        updateSoftwareFromFiles(updatedFiles); 
     };
 
     // Remove preview image
@@ -315,46 +356,7 @@ function UploadModel() {
             setUploading(false);
         }
     };
-    // Adaugă aceste funcții în componenta UploadModel, după useState-urile existente
 
-    // Funcție pentru a obține extensiile permise bazate pe software-urile selectate
-    const getAllowedExtensions = (selectedSoftware) => {
-        if (selectedSoftware.length === 0) {
-            return []; // Nu permite niciun fișier dacă nu este selectat niciun software
-        }
-
-        // Intersecția extensiilor pentru toate software-urile selectate
-        let allowedExtensions = [...SUPPORTED_EXTENSIONS[selectedSoftware[0]]];
-
-        for (let i = 1; i < selectedSoftware.length; i++) {
-            const software = selectedSoftware[i];
-            const softwareExtensions = SUPPORTED_EXTENSIONS[software] || [];
-            allowedExtensions = allowedExtensions.filter(ext =>
-                softwareExtensions.includes(ext)
-            );
-        }
-
-        return allowedExtensions;
-    };
-
-    // Funcție pentru a formata accept attribute pentru input file
-    const getAcceptAttribute = (selectedSoftware) => {
-        const allowedExtensions = getAllowedExtensions(selectedSoftware);
-        return allowedExtensions.join(',');
-    };
-
-    // Funcție pentru a obține textul descriptiv al extensiilor permise
-    const getAllowedExtensionsText = (selectedSoftware) => {
-        const allowedExtensions = getAllowedExtensions(selectedSoftware);
-
-        if (allowedExtensions.length === 0) {
-            return selectedSoftware.length === 0
-                ? "Please select at least one software to upload files"
-                : "No common file formats between selected software";
-        }
-
-        return `Allowed formats: ${allowedExtensions.join(', ')}`;
-    };
     // Show loading if user data is still loading
     if (!currentUser && userLogedIn === undefined) {
         return (
@@ -376,364 +378,167 @@ function UploadModel() {
         <div className="upload-model-page">
             <Header />
             <div className="upload-container" style={{ marginTop: windowWidth < 1000 ? '-6rem' : '8rem' }}>
-                <h1 className="upload-title">Upload 3D Model</h1>
-                {error && <div className="alert error">{error}</div>}
-                {success && <div className="alert success">{success}</div>}
+
+
+
                 <form onSubmit={handleSubmit} className="upload-form">
-                    {/* Basic Information */}
-                    <h2 className="section-title">Basic Information</h2>
+                    <h1 className="upload-title">Upload 3D Model</h1>
+                    {error && <div className="alert error">{error}</div>}
+                    {success && <div className="alert success">{success}</div>}
+                    {/* Grid for matrix layout */}
+                    <div className="upload-grid">
 
-                    <div className="input-group">
-                        <label className="form-label">Title *</label>
-                        <input
-                            type="text"
-                            name="title"
-                            value={formData.title}
-                            onChange={handleInputChange}
-                            className="form-input"
-                            placeholder="Enter model title..."
-                            required
-                            disabled={uploading}
-                        />
-                    </div>
-
-                    <div className="input-group">
-                        <label className="form-label">Description</label>
-                        <textarea
-                            name="description"
-                            value={formData.description}
-                            onChange={handleInputChange}
-                            className="form-input form-textarea"
-                            placeholder="Describe your model..."
-                            disabled={uploading}
-                        />
-                    </div>
-
-                    <div className="two-col-grid">
-                        <div className="input-group">
-                            <label className="form-label">Type</label>
-                            <select
-                                name="type"
-                                value={formData.type}
-                                onChange={handleInputChange}
-                                className="form-input form-select"
-                                disabled={uploading}
+                        {/* Upload files and images*/}
+                        <div className="upload-column">
+                            {/* Model Files Upload */}
+                            <h2 className="section-title">Model Files *</h2>
+                            <div
+                                className={dragActive ? 'file-upload-area active' : 'file-upload-area'}
+                                onDragEnter={(e) => !uploading && handleDrag(e, true, setDragActive)}
+                                onDragLeave={(e) => !uploading && handleDrag(e, false, setDragActive)}
+                                onDragOver={(e) => !uploading && handleDrag(e, true, setDragActive)}
+                                onDrop={!uploading ? handleModelDrop : undefined}
+                                onClick={() => !uploading && document.getElementById('modelFiles').click()}
                             >
-                                <option value="Model">Single Model</option>
-                                <option value="Package">Package (Multiple Models)</option>
-                            </select>
-                        </div>
+                                <div className="upload-icon">📁</div>
+                                <div className="upload-text">{uploading ? 'Uploading...' : 'Drag & drop your 3D model files here, or click to browse'}</div>
+                                <div className="upload-subtext">Supported formats will be detected automatically (max 100MB per file, 500MB total)</div>
+                            </div>
 
-                        <div className="input-group">
-                            <label className="form-label">Category *</label>
-                            <select
-                                name="category"
-                                value={formData.category}
-                                onChange={handleInputChange}
-                                className="form-input form-select"
-                                required
-                                disabled={uploading}
-                            >
-                                <option value="">Select Category</option>
-                                {CATEGORY_OPTIONS.map(category => (
-                                    <option key={category} value={category}>{category}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    {/* Software Compatibility */}
-                    <h2 className="section-title">Software Compatibility</h2>
-                    <p className="muted-paragraph">
-                        Select the software programs that can open your model files:
-                    </p>
-                    <div className="tags-container">
-                        {softwareOptions.map(software => (
-                            <button
-                                key={software}
-                                type="button"
-                                onClick={() => !uploading && handleSoftwareToggle(software)}
-                                className={formData.software.includes(software) ? 'tag active' : 'tag'}
-                                disabled={uploading}
-                            >
-                                {software}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Tags */}
-                    <h2 className="section-title">Tags</h2>
-                    <p className="muted-paragraph">
-                        Select tags that describe your model or add your own:
-                    </p>
-
-                    {/* All Tags Display - Combined */}
-                    <div className="tags-container">
-                        {/* Display selected tags (both predefined and custom) */}
-                        {formData.tags.map(tag => (
-                            <button
-                                key={tag}
-                                type="button"
-                                onClick={() => !uploading && handleRemoveTag(tag)}
-                                className="tag active"
-                                disabled={uploading}
-                            >
-                                {tag}
-                                <span className="tag-remove">×</span>
-                            </button>
-                        ))}
-
-                        {/* Display predefined tags that are not selected */}
-                        {TAG_OPTIONS
-                            .filter(tag => !formData.tags.includes(tag))
-                            .map(tag => (
-                                <button
-                                    key={tag}
-                                    type="button"
-                                    onClick={() => !uploading && handleTagToggle(tag)}
-                                    className="tag"
-                                    disabled={uploading}
-                                >
-                                    {tag}
-                                </button>
-                            ))
-                        }
-                    </div>
-
-                    {/* Custom Tags Input */}
-                    <div className="custom-tags-section">
-                        <div className="custom-tags-input-group">
+                            {/* Input*/}
                             <input
-                                type="text"
-                                value={customTagInput}
-                                onChange={handleCustomTagInputChange}
-                                onKeyPress={handleCustomTagKeyPress}
-                                placeholder="Add tag..."
-                                className="custom-tag-input"
+                                id="modelFiles"
+                                type="file"
+                                multiple
+                                accept={allSupportedExtensions.join(',')}
+                                onChange={(e) => !uploading && handleModelFiles(Array.from(e.target.files))}
+                                className="hidden-input"
                                 disabled={uploading}
-                                maxLength={30}
                             />
-                            <button
-                                type="button"
-                                onClick={handleAddCustomTag}
-                                className="add-custom-tag-button"
-                                disabled={uploading || !customTagInput.trim()}
-                            >
-                                Add
-                            </button>
-                        </div>
-                        <div className="custom-tags-hint">
-                            Press Enter or click "Add" to add tag (max 30 characters)
-                        </div>
-                    </div>
 
-                    {/* Model Files Upload */}
-                    <h2 className="section-title">Model Files *</h2>
-
-                    {/* Informative message for selected software compatibilities */}
-                    {formData.software.length === 0 ? (
-                        <div className="software-required-message">
-                            <div className="warning-icon">⚠️</div>
-                            <div className="warning-text">
-                                Please select at least one software compatibility tag above to enable file upload
-                            </div>
-                        </div>
-                    ) : getAllowedExtensions(formData.software).length === 0 ? (
-                        <div className="software-required-message">
-                            <div className="warning-icon">⚠️</div>
-                            <div className="warning-text">
-                                No common file formats between the selected software. Please select different software combinations.
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="allowed-extensions-info">
-                            <div className="info-icon">ℹ️</div>
-                            <div className="info-text">
-                                {getAllowedExtensionsText(formData.software)}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Verify if there are valid extensions for the selected software compatibility */}
-                    {getAllowedExtensions(formData.software).length === 0 ? (
-                        <div className="file-upload-area disabled">
-                            <div className="upload-icon">📁</div>
-                            <div className="upload-text">
-                                Drag & drop your 3D model files here, or click to browse
-                            </div>
-                            <div className="upload-subtext">
-                                Supported formats based on selected software (max 100MB per file, 500MB total)
-                            </div>
-                        </div>
-                    ) : (
-                        <div
-                            className={
-                                dragActive
-                                    ? 'file-upload-area active'
-                                    : 'file-upload-area'
-                            }
-                            onDragEnter={(e) => !uploading && handleDrag(e, true, setDragActive)}
-                            onDragLeave={(e) => !uploading && handleDrag(e, false, setDragActive)}
-                            onDragOver={(e) => !uploading && handleDrag(e, true, setDragActive)}
-                            onDrop={!uploading ? handleModelDrop : undefined}
-                            onClick={() => !uploading && document.getElementById('modelFiles').click()}
-                        >
-                            <div className="upload-icon">📁</div>
-                            <div className="upload-text">
-                                {uploading ? 'Uploading...' : 'Drag & drop your 3D model files here, or click to browse'}
-                            </div>
-                            <div className="upload-subtext">
-                                Supported formats based on selected software (max 100MB per file, 500MB total)
-                            </div>
-                        </div>
-                    )}
-
-                    <input
-                        id="modelFiles"
-                        type="file"
-                        multiple
-                        accept={getAcceptAttribute(formData.software)}
-                        onChange={(e) => !uploading && getAllowedExtensions(formData.software).length > 0 && handleModelFiles(Array.from(e.target.files))}
-                        className="hidden-input"
-                        disabled={uploading || getAllowedExtensions(formData.software).length === 0}
-                    />
-                    <input
-                        id="modelFiles"
-                        type="file"
-                        multiple
-                        accept={supportedExtensions.join(',')}
-                        onChange={(e) => !uploading && handleModelFiles(Array.from(e.target.files))}
-                        className="hidden-input"
-                        disabled={uploading}
-                    />
-
-                    {modelFiles.length > 0 && (
-                        <div className="file-list">
-                            <h4>Selected Files ({modelFiles.length}):</h4>
-                            {modelFiles.map((file, index) => (
-                                <div key={index} className="file-item">
-                                    <span>
-                                        <strong>{file.name}</strong>
-                                        <span className="file-size">
-                                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                                        </span>
-                                    </span>
-                                    <button
-                                        type="button"
-                                        onClick={() => !uploading && removeModelFile(index)}
-                                        className="remove-button"
-                                        disabled={uploading}
-                                    >
-                                        Remove
-                                    </button>
+                            {modelFiles.length > 0 && (
+                                <div className="file-list">
+                                    <h4>Selected Files ({modelFiles.length}):</h4>
+                                    {modelFiles.map((file, index) => (
+                                        <div key={index} className="file-item">
+                                            <span><strong>{file.name}</strong><span className="file-size"> ({(file.size / 1024 / 1024).toFixed(2)} MB)</span></span>
+                                            <button type="button" onClick={() => !uploading && removeModelFile(index)} className="remove-button" disabled={uploading}>Remove</button>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                    
-                    {/* Preview Images Upload */}
-                    <h2 className="section-title">Preview Images *</h2>
-                    <div
-                        className={previewDragActive ? 'file-upload-area active' : 'file-upload-area'}
-                        onDragEnter={(e) => !uploading && handleDrag(e, true, setPreviewDragActive)}
-                        onDragLeave={(e) => !uploading && handleDrag(e, false, setPreviewDragActive)}
-                        onDragOver={(e) => !uploading && handleDrag(e, true, setPreviewDragActive)}
-                        onDrop={!uploading ? handlePreviewDrop : undefined}
-                        onClick={() => !uploading && document.getElementById('previewImages').click()}
-                    >
-                        <div className="upload-icon">🖼️</div>
-                        <div className="upload-text">
-                            {uploading ? 'Uploading...' : 'Drag & drop preview images here, or click to browse'}
-                        </div>
-                        <div className="upload-subtext">
-                            Upload images that showcase your model (JPG, PNG, WebP - max 10MB per image, max 10 images)
-                        </div>
-                    </div>
+                            )}
+                            {modelFiles.length > 0 && (<div className="detected-software-info">
 
-                    <input
-                        id="previewImages"
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(e) => !uploading && handlePreviewFiles(Array.from(e.target.files))}
-                        className="hidden-input"
-                        disabled={uploading}
-                    />
+                                <>
+                                    <strong>Compatible softwares:</strong> {formData.software.length > 0 ? formData.software.join(', ') : 'None based on the uploaded file types.'}
+                                </>
 
-                    {previewUrls.length > 0 && (
-                        <div>
-                            <h4 className="mt-20">Preview Images ({previewUrls.length}):</h4>
-                            <div className="preview-grid">
-                                {previewUrls.map((url, index) => (
-                                    <div key={index} className="preview-item">
-                                        <img
-                                            src={url}
-                                            alt={`Preview ${index + 1}`}
-                                            className="preview-image"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => !uploading && removePreviewImage(index)}
-                                            className="remove-preview-button"
-                                            disabled={uploading}
-                                        >
-                                            ✕
-                                        </button>
+                            </div>)}
+                            {/* Preview Images Upload */}
+                            <h2 className="section-title">Preview Images *</h2>
+                            <div
+                                className={previewDragActive ? 'file-upload-area active' : 'file-upload-area'}
+                                onDragEnter={(e) => !uploading && handleDrag(e, true, setPreviewDragActive)}
+                                onDragLeave={(e) => !uploading && handleDrag(e, false, setPreviewDragActive)}
+                                onDragOver={(e) => !uploading && handleDrag(e, true, setPreviewDragActive)}
+                                onDrop={!uploading ? handlePreviewDrop : undefined}
+                                onClick={() => !uploading && document.getElementById('previewImages').click()}
+                            >
+                                <div className="upload-icon">🖼️</div>
+                                <div className="upload-text">{uploading ? 'Uploading...' : 'Drag & drop preview images here, or click to browse'}</div>
+                                <div className="upload-subtext">Upload images that showcase your model (JPG, PNG, WebP - max 10MB per image, max 10 images)</div>
+                            </div>
+                            <input id="previewImages" type="file" multiple accept="image/*" onChange={(e) => !uploading && handlePreviewFiles(Array.from(e.target.files))} className="hidden-input" disabled={uploading} />
+                            {previewUrls.length > 0 && (
+                                <div>
+                                    <h4 className="mt-20">Preview Images ({previewUrls.length}):</h4>
+                                    <div className="preview-grid">
+                                        {previewUrls.map((url, index) => (
+                                            <div key={index} className="preview-item">
+                                                <img src={url} alt={`Preview ${index + 1}`} className="preview-image" />
+                                                <button type="button" onClick={() => !uploading && removePreviewImage(index)} className="remove-preview-button" disabled={uploading}>✕</button>
+                                            </div>
+                                        ))}
                                     </div>
+                                </div>
+                            )}
+
+                        </div>
+
+                        {/* Model info */}
+                        <div className="info-column">
+                            {/* Basic Information */}
+                            <h2 className="section-title">Basic Information</h2>
+                            <div className="input-group">
+                                <label className="form-label">Title *</label>
+                                <input type="text" name="title" value={formData.title} onChange={handleInputChange} className="form-input" placeholder="Enter model title..." required disabled={uploading} />
+                            </div>
+                            <div className="input-group">
+                                <label className="form-label">Description</label>
+                                <textarea name="description" value={formData.description} onChange={handleInputChange} className="form-input form-textarea" placeholder="Describe your model..." disabled={uploading} />
+                            </div>
+                            <div className="two-col-grid">
+                                <div className="input-group">
+                                    <label className="form-label">Type</label>
+                                    <select name="type" value={formData.type} onChange={handleInputChange} className="form-input form-select" disabled={uploading}>
+                                        <option value="Model">Single Model</option>
+                                        <option value="Package">Package (Multiple Models)</option>
+                                    </select>
+                                </div>
+                                <div className="input-group">
+                                    <label className="form-label">Category *</label>
+                                    <select name="category" value={formData.category} onChange={handleInputChange} className="form-input form-select" required disabled={uploading}>
+                                        <option value="">Select Category</option>
+                                        {CATEGORY_OPTIONS.map(category => (<option key={category} value={category}>{category}</option>))}
+                                    </select>
+                                </div>
+                            </div>
+
+
+
+                            {/* Tags */}
+                            <h2 className="section-title">Tags</h2>
+                            <p className="muted-paragraph">Select tags that describe your model or add your own:</p>
+                            <div className="tags-container">
+                                {formData.tags.map(tag => (
+                                    <button key={tag} type="button" onClick={() => !uploading && handleRemoveTag(tag)} className="tag active" disabled={uploading}>{tag}<span className="tag-remove">×</span></button>
+                                ))}
+                                {TAG_OPTIONS.filter(tag => !formData.tags.includes(tag)).map(tag => (
+                                    <button key={tag} type="button" onClick={() => !uploading && handleTagToggle(tag)} className="tag" disabled={uploading}>{tag}</button>
                                 ))}
                             </div>
-                        </div>
-                    )}
+                            <div className="custom-tags-section">
+                                <div className="custom-tags-input-group">
+                                    <input type="text" value={customTagInput} onChange={handleCustomTagInputChange} onKeyPress={handleCustomTagKeyPress} placeholder="Add tag..." className="custom-tag-input" disabled={uploading} maxLength={30} />
+                                    <button type="button" onClick={handleAddCustomTag} className="add-custom-tag-button" disabled={uploading || !customTagInput.trim()}>Add</button>
+                                </div>
+                                <div className="custom-tags-hint">Press Enter or click "Add" to add tag (max 30 characters)</div>
+                            </div>
+                            {/* Privacy Settings */}
+                            <h2 className="section-title">Privacy Settings</h2>
+                            <div className="inline-checkbox">
+                                <input type="checkbox" id="isPublic" name="isPublic" checked={formData.isPublic} onChange={handleInputChange} disabled={uploading} />
+                                <label htmlFor="isPublic" className="clickable-label">Make this model publicly visible in community</label>
+                            </div>
+                            <p className="hint">{formData.isPublic ? 'Your model will be visible to all users and appear in the community feed.' : 'Your model will be private and only you can see it.'}</p>
 
-                    {/* Privacy Settings */}
-                    <h2 className="section-title">Privacy Settings</h2>
-                    <div className="inline-checkbox">
-                        <input
-                            type="checkbox"
-                            id="isPublic"
-                            name="isPublic"
-                            checked={formData.isPublic}
-                            onChange={handleInputChange}
-                            disabled={uploading}
-                        />
-                        <label htmlFor="isPublic" className="clickable-label">
-                            Make this model publicly visible in community
-                        </label>
+
+                        </div>
+
                     </div>
-                    <p className="hint">
-                        {formData.isPublic
-                            ? 'Your model will be visible to all users and appear in the community feed.'
-                            : 'Your model will be private and only you can see it.'}
-                    </p>
+              
 
                     {/* Submit Buttons */}
                     <div className="actions">
-                        <button
-                            type="submit"
-                            disabled={uploading}
-                            className="primary-button"
-                        >
-                            {uploading ? 'Uploading Model...' : 'Upload Model'}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => window.location.href = '/'}
-                            className="secondary-button"
-                            disabled={uploading}
-                        >
-                            Cancel
-                        </button>
+                        <button type="submit" disabled={uploading} className="primary-button">{uploading ? 'Uploading Model...' : 'Upload Model'}</button>
+                        <button type="button" onClick={() => window.location.href = '/'} className="secondary-button" disabled={uploading}>Cancel</button>
                     </div>
 
                     {/* Upload Progress Info */}
                     {uploading && (
                         <div className="upload-progress">
-                            <p className="progress-title">
-                                📤 Uploading your model... This may take a few minutes depending on file size.
-                            </p>
-                            <p className="progress-subtext">
-                                Please don't close this page until upload is complete.
-                            </p>
+                            <p className="progress-title">📤 Uploading your model... This may take a few minutes depending on file size.</p>
+                            <p className="progress-subtext">Please don't close this page until upload is complete.</p>
                         </div>
                     )}
                 </form>

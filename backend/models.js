@@ -1,6 +1,6 @@
 import { auth, db, storage } from "./firebase.js";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, deleteObject, listAll  } from "firebase/storage";
+import { doc, setDoc, updateDoc, arrayUnion, collection, query, where, getDoc, arrayRemove, getDocs, writeBatch  } from "firebase/firestore";
 
 
 // Supported file extensions for different 3D software
@@ -735,18 +735,22 @@ export const getFileDownloadUrl = async (filePath) => {
   }
 };
 // Get modeld of a certain creator
-export const getModelsByCreator = async (creatorUID) => {
+export const getModelsByCreator = async (creatorUID, includePrivate = false) => {
   try {
     console.log("Fetching models for creator:", creatorUID);
     
     const { collection, query, where, getDocs, doc, getDoc } = await import('firebase/firestore');
 
     // Query the user's models
-    const q = query(
+    let q = query(
       collection(db, "models"), 
-      where("creatorUID", "==", creatorUID),
-      where("isPublic", "==", true)
+      where("creatorUID", "==", creatorUID)
     );
+
+    // Conditionally add the isPublic filter
+    if (!includePrivate) {
+      q = query(q, where("isPublic", "==", true));
+    }
 
     const snapshot = await getDocs(q);
     const models = [];
@@ -778,7 +782,6 @@ export const getModelsByCreator = async (creatorUID) => {
     return { success: false, message: error.message, models: [] };
   }
 };
-
 // Add comment to model
 export const addComment = async (modelId, commentText) => {
   try {
@@ -932,4 +935,116 @@ export const getModelComments = async (modelId) => {
     console.error("Error getting comments:", error);
     return { success: false, message: error.message, comments: [] };
   }
+};
+// Update model details
+export const updateModel = async (modelId, updatedData) => {
+    try {
+        console.log("=== UPDATING MODEL ===");
+        console.log("Model ID:", modelId);
+        console.log("Updated data:", updatedData);
+
+        if (!auth.currentUser) {
+            return { success: false, message: 'User not authenticated' };
+        }
+
+        const userId = auth.currentUser.uid;
+        const modelRef = doc(db, "models", modelId);
+        const modelDoc = await getDoc(modelRef);
+
+        if (!modelDoc.exists()) {
+            return { success: false, message: 'Model not found' };
+        }
+
+        // Security check: ensure the user is the owner of the model
+        if (modelDoc.data().creatorUID !== userId) {
+            return { success: false, message: 'You are not authorized to edit this model.' };
+        }
+
+        // Prepare the final data to be updated
+        const dataToUpdate = {
+            ...updatedData,
+            updatedAt: new Date(), // Always update the timestamp
+        };
+
+        // Update the document in Firestore
+        await updateDoc(modelRef, dataToUpdate);
+
+        console.log("Model updated successfully");
+        return { success: true, message: 'Model updated successfully!' };
+
+    } catch (error) {
+        console.error("Error updating model:", error);
+        return { success: false, message: error.message || 'Failed to update model.' };
+    }
+};
+//Delete model
+export const deleteModel = async (modelId) => {
+    try {
+        if (!auth.currentUser) {
+            return { success: false, message: 'User not authenticated' };
+        }
+
+        const userId = auth.currentUser.uid;
+        const modelRef = doc(db, "models", modelId);
+        const modelDoc = await getDoc(modelRef);
+
+        if (!modelDoc.exists()) {
+            return { success: false, message: 'Model not found' };
+        }
+        if (modelDoc.data().creatorUID !== userId) {
+            return { success: false, message: 'You are not authorized to delete this model.' };
+        }
+
+        //  Delete files from storage(models+images)
+        const modelFilesFolderRef = ref(storage, `models/${modelId}`);
+        const modelImagesFolderRef = ref(storage, `modelImages/${modelId}`);
+
+        const deleteFolderContents = async (folderRef) => {
+            try {
+                const listResults = await listAll(folderRef);
+                const deletePromises = listResults.items.map(itemRef => deleteObject(itemRef));
+                await Promise.all(deletePromises);
+            } catch (error) {
+                console.error(`Could not delete folder contents for ${folderRef.fullPath}`, error);
+            }
+        };
+
+        await Promise.all([
+            deleteFolderContents(modelFilesFolderRef),
+            deleteFolderContents(modelImagesFolderRef)
+        ]);
+
+        // Batch operation to write docs automatically
+        const batch = writeBatch(db);
+
+        // Find all users who have this model at favourites and update their lists
+        const favoritedUsersQuery = query(collection(db, "users"), where("favourites", "array-contains", modelId));
+        const favoritedUsersSnapshot = await getDocs(favoritedUsersQuery);
+        favoritedUsersSnapshot.forEach(userDoc => {
+            batch.update(userDoc.ref, { favourites: arrayRemove(modelId) });
+        });
+
+        // Find all users who downloaded this model and update their lists
+        const downloadedUsersQuery = query(collection(db, "users"), where("downloadedModels", "array-contains", modelId));
+        const downloadedUsersSnapshot = await getDocs(downloadedUsersQuery);
+        downloadedUsersSnapshot.forEach(userDoc => {
+            batch.update(userDoc.ref, { downloadedModels: arrayRemove(modelId) });
+        });
+
+        // Eliminate from creator's upload list
+        const creatorRef = doc(db, "users", userId);
+        batch.update(creatorRef, { uploadedModels: arrayRemove(modelId) });
+
+        // Delete document through batch
+        batch.delete(modelRef);
+
+        // Execute all batch operations
+        await batch.commit();
+
+        return { success: true, message: 'Model deleted successfully from all records.' };
+
+    } catch (error) {
+        console.error("Error deleting model:", error);
+        return { success: false, message: error.message || 'Failed to delete model.' };
+    }
 };

@@ -63,7 +63,12 @@ const listItemStyle = {
 
 function CookiePolicy() {
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        
+            document.title = `Cookie Policy - ShapeHive`;
+        
 
+    }, []);
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);

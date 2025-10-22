@@ -110,6 +110,10 @@ function LogIn() {
     const [isSubmitting, setIsSubmitting] = useState(false); //loading state for login process
     const navigate = useNavigate(); //navigation hook
     useEffect(() => {
+           
+            document.title = 'Log In - ShapeHive';
+        }, []);
+    useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);
         };

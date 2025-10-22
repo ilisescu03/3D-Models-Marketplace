@@ -100,7 +100,11 @@ function Settings() {
     const roles = accountType === 'individual' ? individualRoles : organizationRoles;
     // Navigation hook
     const navigate = useNavigate();
-
+    useEffect(() => {
+         
+                    document.title = `Settings - ShapeHive`;
+                
+            }, []);
     useEffect(() => {
             const handleResize = () => {
                 setWindowWidth(window.innerWidth);

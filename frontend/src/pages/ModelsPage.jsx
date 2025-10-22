@@ -39,7 +39,7 @@ function ModelsPage() {
 
     const softwareOptions = [
         "Blender", "Cinema4D", "AutoCAD", "ArchiCAD", "Maya",
-        "3ds Max", "ZBrush", "Substance Painter", "Photoshop",
+        "3dsMax", "ZBrush", "SubstancePainter", "Photoshop",
         "Godot", "Unity", "Unreal Engine"
     ];
     // Mobile menu states
@@ -161,7 +161,20 @@ function ModelsPage() {
 
         loadModels();
     }, [currentUser, userLogedIn]);
+    useEffect(() => {
+        if (category) {
+          
+            document.title = `${category} - ShapeHive`;
+        } else {
+          
+            document.title = '3D Models - ShapeHive';
+        }
 
+    
+        return () => {
+    
+        };
+    }, [category]); 
     // Function to load models from backend
     const loadModels = async () => {
         try {
@@ -256,7 +269,7 @@ function ModelsPage() {
                     boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
                     padding: '0',
                     borderBottom: '1px solid #e9ecef',
-                    marginTop: '-155px', // Spațiu 0 cu header-ul
+                    marginTop: '-155px',
                     position: 'relative'
                 }}>
                     {/* Main filter buttons row - Full width */}
@@ -1152,7 +1165,7 @@ function ModelsPage() {
                     {/* Title aligned to the left */}
                     <p style={{
                         textAlign: 'left',
-                        marginLeft: '4rem',
+                        marginLeft: '1rem',
                         fontFamily: 'Arial, sans-serif',
                         letterSpacing: '0.5px',
                         color: '#616161ff',
@@ -1213,7 +1226,7 @@ function ModelsPage() {
                             {hasActiveFilters && (
                                 <p style={{
                                     textAlign: 'left',
-                                    marginLeft: '4rem',
+                                    marginLeft: '1rem',
                                     fontFamily: 'Arial, sans-serif',
                                     color: '#6c757d',
                                     fontSize: '1rem',

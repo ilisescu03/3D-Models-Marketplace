@@ -13,7 +13,7 @@
 }
 
 .upload-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
@@ -712,4 +712,40 @@
         font-size: 11px;
         padding: 4px 8px;
     }
+}
+/* Matrix layout for upload form */
+.upload-grid {
+  display: grid;
+
+  grid-template-columns: 1fr;
+  gap: 30px; 
+  margin-bottom: 30px;
+}
+
+
+@media (min-width: 992px) {
+  .upload-grid {
+    
+    grid-template-columns: 1fr 1fr;
+    gap: 40px; 
+  }
+}
+
+.detected-software-info {
+  margin-top: 15px;
+  margin-bottom: 25px;
+  padding: 12px 15px;
+  background-color: #f8f9fa; 
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #495057; 
+  min-height: 45px; 
+  display: flex;
+  align-items: center;
+}
+
+.detected-software-info strong {
+  color: #212529; 
+  margin-right: 8px;
 }

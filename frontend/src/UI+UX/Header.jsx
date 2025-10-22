@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { doSignOut } from '/backend/auth.js';
 import { auth, db } from '/backend/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -970,4 +970,4 @@ function Header() {
     )
 }
 
-export default Header;
+export default React.memo(Header);

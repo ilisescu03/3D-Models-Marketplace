@@ -423,7 +423,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                             ▼
                         </span>
                     </button>
-                    {/* Explore submenu */}
+          
                     {/* Explore submenu */}
                     <div
                         style={{
@@ -616,4 +616,4 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
     );
 }
 
-export default SideMenu;
+export default React.memo(SideMenu);

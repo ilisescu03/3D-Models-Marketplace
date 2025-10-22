@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import emailjs from '@emailjs/browser';
 import Footer from '../UI+UX/Footer.jsx';
 import Header from "../UI+UX/Header";
@@ -7,7 +7,12 @@ import '/frontend/css/Contact.css';
 function Contact() {
     const form = useRef(); 
     const [status, setStatus] = useState('');
+    useEffect(() => {
+       
+            document.title = `Contact - ShapeHive`;
+        
 
+    }, []);
     const handleSubmit = (e) => {
         e.preventDefault();
         setStatus('submitting');

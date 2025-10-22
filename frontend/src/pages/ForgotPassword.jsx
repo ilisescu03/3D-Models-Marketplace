@@ -115,6 +115,11 @@ function ForgotPassword() {
 
     }
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+     useEffect(() => {
+     
+                document.title = `Forgot Password - ShapeHive`;
+            
+        }, []);
     // Track window resize
     useEffect(() => {
         const handleResize = () => {

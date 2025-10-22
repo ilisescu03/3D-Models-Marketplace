@@ -1,4 +1,4 @@
-import { toggleFavoriteModel, isModelFavorited, addComment, addReply } from '/backend/models.js';
+import { toggleFavoriteModel, isModelFavorited, addComment, addReply, updateModel, deleteModel } from '/backend/models.js';
 import { doFollowUser, doUnfollowUser, getFollowing, sendNotification } from '/backend/users.js';
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -57,6 +57,120 @@ function ModelDetails() {
     const [commentLoading, setCommentLoading] = useState(false); // Check if the comment is loading
     const [replyLoading, setReplyLoading] = useState(false); // Check if the reply is loading
 
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editModelData, setEditModelData] = useState(null);
+    const [newImageFiles, setNewImageFiles] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [tagInput, setTagInput] = useState('');
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const CATEGORIES = [
+        'Architecture',
+        'Character',
+        'Vehicle',
+        'Environment',
+        'Furniture',
+        'Electronics',
+        'Jewelry',
+        'Weapons',
+        'Food & Drink',
+        'Plants',
+        'Animals',
+        'Abstract',
+        'Mechanical',
+        'Fashion & Style',
+        'Sports',
+        'Culture & History',
+        'Other' 
+    ];
+
+    const openEditModal = () => {
+        setEditModelData({ ...model });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditFormChange = (e) => {
+        const { name, value } = e.target;
+        if (name === 'isPublic') {
+            setEditModelData(prev => ({ ...prev, [name]: value === 'true' }));
+        } else {
+            setEditModelData(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleImageRemove = (urlToRemove) => {
+        setEditModelData(prev => ({
+            ...prev,
+            previewImages: prev.previewImages.filter(url => url !== urlToRemove)
+        }));
+    };
+
+    const handleNewImages = (e) => {
+        if (e.target.files) {
+            setNewImageFiles(prev => [...prev, ...Array.from(e.target.files)]);
+        }
+    };
+    // --- Handlers for Delete Modal ---
+    const handleOpenDeleteConfirm = () => {
+        setIsDeleteConfirmOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        setIsDeleting(true);
+        const result = await deleteModel(modelId);
+        if (result.success) {
+            alert("Model successfully deleted.");
+            setIsDeleteConfirmOpen(false);
+            setIsEditModalOpen(false);
+            navigate('/dashboard'); 
+        } else {
+            alert(`Error: ${result.message}`);
+        }
+        setIsDeleting(false);
+    };
+    const handleAddTag = () => {
+        if (tagInput && !editModelData.tags.includes(tagInput.trim())) {
+            setEditModelData(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
+        }
+        setTagInput('');
+    };
+
+    const handleRemoveTag = (tagToRemove) => {
+        setEditModelData(prev => ({
+            ...prev,
+            tags: prev.tags.filter(tag => tag !== tagToRemove)
+        }));
+    };
+
+    const handleSaveChanges = async () => {
+        if (!editModelData) return;
+        setIsSaving(true);
+        try {
+            const dataToUpdate = {
+                title: editModelData.title,
+                description: editModelData.description,
+                isPublic: editModelData.isPublic,
+                category: editModelData.category,
+                tags: editModelData.tags || [],
+                previewImages: editModelData.previewImages,
+            };
+
+            const result = await updateModel(modelId, dataToUpdate, newImageFiles);
+
+            if (result.success) {
+                alert('Model updated successfully!');
+                setIsEditModalOpen(false);
+                loadModelDetails(); 
+            } else {
+                alert(`Error: ${result.message}`);
+            }
+        } catch (error) {
+            console.error("Error saving changes:", error);
+            alert("An error occurred while saving. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
     // Open the image full view
     const openModal = (index) => {
         setCurrentModalImageIndex(index);
@@ -100,7 +214,22 @@ function ModelDetails() {
             setComments(sortedComments);
         }
     }, [model]);
+   useEffect(() => {
+        // Verify if the model was loaded and the  tite proprety exists
+        if (model && model.title) {
+            // If yes, set the doc text
+            document.title = `${model.title} - ShapeHive`;
+        } else if (!loading) {
+            //If the model was not found
+            document.title = 'Model Not Found - ShapeHive';
+        }
 
+        // Clean up
+        return () => {
+            document.title = 'ShapeHive';
+        };
+
+    }, [model, loading]);
     // Use effect to check if the model is favorited or not
     useEffect(() => {
         const checkFavoriteStatus = async () => {
@@ -280,7 +409,7 @@ function ModelDetails() {
                 await sendNotification(
                     model.creatorUID,
                     currentUser.uid,
-                    "You have a new follower!", 
+                    "You have a new follower!",
                     `${username} started following you!`,
                     `/user/${username}`
                 );
@@ -303,6 +432,13 @@ function ModelDetails() {
             setFollowLoading(false);
         }
     };
+    // Redirect if the model is private and the user is not the creator
+    useEffect(() => {
+        if (model && !model.isPublic && currentUser?.uid !== model.creatorUID) {
+            console.warn("ACCESS DENIED: Attempting to view a private model without ownership. Redirecting...");
+            navigate('/');
+        }
+    }, [model, currentUser, navigate]);
     // Add reply
     const handleAddReply = async (targetId, targetType, parentCommentId, repliedToUsername = null) => {
         if (!replyText.trim()) {
@@ -433,11 +569,11 @@ function ModelDetails() {
             if (result.success) {
                 if (result.isFirstDownload && model && currentUser.uid !== model.creatorUID) {
                     await sendNotification(
-                        model.creatorUID,                  
-                        currentUser.uid,                      
-                        "Your model was purchased!",          
-                        `${username} purchased your model "${model.title}"`, 
-                        `/model/${modelId}`                
+                        model.creatorUID,
+                        currentUser.uid,
+                        "Your model was purchased!",
+                        `${username} purchased your model "${model.title}"`,
+                        `/model/${modelId}`
                     );
                 }
                 // Success message
@@ -508,11 +644,11 @@ function ModelDetails() {
                 setIsFavorited(result.isFavorite);
                 if (result.action === 'added' && model && currentUser.uid !== model.creatorUID) {
                     await sendNotification(
-                        model.creatorUID,                      
-                        currentUser.uid,                      
-                        "Your model was added to favorites!", 
+                        model.creatorUID,
+                        currentUser.uid,
+                        "Your model was added to favorites!",
                         `${username} added your model "${model.title}" to favorites`,
-                        `/model/${modelId}`                   
+                        `/model/${modelId}`
                     );
                 }
                 // Update model's favorites count in local state
@@ -627,7 +763,16 @@ function ModelDetails() {
 
                         {/* Model Details */}
                         <div className="detailsCardStyle">
+                            {currentUser?.uid === model.creatorUID && (
+                                <button className="edit-model-button" title="Edit model details" onClick={openEditModal}>
+                                    <img src="/Edit-10.svg" alt="Edit" />
+                                </button>
+                            )}
                             <h1 className={isLargeScreen ? 'titleStyle' : 'titleStyle titleStyleMobile'}>{model.title}</h1>
+                            {/* Private model message */}
+                            {currentUser?.uid === model.creatorUID && model.isPublic === false && (
+                                <p className="private-model-notice">(Your model is private)</p>
+                            )}
                             {/* Creator info */}
                             <div
                                 className="creatorStyle"
@@ -1048,9 +1193,82 @@ function ModelDetails() {
                     </div>
                 </div>
             )}
-              {!loading && (<div style={{ marginTop: '4rem' , width:'100%'}}>
-                            <Footer />
-                        </div>)}
+            {isEditModalOpen && editModelData && (
+                <div className="edit-modal-overlay">
+                    <div className="edit-modal-content">
+                        <div className="edit-modal-header">
+                            <h2>Edit Model</h2>
+                            <button className="close-button-modal" onClick={() => setIsEditModalOpen(false)}>×</button>
+                        </div>
+                        <div className="edit-modal-body">
+                            <div className="form-group">
+                                <label>Title</label>
+                                <input type="text" name="title" value={editModelData.title} onChange={handleEditFormChange} />
+                            </div>
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea name="description" rows="5" value={editModelData.description} style={{ fontFamily: "Arial, sans-serif" }} onChange={handleEditFormChange}></textarea>
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Category</label>
+                                    <select name="category" value={editModelData.category} onChange={handleEditFormChange}>
+                                        {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Visibility</label>
+                                    <select name="isPublic" value={editModelData.isPublic} onChange={handleEditFormChange}>
+                                        <option value="true">Public</option>
+                                        <option value="false">Private</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Tags</label>
+                                <div className="tags-input-container">
+                                    {editModelData.tags?.map(tag => (
+                                        <div key={tag} className="tag-chip">
+                                            {tag}
+                                            <span onClick={() => handleRemoveTag(tag)}>x</span>
+                                        </div>
+                                    ))}
+                                    <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddTag()} placeholder="Add a tag and press Enter" />
+                                </div>
+                            </div>
+
+                        </div>
+                        <div className="edit-modal-footer space-between">
+                            <button className="delete-btn" onClick={handleOpenDeleteConfirm}>Delete Model</button>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button className="cancel-btn" onClick={() => setIsEditModalOpen(false)}>Cancel</button>
+                                <button className="save-btn" onClick={handleSaveChanges} disabled={isSaving}>
+                                    {isSaving ? 'Saving...' : 'Save'}
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            )}
+            {isDeleteConfirmOpen && (
+                <div className="confirm-delete-modal-overlay">
+                    <div className="confirm-delete-modal-content">
+                        <h4>Are you sure?</h4>
+                        <p>This action is irreversible and will permanently delete your model and all its files.</p>
+                        <div className="confirm-delete-modal-actions">
+                            <button className="cancel-btn" onClick={() => setIsDeleteConfirmOpen(false)} disabled={isDeleting}>No, Cancel</button>
+                            <button className="delete-btn" onClick={handleConfirmDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {!loading && (<div style={{ marginTop: '4rem', width: '100%' }}>
+                <Footer />
+            </div>)}
         </div>
 
     );

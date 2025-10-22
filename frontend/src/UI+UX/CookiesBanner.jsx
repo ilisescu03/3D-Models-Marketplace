@@ -1,5 +1,5 @@
 // CookiesBanner.jsx
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CookieService } from '/backend/cookies.js';
 
 const bannerStyle = {
@@ -211,4 +211,4 @@ function CookiesBanner() {
     );
 }
 
-export default CookiesBanner;
+export default React.memo(CookiesBanner);

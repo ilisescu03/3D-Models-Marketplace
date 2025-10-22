@@ -139,7 +139,11 @@ function SignUp() {
     const navigate = useNavigate();
 
     const rules = checkPasswordRules(values.password);
-
+    useEffect(() => {
+         
+                    document.title = `Sign Up - ShapeHive`;
+                
+            }, []);
     useEffect(() => {
         const handleResize = () => {
             setWindowWidth(window.innerWidth);

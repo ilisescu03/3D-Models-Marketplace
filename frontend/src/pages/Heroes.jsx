@@ -56,7 +56,11 @@ function Heroes() {
             return [];
         }
     };
-
+     useEffect(() => {
+     
+                document.title = `Hive Heroes - ShapeHive`;
+            
+        }, []);
     // Main useEffect for data initialization
     useEffect(() => {
         // Fetches all users and their data including models, bio, and skills
