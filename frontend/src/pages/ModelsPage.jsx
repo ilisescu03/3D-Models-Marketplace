@@ -27,10 +27,24 @@ function ModelsPage() {
     // Data for dropdowns
     const types = ['All', 'Model', 'Package'];
 
-    const categories = [
-        'Architecture', 'Character', 'Vehicle', 'Environment', 'Furniture',
-        'Electronics', 'Jewelry', 'Weapons', 'Food & Drink', 'Plants', 'Animals',
-        'Abstract', 'Mechanical', 'Fashion & Style', 'Sports', 'Culture & History', 'Other'
+    const categories =[
+        'Architecture',
+        'Characters & Creatures',
+        'Cars & Vehicles',
+        'Environment',
+        'Furniture',
+        'Electronics',
+        'Jewelry',
+        'Weapons',
+        'Food & Drink',
+        'Plants',
+        'Animals',
+        'Art & Abstract',
+        'Mechanical',
+        'Fashion & Style',
+        'Sports',
+        'Culture & History',
+        'Other' 
     ];
 
     const dateOptions = [

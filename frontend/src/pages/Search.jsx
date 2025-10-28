@@ -57,9 +57,23 @@ const [availableTags, setAvailableTags] = useState([]);
     const headerRef = useRef(null);
     // Data for dropdowns
     const categories = [
-        'Architecture', 'Character', 'Vehicle', 'Environment', 'Furniture',
-        'Electronics', 'Jewelry', 'Weapons', 'Food & Drink', 'Plants', 'Animals',
-        'Abstract', 'Mechanical', 'Fashion & Style', 'Sports', 'Culture & History', 'Other'
+        'Architecture',
+        'Characters & Creatures',
+        'Cars & Vehicles',
+        'Environment',
+        'Furniture',
+        'Electronics',
+        'Jewelry',
+        'Weapons',
+        'Food & Drink',
+        'Plants',
+        'Animals',
+        'Art & Abstract',
+        'Mechanical',
+        'Fashion & Style',
+        'Sports',
+        'Culture & History',
+        'Other' 
     ];
 
     const accountTypes = ['individual', 'organization'];

@@ -1,6 +1,7 @@
 import { auth, db, storage } from "./firebase.js";
 import { ref, uploadBytes, getDownloadURL, deleteObject, listAll  } from "firebase/storage";
 import { doc, setDoc, updateDoc, arrayUnion, collection, query, where, getDoc, arrayRemove, getDocs, writeBatch  } from "firebase/firestore";
+import JSZip from 'jszip';
 
 
 // Supported file extensions for different 3D software
@@ -24,36 +25,34 @@ const SUPPORTED_EXTENSIONS = {
 
 // All supported extensions in one array
 const ALL_SUPPORTED_EXTENSIONS = Object.values(SUPPORTED_EXTENSIONS).flat();
-
+// Detect software based on file extension
+const detectSoftware = (fileName) => {
+  const extension = '.' + fileName.toLowerCase().split('.').pop();
+  for (const [software, extensions] of Object.entries(SUPPORTED_EXTENSIONS)) {
+    if (extensions.includes(extension)) {
+      return software;
+    }
+  }
+  return 'Unknown';
+};
 // Validate files before upload
-const validateFiles = (files) => {
+const validateFile = (file) => {
   const errors = [];
-  const maxFileSize = 100 * 1024 * 1024; // 100MB per file
-  const maxTotalSize = 500 * 1024 * 1024; // 500MB total
-  
-  let totalSize = 0;
-  
-  for (const file of files) {
-    totalSize += file.size;
-    
-    // Check file size
-    if (file.size > maxFileSize) {
-      errors.push(`File "${file.name}" is too large (max 100MB per file)`);
-    }
-    
-    // Check file extension
-    const extension = '.' + file.name.split('.').pop().toLowerCase();
-    if (!ALL_SUPPORTED_EXTENSIONS.includes(extension)) {
-      errors.push(`File "${file.name}" has unsupported format (${extension})`);
-    }
+  const maxFileSize = 500 * 1024 * 1024; // 500MB
+
+  if (file.size > maxFileSize) {
+    errors.push(`File "${file.name}" is too large (max 500MB).`);
   }
-  
-  if (totalSize > maxTotalSize) {
-    errors.push('Total file size exceeds 500MB limit');
+
+  const extension = '.' + file.name.split('.').pop().toLowerCase();
+  // Accept supported extensions OR .zip
+  if (!ALL_SUPPORTED_EXTENSIONS.includes(extension) && extension !== '.zip') {
+    errors.push(`File "${file.name}" has an unsupported format. Only supported 3D formats or .zip archives are allowed.`);
   }
-  
+
   return errors;
 };
+
 
 // Validate preview images
 const validatePreviewImages = (images) => {
@@ -83,31 +82,39 @@ const validatePreviewImages = (images) => {
   return errors;
 };
 
-// Detect software based on file extension
-const detectSoftware = (fileName) => {
-  const extension = '.' + fileName.toLowerCase().split('.').pop();
-  
-  for (const [software, extensions] of Object.entries(SUPPORTED_EXTENSIONS)) {
-    if (extensions.includes(extension)) {
-      return software;
-    }
-  }
-  return 'Unknown';
-};
 
 // Generate unique model ID
 const generateModelId = () => {
   return `model_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
+// Extract and detect software from ZIP archive
+const detectSoftwareFromZip = async (zipFile) => {
+  try {
+    const zip = new JSZip();
+    const content = await zip.loadAsync(zipFile);
+    const detectedSoftware = new Set();
 
+    for (const fileName in content.files) {
+      if (!content.files[fileName].dir) { // Ignore directories
+        const fileExtension = '.' + fileName.split('.').pop().toLowerCase();
+        if (ALL_SUPPORTED_EXTENSIONS.includes(fileExtension)) {
+          const software = detectSoftware(fileName);
+          if (software !== 'Unknown') {
+            detectedSoftware.add(software);
+          }
+        }
+      }
+    }
+
+    return Array.from(detectedSoftware);
+  } catch (error) {
+    console.error('Error processing ZIP file for software detection:', error);
+    return [];
+  }
+};
 // Upload model with files and preview images
-export const uploadModel = async (modelData, files, previewImages) => {
-  console.log("=== STARTING MODEL UPLOAD ===");
-  console.log("Model data:", modelData);
-  console.log("Files count:", files.length);
-  console.log("Preview images count:", previewImages.length);
-
+export const uploadModel = async (modelData, file, previewImages) => {
   try {
     // Check authentication
     if (!auth.currentUser) {
@@ -117,8 +124,8 @@ export const uploadModel = async (modelData, files, previewImages) => {
     const creatorUID = auth.currentUser.uid;
     console.log("Creator UID:", creatorUID);
 
-    // Validate model files
-    const fileErrors = validateFiles(files);
+    // Validate model file
+    const fileErrors = validateFile(file);
     if (fileErrors.length > 0) {
       return { success: false, message: fileErrors.join('; ') };
     }
@@ -138,76 +145,80 @@ export const uploadModel = async (modelData, files, previewImages) => {
       return { success: false, message: 'Category is required' };
     }
 
+    // Check if compatible software was detected
+    if (!modelData.software || modelData.software.length === 0) {
+      return { success: false, message: 'No compatible software detected. The uploaded file must contain supported 3D model formats.' };
+    }
+
     // Generate unique model ID
     const modelId = generateModelId();
     console.log("Generated model ID:", modelId);
 
-    // Upload model files to Storage
-    console.log("=== UPLOADING MODEL FILES ===");
-    const modelFiles = [];
+    // Upload model file to Storage
+    console.log("=== UPLOADING MODEL FILE ===");
+    const modelFilesMetaData = [];
+    const detectedSoftware = new Set();
+
+    const extension = '.' + file.name.split('.').pop().toLowerCase();
     
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      console.log(`Uploading file ${i + 1}/${files.length}: ${file.name}`);
+    if (extension === '.zip') {
+      console.log("Uploading .zip archive as single file...");
       
-      // Create storage reference
+      // Upload the ZIP file directly to Storage
       const fileRef = ref(storage, `models/${modelId}/${file.name}`);
-      
-      // Upload file with metadata
       const snapshot = await uploadBytes(fileRef, file, {
-        customMetadata: {
-          creatorUid: creatorUID,
-          originalName: file.name,
-          uploadedAt: new Date().toISOString()
-        }
+        customMetadata: { creatorUid: creatorUID }
       });
-      
-      // Get download URL
       const downloadURL = await getDownloadURL(snapshot.ref);
-      console.log(`File uploaded successfully: ${downloadURL}`);
       
-      // Add to model files array
-      modelFiles.push({
+      // Add ZIP file to metadata
+      modelFilesMetaData.push({
         fileName: file.name,
         fileUrl: downloadURL,
         fileSize: file.size,
-        software: detectSoftware(file.name),
-        uploadedAt: new Date()
+        software: modelData.software, // Use the detected software from frontend
+        uploadedAt: new Date(),
+        isArchive: true
+      });
+      
+      console.log("ZIP archive uploaded successfully:", file.name);
+      
+    } else {
+      // Handle single 3D model file
+      const software = detectSoftware(file.name);
+      if (software !== 'Unknown') {
+        detectedSoftware.add(software);
+      }
+      
+      const fileRef = ref(storage, `models/${modelId}/${file.name}`);
+      const snapshot = await uploadBytes(fileRef, file, {
+        customMetadata: { creatorUid: creatorUID }
+      });
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      modelFilesMetaData.push({
+        fileName: file.name,
+        fileUrl: downloadURL,
+        fileSize: file.size,
+        software: software,
+        uploadedAt: new Date(),
+        isArchive: false
       });
     }
 
-    // Upload preview images to Storage
+    // Upload preview images
     console.log("=== UPLOADING PREVIEW IMAGES ===");
     const previewImageUrls = [];
-    
     for (let i = 0; i < previewImages.length; i++) {
-      const image = previewImages[i];
-      console.log(`Uploading image ${i + 1}/${previewImages.length}: ${image.name}`);
-      
-      // Generate unique filename for image
-      const fileExtension = image.name.split('.').pop();
-      const imageFileName = `preview_${i + 1}.${fileExtension}`;
-      
-      // Create storage reference
-      const imageRef = ref(storage, `modelImages/${modelId}/${imageFileName}`);
-      
-      // Upload image
-      const snapshot = await uploadBytes(imageRef, image, {
-        customMetadata: {
-          creatorUid: creatorUID,
-          originalName: image.name,
-          uploadedAt: new Date().toISOString()
-        }
-      });
-      
-      // Get download URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
-      console.log(`Image uploaded successfully: ${downloadURL}`);
-      
-      previewImageUrls.push(downloadURL);
+        const image = previewImages[i];
+        const imageFileName = `preview_${i + 1}.${image.name.split('.').pop()}`;
+        const imageRef = ref(storage, `modelImages/${modelId}/${imageFileName}`);
+        const snapshot = await uploadBytes(imageRef, image, {
+            customMetadata: { creatorUid: creatorUID }
+        });
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        previewImageUrls.push(downloadURL);
     }
 
-    // Create model document for Firestore
     console.log("=== CREATING FIRESTORE DOCUMENT ===");
     const modelDoc = {
       id: modelId,
@@ -221,7 +232,7 @@ export const uploadModel = async (modelData, files, previewImages) => {
       downloadedBy: [creatorUID],
       comments: [],
       previewImages: previewImageUrls,
-      modelFiles: modelFiles,
+      modelFiles: modelFilesMetaData,
       previewSettings: modelData.previewSettings || {
         position: { x: 0, y: 0, z: 0 },
         rotation: { x: 0, y: 0, z: 0 },
@@ -229,7 +240,7 @@ export const uploadModel = async (modelData, files, previewImages) => {
         cameraPosition: { x: 0, y: 0, z: 5 }
       },
       tags: modelData.tags || [],
-      software: modelData.software || [],
+      software: modelData.software, // Use the software detected in frontend
       category: modelData.category,
       isPublic: modelData.isPublic !== false, // Default to true
       createdAt: new Date(),
@@ -247,32 +258,29 @@ export const uploadModel = async (modelData, files, previewImages) => {
     await updateDoc(userRef, {
       uploadedModels: arrayUnion(modelId)
     });
-     console.log("Model document saved to Firestore");
+    
+    console.log("Model document saved to Firestore");
     await updateDoc(userRef, {
         downloadedModels: arrayUnion(modelId)
-      });
+    });
+    
     console.log("User document updated with new model ID");
-
     console.log("=== MODEL UPLOAD SUCCESSFUL ===");
+    
     return { 
       success: true, 
       message: 'Model uploaded successfully!', 
       modelId: modelId,
-      previewUrl: previewImageUrls[0] || null
+      previewUrl: previewImageUrls[0] 
     };
 
   } catch (error) {
-    console.error("=== MODEL UPLOAD ERROR ===");
-    console.error("Error details:", error);
-    console.error("Error message:", error.message);
-    console.error("Error code:", error.code);
-    
-    return { 
-      success: false, 
-      message: error.message || 'Upload failed. Please try again.' 
-    };
+    console.error('Error uploading model:', error);
+    return { success: false, message: error.message || 'Failed to upload model' };
   }
 };
+
+
 // Get models with pagination and filters for display
 export const getModels = async (filters = {}, lastDoc = null, limitCount = 12) => {
   try {
@@ -937,12 +945,9 @@ export const getModelComments = async (modelId) => {
   }
 };
 // Update model details
-export const updateModel = async (modelId, updatedData) => {
+export const updateModel = async (modelId, updatedData, newImageFiles = []) => {
     try {
-        console.log("=== UPDATING MODEL ===");
-        console.log("Model ID:", modelId);
-        console.log("Updated data:", updatedData);
-
+        console.log("=== UPDATING MODEL (with image handling) ===");
         if (!auth.currentUser) {
             return { success: false, message: 'User not authenticated' };
         }
@@ -955,21 +960,63 @@ export const updateModel = async (modelId, updatedData) => {
             return { success: false, message: 'Model not found' };
         }
 
-        // Security check: ensure the user is the owner of the model
         if (modelDoc.data().creatorUID !== userId) {
             return { success: false, message: 'You are not authorized to edit this model.' };
         }
 
-        // Prepare the final data to be updated
+        // --- 1. Handle Image Deletions from Storage ---
+        const originalImages = modelDoc.data().previewImages || [];
+        const remainingImages = updatedData.previewImages || [];
+        const imagesToDelete = originalImages.filter(url => !remainingImages.includes(url));
+
+        if (imagesToDelete.length > 0) {
+            console.log("Deleting images from storage:", imagesToDelete);
+            const deletePromises = imagesToDelete.map(url => {
+                try {
+                    // Get a reference from the HTTPS download URL
+                    const imageRefToDelete = ref(storage, url);
+                    return deleteObject(imageRefToDelete);
+                } catch (error) {
+                    console.error(`Skipping deletion for invalid URL: ${url}`, error);
+                    return Promise.resolve(); // Don't block other deletions
+                }
+            });
+            await Promise.all(deletePromises);
+        }
+
+        // --- 2. Handle New Image Uploads to Storage ---
+        const newImageUrls = [];
+        if (newImageFiles.length > 0) {
+            console.log("Uploading new images to storage...");
+            const uploadPromises = newImageFiles.map(async (imageFile) => {
+                const fileExtension = imageFile.name.split('.').pop();
+                const imageFileName = `preview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
+                const imageRef = ref(storage, `modelImages/${modelId}/${imageFileName}`);
+                
+                const snapshot = await uploadBytes(imageRef, imageFile, {
+                    customMetadata: { creatorUid: userId }
+                });
+                return getDownloadURL(snapshot.ref);
+            });
+            
+            const urls = await Promise.all(uploadPromises);
+            newImageUrls.push(...urls);
+        }
+
+        // --- 3. Prepare Final Data for Firestore Update ---
+        // Combine the URLs of images that were kept with the newly uploaded ones
+        const finalImageUrls = [...remainingImages, ...newImageUrls];
+
         const dataToUpdate = {
             ...updatedData,
-            updatedAt: new Date(), // Always update the timestamp
+            previewImages: finalImageUrls, // Use the final, correct list of URLs
+            updatedAt: new Date(),
         };
 
-        // Update the document in Firestore
+        // --- 4. Update the document in Firestore ---
         await updateDoc(modelRef, dataToUpdate);
 
-        console.log("Model updated successfully");
+        console.log("Model updated successfully in Firestore");
         return { success: true, message: 'Model updated successfully!' };
 
     } catch (error) {

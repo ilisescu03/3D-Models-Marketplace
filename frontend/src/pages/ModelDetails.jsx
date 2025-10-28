@@ -63,11 +63,12 @@ function ModelDetails() {
     const [isSaving, setIsSaving] = useState(false);
     const [tagInput, setTagInput] = useState('');
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [modalPreviewImages, setModalPreviewImages] = useState([]);
     const [isDeleting, setIsDeleting] = useState(false);
     const CATEGORIES = [
         'Architecture',
-        'Character',
-        'Vehicle',
+        'Characters & Creatures',
+        'Cars & Vehicles',
         'Environment',
         'Furniture',
         'Electronics',
@@ -76,16 +77,19 @@ function ModelDetails() {
         'Food & Drink',
         'Plants',
         'Animals',
-        'Abstract',
+        'Art & Abstract',
         'Mechanical',
         'Fashion & Style',
         'Sports',
         'Culture & History',
-        'Other' 
+        'Other'
     ];
 
     const openEditModal = () => {
         setEditModelData({ ...model });
+        // Initialize the modal's preview list with objects to track their type
+        setModalPreviewImages(model.previewImages.map(url => ({ type: 'url', src: url })));
+        setNewImageFiles([]); // Reset the list of new files
         setIsEditModalOpen(true);
     };
 
@@ -98,17 +102,51 @@ function ModelDetails() {
         }
     };
 
-    const handleImageRemove = (urlToRemove) => {
-        setEditModelData(prev => ({
-            ...prev,
-            previewImages: prev.previewImages.filter(url => url !== urlToRemove)
-        }));
+    const handleImageRemove = (imageToRemove) => {
+        // Prevent removing the last image
+        if (modalPreviewImages.length <= 1) {
+            alert("You must have at least one preview image.");
+            return;
+        }
+
+        // If it's an existing image (from Firestore)
+        if (imageToRemove.type === 'url') {
+            setEditModelData(prev => ({
+                ...prev,
+                previewImages: prev.previewImages.filter(url => url !== imageToRemove.src)
+            }));
+        }
+        // If it's a new image you've just added (a blob)
+        else if (imageToRemove.type === 'blob') {
+            // Remove the file from the list to be uploaded
+            setNewImageFiles(prev => prev.filter(file => file !== imageToRemove.file));
+            // Important: Revoke the temporary URL to prevent memory leaks
+            URL.revokeObjectURL(imageToRemove.src);
+        }
+
+        // Update the visual list you see in the modal
+        setModalPreviewImages(prev => prev.filter(img => img.src !== imageToRemove.src));
     };
 
     const handleNewImages = (e) => {
         if (e.target.files) {
-            setNewImageFiles(prev => [...prev, ...Array.from(e.target.files)]);
+            const files = Array.from(e.target.files);
+
+            // Add the files to the state that holds files for upload
+            setNewImageFiles(prev => [...prev, ...files]);
+
+            // Create temporary "blob" URLs for instant preview
+            const newPreviews = files.map(file => ({
+                type: 'blob',
+                src: URL.createObjectURL(file),
+                file: file // Keep a reference to the original File object
+            }));
+
+            // Add the new previews to the list shown in the modal
+            setModalPreviewImages(prev => [...prev, ...newPreviews]);
         }
+        // Clear the file input so you can select the same file again if needed
+        e.target.value = null;
     };
     // --- Handlers for Delete Modal ---
     const handleOpenDeleteConfirm = () => {
@@ -122,7 +160,7 @@ function ModelDetails() {
             alert("Model successfully deleted.");
             setIsDeleteConfirmOpen(false);
             setIsEditModalOpen(false);
-            navigate('/dashboard'); 
+            navigate('/dashboard');
         } else {
             alert(`Error: ${result.message}`);
         }
@@ -160,7 +198,7 @@ function ModelDetails() {
             if (result.success) {
                 alert('Model updated successfully!');
                 setIsEditModalOpen(false);
-                loadModelDetails(); 
+                loadModelDetails();
             } else {
                 alert(`Error: ${result.message}`);
             }
@@ -214,7 +252,7 @@ function ModelDetails() {
             setComments(sortedComments);
         }
     }, [model]);
-   useEffect(() => {
+    useEffect(() => {
         // Verify if the model was loaded and the  tite proprety exists
         if (model && model.title) {
             // If yes, set the doc text
@@ -1235,6 +1273,24 @@ function ModelDetails() {
                                     ))}
                                     <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddTag()} placeholder="Add a tag and press Enter" />
                                 </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Preview Images ({modalPreviewImages.length}/10)</label>
+                                <div className="image-previews-container">
+                                    {modalPreviewImages.map((image, index) => (
+                                        <div key={index} className="image-preview-chip">
+                                            <img src={image.src} alt={`Preview ${index + 1}`} />
+                                            <button type="button" onClick={() => handleImageRemove(image)} className="remove-image-btn" title="Remove image">×</button>
+                                        </div>
+                                    ))}
+                                    {modalPreviewImages.length < 10 && (
+                                        <label className="add-image-label">
+                                            + Add
+                                            <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={handleNewImages} style={{ display: 'none' }} />
+                                        </label>
+                                    )}
+                                </div>
+                                <small>The first image is the main thumbnail. You must have at least one image.</small>
                             </div>
 
                         </div>

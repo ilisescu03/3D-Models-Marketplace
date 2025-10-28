@@ -8,7 +8,7 @@ const footerStyle = {
     fontFamily: 'Arial, sans-serif',
     color: '#cccccc',
     padding: '60px 20px 20px 20px', 
-    borderTop: '2px solid #ff7300ff',
+  
     width: '100%',
     boxSizing: 'border-box',
 };
@@ -132,6 +132,7 @@ function Footer({ onManageCookiesClick }) {
                 
                 {/* --- COLUMN 1: BRAND --- */}
                 <div style={columnStyle}>
+                    <img src="/WebsiteLogo2.png" style={{height:'100px'}}/>
                     <h3 style={logoStyle}>ShapeHive</h3>
                     <p style={sloganStyle}>Your 3D Asset Universe. High-quality models for your creative projects.</p>
                 </div>
@@ -140,8 +141,8 @@ function Footer({ onManageCookiesClick }) {
                 <div style={columnStyle}>
                     <h4 style={titleStyle}>Explore</h4>
                     <ul style={listStyle}>
-                        <li><a href="/3d-models" style={linkStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={(e) => { e.preventDefault(); handleCategoryClick('Vehicle'); }}>Vehicles</a></li>
-                        <li><a href="/3d-models" style={linkStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={(e) => { e.preventDefault(); handleCategoryClick('Character'); }}>Characters</a></li>
+                        <li><a href="/3d-models" style={linkStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={(e) => { e.preventDefault(); handleCategoryClick('Cars & Vehicles'); }}>Cars & Vehicles</a></li>
+                        <li><a href="/3d-models" style={linkStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={(e) => { e.preventDefault(); handleCategoryClick('Characters & Creatures'); }}>Characters & Creatures</a></li>
                         <li><a href="/3d-models" style={linkStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={(e) => { e.preventDefault(); handleCategoryClick('Architecture'); }}>Architecture</a></li>
                         <li><a href="/3d-models" style={linkStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>More...</a></li>
                     </ul>

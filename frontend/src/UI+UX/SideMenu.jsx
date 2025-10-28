@@ -535,8 +535,8 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                             }}>
                                 {[
                                     { name: 'Architecture', icon: '/architectureIcon.svg' },
-                                    { name: 'Character', icon: '/characterIcon.png' },
-                                    { name: 'Vehicle', icon: '/vehicleIcon.svg' },
+                                    { name: 'Characters & Creatures', icon: '/characterIcon.png' },
+                                    { name: 'Cars & Vehicles', icon: '/vehicleIcon.svg' },
                                     { name: 'Environment', icon: '/lanscape.svg' },
                                     { name: 'Furniture', icon: '/furniture.svg' },
                                     { name: 'Electronics', icon: '/electronicsIcon.svg' },
@@ -545,7 +545,7 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                     { name: 'Food & Drink', icon: '/foodDrinkIcon.svg' },
                                     { name: 'Plants', icon: '/plantsIcon.svg' },
                                     { name: 'Animals', icon: '/animalsIcon.svg' },
-                                    { name: 'Abstract', icon: '/artIcon.svg' },
+                                    { name: 'Art & Abstract', icon: '/artIcon.svg' },
                                     { name: 'Mechanical', icon: '/mechanicalIcon.svg' },
                                     { name: 'Fashion & Style', icon: '/fashionIcon.svg' },
                                     { name: 'Sports', icon: '/sportsIcon.svg' },

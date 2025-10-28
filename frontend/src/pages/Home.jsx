@@ -209,8 +209,19 @@ function Home() {
                                                 />
                                                 <h3 className="model-title-inline">{model.title}</h3>
                                             </div>
-                                            <div className="model-header-right">
-                                                {/* Stats */}
+                                             <div className="model-header-right">
+                                                <div className="stat-item" title="Comments">
+                                                    <img src="/commentsIcon.png" alt="comments" className="stat-icon" />
+                                                    <span>{model.comments?.length || 0}</span>
+                                                </div>
+                                                <div className="stat-item" title="Favorites">
+                                                    <img src="/favIcon.png" alt="favorites" className="stat-icon" />
+                                                    <span>{model.favorites || 0}</span>
+                                                </div>
+                                                <div className="stat-item" title="Downloads">
+                                                    <img src="/downloadsIcon.png" alt="downloads" className="stat-icon" />
+                                                    <span>{model.downloads || 0}</span>
+                                                </div>
                                             </div>
                                         </div>
                                         {/* Compatible software list */}
