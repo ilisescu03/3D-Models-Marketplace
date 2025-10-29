@@ -243,7 +243,7 @@ function Header() {
                         alignItems: 'flex-end',
                         gap: '0px',
                         position: 'relative',
-                        left: '4rem',
+                        left: '6.5rem',
                         paddingRight: '0px'
                     }}>
                         {!loading && user ? (
@@ -355,7 +355,7 @@ function Header() {
                         <button
                             onClick={() => navigate('/search')}
                             style={imageButtonStyle}>
-                            <img src='/SearchBtn.png' alt='Search' style={{ height: '30px', position: 'relative', left: '-1rem', marginBottom: '0px' }} />
+                            <img src='/SearchBtn.png' alt='Search' style={{ height: '30px', position: 'relative', left: '-2rem', marginBottom: '0px' }} />
                         </button>
 
                         {!loading && user ? (
@@ -366,7 +366,7 @@ function Header() {
                                         navigate('/upload');
                                     }
                                 }}>
-                                <img src='/UploadButton.png' alt='Upload' style={{ height: '25px', position:'relative', left:'-2rem', marginBottom: '0px', filter: 'invert(0%)' }} />
+                                <img src='/UploadButton.png' alt='Upload' style={{ height: '25px', position:'relative', left:'-4rem', marginBottom: '0px', filter: 'invert(0%)' }} />
                             </button>
                         ) : null}
                     </div>

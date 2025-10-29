@@ -1,6 +1,6 @@
 // UploadModel.jsx
 import React, { useState, useEffect, useMemo } from 'react';
-import JSZip from 'jszip'; 
+import JSZip from 'jszip';
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import { uploadModel, getSupportedExtensions, getSoftwareOptions } from '/backend/models.js';
 import Header from '../UI+UX/Header';
@@ -26,24 +26,24 @@ const SUPPORTED_EXTENSIONS = {
     'Houdini': ['.hip', '.hiplc', '.bgeo']
 };
 const CATEGORY_OPTIONS = [
-        'Architecture',
-        'Characters & Creatures',
-        'Cars & Vehicles',
-        'Environment',
-        'Furniture',
-        'Electronics',
-        'Jewelry',
-        'Weapons',
-        'Food & Drink',
-        'Plants',
-        'Animals',
-        'Art & Abstract',
-        'Mechanical',
-        'Fashion & Style',
-        'Sports',
-        'Culture & History',
-        'Other' 
-    ];
+    'Architecture',
+    'Characters & Creatures',
+    'Cars & Vehicles',
+    'Environment',
+    'Furniture',
+    'Electronics',
+    'Jewelry',
+    'Weapons',
+    'Food & Drink',
+    'Plants',
+    'Animals',
+    'Art & Abstract',
+    'Mechanical',
+    'Fashion & Style',
+    'Sports',
+    'Culture & History',
+    'Other'
+];
 
 const TAG_OPTIONS = [
     'Low Poly', 'High Poly', 'Textured', 'Rigged', 'Animated',
@@ -65,8 +65,10 @@ function UploadModel() {
         category: '',
         software: [],
         tags: [],
-        isPublic: true
+        isPublic: true,
+        price: 0 // Price field
     });
+    const [isFree, setIsFree] = useState(true); // State for pricing toggle
     const [customTagInput, setCustomTagInput] = useState('');
     // Files state
     const [modelFile, setModelFile] = useState(null);
@@ -82,7 +84,7 @@ function UploadModel() {
 
     // Get supported extensions and software options
     const [softwareOptions] = useState(getSoftwareOptions());
-    
+
     // Create once all supported extensions list
     const allSupportedExtensions = useMemo(() => {
         const extensionSet = new Set();
@@ -112,13 +114,13 @@ function UploadModel() {
     const updateSoftwareFromFile = async (file) => {
         const detectedSoftware = new Set();
         const extension = '.' + file.name.split('.').pop().toLowerCase();
-        
+
         if (extension === '.zip') {
             // Process ZIP archive to detect supported files
             try {
                 const zip = new JSZip();
                 const content = await zip.loadAsync(file);
-                
+
                 for (const fileName in content.files) {
                     if (!content.files[fileName].dir) {
                         const fileExtension = '.' + fileName.split('.').pop().toLowerCase();
@@ -281,7 +283,7 @@ function UploadModel() {
     // Process model file
     const handleModelFile = async (file) => {
         const extension = '.' + file.name.split('.').pop().toLowerCase();
-        
+
         // Check if file is supported
         if (!allSupportedExtensions.includes(extension)) {
             setError('File format not supported. Please upload a supported 3D model file or .zip archive.');
@@ -369,11 +371,25 @@ function UploadModel() {
             return;
         }
 
+        // Price validation
+        const finalFormData = { ...formData };
+        if (!isFree) {
+            const price = parseFloat(formData.price);
+            if (isNaN(price) || price <= 0) {
+                setError('For a paid model, please enter a valid price greater than 0.');
+                return;
+            }
+            finalFormData.price = price; // Ensure price is a number
+        } else {
+            finalFormData.price = 0; // Ensure price is 0 for free models
+        }
+
+
         setUploading(true);
 
         try {
             console.log('Starting upload...');
-            const result = await uploadModel(formData, modelFile, previewImages);
+            const result = await uploadModel(finalFormData, modelFile, previewImages);
 
             if (result.success) {
                 setSuccess('Model uploaded successfully! Redirecting to home page...');
@@ -385,8 +401,10 @@ function UploadModel() {
                     category: '',
                     software: [],
                     tags: [],
-                    isPublic: true
+                    isPublic: true,
+                    price: 0 // Reset price
                 });
+                setIsFree(true); // Reset to free
                 setModelFile(null);
                 setPreviewImages([]);
                 setPreviewUrls([]);
@@ -403,6 +421,15 @@ function UploadModel() {
             setError('Upload failed. Please try again.');
         } finally {
             setUploading(false);
+        }
+    };
+
+    // Handle toggle for pricing
+    const handlePriceToggle = () => {
+        const newIsFree = !isFree;
+        setIsFree(newIsFree);
+        if (newIsFree) {
+            setFormData(prev => ({ ...prev, price: 0 }));
         }
     };
 
@@ -428,7 +455,7 @@ function UploadModel() {
                     <h1 className="upload-title">Upload 3D Model</h1>
                     {error && <div className="alert error">{error}</div>}
                     {success && <div className="alert success">{success}</div>}
-                    
+
                     {/* Grid for matrix layout */}
                     <div className="upload-grid">
                         {/* Upload files and images*/}
@@ -470,10 +497,10 @@ function UploadModel() {
                                             <strong>{modelFile.name}</strong>
                                             <span className="file-size"> ({(modelFile.size / 1024 / 1024).toFixed(2)} MB)</span>
                                         </span>
-                                        <button 
-                                            type="button" 
-                                            onClick={() => !uploading && removeModelFile()} 
-                                            className="remove-button" 
+                                        <button
+                                            type="button"
+                                            onClick={() => !uploading && removeModelFile()}
+                                            className="remove-button"
                                             disabled={uploading}
                                         >
                                             Remove
@@ -481,7 +508,7 @@ function UploadModel() {
                                     </div>
                                 </div>
                             )}
-                            
+
                             {modelFile && (
                                 <div className="detected-software-info">
                                     <strong>Compatible software:</strong> {formData.software.length > 0 ? formData.software.join(', ') : 'None detected - upload will be blocked'}
@@ -502,16 +529,16 @@ function UploadModel() {
                                 <div className="upload-text">{uploading ? 'Uploading...' : 'Drag & drop preview images here, or click to browse'}</div>
                                 <div className="upload-subtext">Upload images that showcase your model (JPG, PNG, WebP - max 10MB per image, max 10 images)</div>
                             </div>
-                            <input 
-                                id="previewImages" 
-                                type="file" 
-                                multiple 
-                                accept="image/*" 
-                                onChange={(e) => !uploading && handlePreviewFiles(Array.from(e.target.files))} 
-                                className="hidden-input" 
-                                disabled={uploading} 
+                            <input
+                                id="previewImages"
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={(e) => !uploading && handlePreviewFiles(Array.from(e.target.files))}
+                                className="hidden-input"
+                                disabled={uploading}
                             />
-                            
+
                             {previewUrls.length > 0 && (
                                 <div>
                                     <h4 className="mt-20">Preview Images ({previewUrls.length}):</h4>
@@ -519,10 +546,10 @@ function UploadModel() {
                                         {previewUrls.map((url, index) => (
                                             <div key={index} className="preview-item">
                                                 <img src={url} alt={`Preview ${index + 1}`} className="preview-image" />
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => !uploading && removePreviewImage(index)} 
-                                                    className="remove-preview-button" 
+                                                <button
+                                                    type="button"
+                                                    onClick={() => !uploading && removePreviewImage(index)}
+                                                    className="remove-preview-button"
                                                     disabled={uploading}
                                                 >
                                                     ✕
@@ -540,36 +567,36 @@ function UploadModel() {
                             <h2 className="section-title">Basic Information</h2>
                             <div className="input-group">
                                 <label className="form-label">Title *</label>
-                                <input 
-                                    type="text" 
-                                    name="title" 
-                                    value={formData.title} 
-                                    onChange={handleInputChange} 
-                                    className="form-input" 
-                                    placeholder="Enter model title..." 
-                                    required 
-                                    disabled={uploading} 
+                                <input
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleInputChange}
+                                    className="form-input"
+                                    placeholder="Enter model title..."
+                                    required
+                                    disabled={uploading}
                                 />
                             </div>
                             <div className="input-group">
                                 <label className="form-label">Description</label>
-                                <textarea 
-                                    name="description" 
-                                    value={formData.description} 
-                                    onChange={handleInputChange} 
-                                    className="form-input form-textarea" 
-                                    placeholder="Describe your model..." 
-                                    disabled={uploading} 
+                                <textarea
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleInputChange}
+                                    className="form-input form-textarea"
+                                    placeholder="Describe your model..."
+                                    disabled={uploading}
                                 />
                             </div>
                             <div className="two-col-grid">
                                 <div className="input-group">
                                     <label className="form-label">Type</label>
-                                    <select 
-                                        name="type" 
-                                        value={formData.type} 
-                                        onChange={handleInputChange} 
-                                        className="form-input form-select" 
+                                    <select
+                                        name="type"
+                                        value={formData.type}
+                                        onChange={handleInputChange}
+                                        className="form-input form-select"
                                         disabled={uploading}
                                     >
                                         <option value="Model">Single Model</option>
@@ -578,12 +605,12 @@ function UploadModel() {
                                 </div>
                                 <div className="input-group">
                                     <label className="form-label">Category *</label>
-                                    <select 
-                                        name="category" 
-                                        value={formData.category} 
-                                        onChange={handleInputChange} 
-                                        className="form-input form-select" 
-                                        required 
+                                    <select
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleInputChange}
+                                        className="form-input form-select"
+                                        required
                                         disabled={uploading}
                                     >
                                         <option value="">Select Category</option>
@@ -594,16 +621,68 @@ function UploadModel() {
                                 </div>
                             </div>
 
+                            {/* ADDED: Pricing Section */}
+                            <h2 className="section-title">Pricing</h2>
+                            <div className="pricing-toggle">
+                                {/* Hidden radio buttons for state management */}
+                                <input
+                                    id="price-free"
+                                    type="radio"
+                                    name="pricing"
+                                    value="free"
+                                    checked={isFree}
+                                    onChange={() => {
+                                        setIsFree(true);
+                                        setFormData(prev => ({ ...prev, price: 0 }));
+                                    }}
+                                    disabled={uploading}
+                                />
+                                <label htmlFor="price-free" className="toggle-label">Free</label>
+
+                                <input
+                                    id="price-paid"
+                                    type="radio"
+                                    name="pricing"
+                                    value="paid"
+                                    checked={!isFree}
+                                    onChange={() => setIsFree(false)}
+                                    disabled={uploading}
+                                />
+                                <label htmlFor="price-paid" className="toggle-label">Paid</label>
+
+                                {/* The visual sliding part of the switch */}
+                                <div className="switch-handle"></div>
+                            </div>
+
+                            {!isFree && (
+                                <div className="input-group mt-20">
+                                    <label className="form-label">Price (€) *</label>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        value={formData.price}
+                                        onChange={handleInputChange}
+                                        className="form-input"
+                                        placeholder="e.g., 4.99"
+                                        min="0.01"
+                                        step="0.01"
+                                        required
+                                        disabled={uploading}
+                                    />
+                                    <p className="hint">Enter a price greater than 0. Use a period (.) for decimals.</p>
+                                </div>
+                            )}
+
                             {/* Tags */}
                             <h2 className="section-title">Tags</h2>
                             <p className="muted-paragraph">Select tags that describe your model or add your own:</p>
                             <div className="tags-container">
                                 {formData.tags.map(tag => (
-                                    <button 
-                                        key={tag} 
-                                        type="button" 
-                                        onClick={() => !uploading && handleRemoveTag(tag)} 
-                                        className="tag active" 
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => !uploading && handleRemoveTag(tag)}
+                                        className="tag active"
                                         disabled={uploading}
                                     >
                                         {tag}
@@ -611,11 +690,11 @@ function UploadModel() {
                                     </button>
                                 ))}
                                 {TAG_OPTIONS.filter(tag => !formData.tags.includes(tag)).map(tag => (
-                                    <button 
-                                        key={tag} 
-                                        type="button" 
-                                        onClick={() => !uploading && handleTagToggle(tag)} 
-                                        className="tag" 
+                                    <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => !uploading && handleTagToggle(tag)}
+                                        className="tag"
                                         disabled={uploading}
                                     >
                                         {tag}
@@ -624,20 +703,20 @@ function UploadModel() {
                             </div>
                             <div className="custom-tags-section">
                                 <div className="custom-tags-input-group">
-                                    <input 
-                                        type="text" 
-                                        value={customTagInput} 
-                                        onChange={handleCustomTagInputChange} 
-                                        onKeyPress={handleCustomTagKeyPress} 
-                                        placeholder="Add tag..." 
-                                        className="custom-tag-input" 
-                                        disabled={uploading} 
-                                        maxLength={30} 
+                                    <input
+                                        type="text"
+                                        value={customTagInput}
+                                        onChange={handleCustomTagInputChange}
+                                        onKeyPress={handleCustomTagKeyPress}
+                                        placeholder="Add tag..."
+                                        className="custom-tag-input"
+                                        disabled={uploading}
+                                        maxLength={30}
                                     />
-                                    <button 
-                                        type="button" 
-                                        onClick={handleAddCustomTag} 
-                                        className="add-custom-tag-button" 
+                                    <button
+                                        type="button"
+                                        onClick={handleAddCustomTag}
+                                        className="add-custom-tag-button"
                                         disabled={uploading || !customTagInput.trim()}
                                     >
                                         Add
@@ -645,23 +724,23 @@ function UploadModel() {
                                 </div>
                                 <div className="custom-tags-hint">Press Enter or click "Add" to add tag (max 30 characters)</div>
                             </div>
-                            
+
                             {/* Privacy Settings */}
                             <h2 className="section-title">Privacy Settings</h2>
                             <div className="inline-checkbox">
-                                <input 
-                                    type="checkbox" 
-                                    id="isPublic" 
-                                    name="isPublic" 
-                                    checked={formData.isPublic} 
-                                    onChange={handleInputChange} 
-                                    disabled={uploading} 
+                                <input
+                                    type="checkbox"
+                                    id="isPublic"
+                                    name="isPublic"
+                                    checked={formData.isPublic}
+                                    onChange={handleInputChange}
+                                    disabled={uploading}
                                 />
                                 <label htmlFor="isPublic" className="clickable-label">Make this model publicly visible in community</label>
                             </div>
                             <p className="hint">
-                                {formData.isPublic 
-                                    ? 'Your model will be visible to all users and appear in the community feed.' 
+                                {formData.isPublic
+                                    ? 'Your model will be visible to all users and appear in the community feed.'
                                     : 'Your model will be private and only you can see it.'
                                 }
                             </p>
@@ -670,17 +749,17 @@ function UploadModel() {
 
                     {/* Submit Buttons */}
                     <div className="actions">
-                        <button 
-                            type="submit" 
-                            disabled={uploading || formData.software.length === 0} 
+                        <button
+                            type="submit"
+                            disabled={uploading || formData.software.length === 0}
                             className="primary-button"
                         >
                             {uploading ? 'Uploading Model...' : 'Upload Model'}
                         </button>
-                        <button 
-                            type="button" 
-                            onClick={() => window.location.href = '/'} 
-                            className="secondary-button" 
+                        <button
+                            type="button"
+                            onClick={() => window.location.href = '/'}
+                            className="secondary-button"
                             disabled={uploading}
                         >
                             Cancel

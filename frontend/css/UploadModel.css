@@ -749,3 +749,124 @@
   color: #212529; 
   margin-right: 8px;
 }
+/* ADDED: Pricing Section Styles */
+.pricing-options {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.pricing-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pricing-option label {
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+}
+
+.pricing-option input[type="radio"] {
+  cursor: pointer;
+  /* Optional: for better styling of radio buttons */
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #fff;
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 1.15em;
+  height: 1.15em;
+  border: 0.15em solid currentColor;
+  border-radius: 50%;
+  transform: translateY(-0.075em);
+  display: grid;
+  place-content: center;
+}
+
+.pricing-option input[type="radio"]::before {
+  content: "";
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em #ff7b00;
+}
+
+.pricing-option input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+.pricing-option input[type="radio"]:focus {
+  outline: max(2px, 0.15em) solid #ff7b00;
+  outline-offset: max(2px, 0.15em);
+}
+/* --- START: Pricing Toggle Switch Styles --- */
+
+.pricing-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 160px; /* Width of the entire switch */
+  height: 44px; /* Height of the switch */
+  background-color: #dddddd; /* Dark background color */
+  border-radius: 22px; /* Fully rounded corners */
+  padding: 4px;
+  box-sizing: border-box;
+  user-select: none; /* Prevent text selection */
+  margin-bottom: 15px;
+  transition: background-color 0.3s ease;
+}
+
+/* Hide the actual radio buttons */
+.pricing-toggle input[type="radio"] {
+  display: none;
+}
+
+/* Style for the labels (Free/Paid text) */
+.pricing-toggle .toggle-label {
+  flex: 1; /* Each label takes half the space */
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #000000; /* Color for the inactive text */
+  cursor: pointer;
+  z-index: 2; /* Make sure text is above the handle */
+  transition: color 0.4s cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+/* The sliding handle */
+.pricing-toggle .switch-handle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px); /* Half the width minus padding */
+  height: calc(100% - 8px); /* Full height minus padding */
+  background-color: #ff7b00; /* Accent color, similar to the sun in the example */
+  border-radius: 18px; /* Rounded corners for the handle */
+  z-index: 1; /* Behind the text */
+  transition: transform 0.4s cubic-bezier(0.445, 0.05, 0.55, 0.95);
+}
+
+/* --- Logic for switching state --- */
+
+/* When the "Free" radio is checked, move handle to the left and change text color */
+.pricing-toggle input#price-free:checked ~ .switch-handle {
+  transform: translateX(0%);
+}
+.pricing-toggle input#price-free:checked + .toggle-label {
+  color: white; /* Active text color */
+}
+
+/* When the "Paid" radio is checked, move handle to the right and change text color */
+.pricing-toggle input#price-paid:checked ~ .switch-handle {
+  transform: translateX(calc(100%));
+}
+.pricing-toggle input#price-paid:checked + .toggle-label {
+  color: white; /* Active text color */
+}
+
+/* --- END: Pricing Toggle Switch Styles --- */

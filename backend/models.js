@@ -145,6 +145,12 @@ export const uploadModel = async (modelData, file, previewImages) => {
       return { success: false, message: 'Category is required' };
     }
 
+    // Backend validation for price
+    const price = parseFloat(modelData.price);
+    if (isNaN(price) || price < 0) {
+        return { success: false, message: 'Invalid price provided. Price must be 0 or greater.' };
+    }
+
     // Check if compatible software was detected
     if (!modelData.software || modelData.software.length === 0) {
       return { success: false, message: 'No compatible software detected. The uploaded file must contain supported 3D model formats.' };
@@ -226,6 +232,7 @@ export const uploadModel = async (modelData, file, previewImages) => {
       creatorUID: creatorUID,
       title: modelData.title.trim(),
       description: modelData.description?.trim() || '',
+      price: price, 
       likes: 0,
       favorites: 0,
       downloads: 0,

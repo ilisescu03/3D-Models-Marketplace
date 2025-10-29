@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
@@ -1316,6 +1317,11 @@ const [availableTags, setAvailableTags] = useState([]);
                                         onClick={() => window.location.href = `/model/${model.id}`}
 
                                     >
+                                        {user?.uid !== model.creatorUID && (
+                                            <div className="price-badge">
+                                                {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                            </div>
+                                        )}
                                         <img
                                             src={model.previewImages?.[0] || '/default-model-preview.png'}
                                             alt={model.title}

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Header from "../UI+UX/Header";
 import Footer from "../UI+UX/Footer.jsx";
@@ -1272,6 +1273,11 @@ function ModelsPage() {
                                             className="model-card"
                                             onClick={() => handleCardClick(model.id)}
                                         >
+                                            {currentUser?.uid !== model.creatorUID && (
+                                                <div className="price-badge">
+                                                    {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                                </div>
+                                            )}
                                             <img
                                                 src={getModelThumbnail(model)}
                                                 alt={model.title}

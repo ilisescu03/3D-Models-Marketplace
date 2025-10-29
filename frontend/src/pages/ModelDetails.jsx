@@ -48,7 +48,8 @@ function ModelDetails() {
     const [isModalOpen, setIsModalOpen] = useState(false); // Check if the full view of the images is active
     const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0); // Current image to show on full view
     const isLargeScreen = useScreenSize(); // Check the screen size
-
+    const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false); // State for payment form
+    const [userData, setUserData] = useState(null);
     // States for comments
     const [commentText, setCommentText] = useState(""); // Comment state
     const [replyingTo, setReplyingTo] = useState(null); // Reply to state
@@ -268,6 +269,27 @@ function ModelDetails() {
         };
 
     }, [model, loading]);
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (currentUser) {
+                try {
+                    const { doc, getDoc } = await import('firebase/firestore');
+                    const { db } = await import('/backend/firebase.js');
+
+                    const userDocRef = doc(db, "users", currentUser.uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        setUserData(userDoc.data());
+                    }
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                }
+            }
+        };
+
+        fetchUserData();
+    }, [currentUser]);
     // Use effect to check if the model is favorited or not
     useEffect(() => {
         const checkFavoriteStatus = async () => {
@@ -587,7 +609,20 @@ function ModelDetails() {
             return 'Invalid date';
         }
     };
+    const handleCardPaymentClick = () => {
+        if (currentUser) {
+            setIsPaymentFormOpen(true);
+        } else {
+            navigate('/login');
+        }
+    };
 
+    const handlePayPalClick = () => {
+        if (!currentUser) {
+            navigate('/login');
+        }
+        // Does nothing if logged in, as per instructions.
+    };
     // DOWNLOAD
     const handleDownload = async (specificFileName = null) => {
         if (!currentUser) {
@@ -613,6 +648,11 @@ function ModelDetails() {
                         `${username} purchased your model "${model.title}"`,
                         `/model/${modelId}`
                     );
+                    setUserData(prev => ({
+                        ...prev,
+                        downloadedModels: [...(prev?.downloadedModels || []), modelId]
+                    }));
+
                 }
                 // Success message
                 if (result.downloads) {
@@ -939,27 +979,80 @@ function ModelDetails() {
                     {/* Right Column - Download and Actions */}
                     <div className={isLargeScreen ? 'rightColumnStyleLarge responsiveFixStyle' : 'rightColumnStyle responsiveFixStyle'}>
                         <div className="detailsCardStyle">
-                            {/* Download button */}
-                            <button
-                                className="downloadButtonStyle"
-                                onClick={() => {
-                                    if (model.modelFiles && model.modelFiles.length === 1) {
-                                        // If there is one file to download
-                                        handleSingleFileDownload(model.modelFiles[0].fileName);
-                                    } else {
-                                        // If there is a package to download
-                                        handleAllFilesDownload();
-                                    }
-                                }}
-                                disabled={downloadLoading}
-                            >
-                                <img
-                                    src="/DownloadIcon.png"
-                                    alt="Download"
-                                    className="downloadIconStyle"
-                                />
-                                {downloadLoading ? 'DOWNLOADING...' : 'DOWNLOAD NOW'}
-                            </button>
+                            {/* === CONDITIONAL PRICE/DOWNLOAD SECTION START === */}
+                            {currentUser && userData?.downloadedModels?.includes(modelId) ? (
+                       
+                                <button
+                                    className="downloadButtonStyle"
+                                    onClick={() => {
+                                        if (model.modelFiles && model.modelFiles.length === 1) {
+                                            handleSingleFileDownload(model.modelFiles[0].fileName);
+                                        } else {
+                                            handleAllFilesDownload();
+                                        }
+                                    }}
+                                    disabled={downloadLoading}
+                                >
+                                    <img
+                                        src="/DownloadIcon.png"
+                                        alt="Download"
+                                        className="downloadIconStyle"
+                                    />
+                                    {downloadLoading ? 'DOWNLOADING...' : 'DOWNLOAD YOUR FILES'}
+                                </button>
+                            ) : (
+                                // --- VISITOR'S VIEW ---
+                                <>
+                                    {(model.price === 0 || !model.price) ? (
+                                        // --- FREE MODEL ---
+                                        <>
+                                            <h2 className="free-badge">FREE</h2>
+                                            <button
+                                                className="downloadButtonStyle"
+                                                onClick={() => {
+                                                    if (model.modelFiles && model.modelFiles.length === 1) {
+                                                        handleSingleFileDownload(model.modelFiles[0].fileName);
+                                                    } else {
+                                                        handleAllFilesDownload();
+                                                    }
+                                                }}
+                                                disabled={downloadLoading}
+                                            >
+                                                <img
+                                                    src="/DownloadIcon.png"
+                                                    alt="Download"
+                                                    className="downloadIconStyle"
+                                                />
+                                                {downloadLoading ? 'DOWNLOADING...' : 'DOWNLOAD NOW'}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        // --- PAID MODEL ---
+                                        <div className="payment-section">
+                                            <h2 className="price-display">€{model.price.toFixed(2)}</h2>
+                                            <div className="payment-methods">
+                                                <span className="payment-methods-title">Payment Method</span>
+                                                <button className="payment-button card-payment" onClick={handleCardPaymentClick}>
+                                                    <div className="payment-logos">
+                                                        <img src="/visa.svg" alt="Visa" />
+                                                        <img src="/mastercard.svg" alt="Mastercard" />
+                                                        <img src="/maestro.png" alt="Maestro" />
+                                                        <img src="/paytm.svg" style={{ height: '15px' }} alt="Paytm" />
+                                                    </div>
+                                                    <span>Pay with new credit or debit card</span>
+                                                </button>
+                                                <button className="payment-button paypal-payment" onClick={handlePayPalClick}>
+                                                    <div className="payment-logos">
+                                                        <img src="/paypal.svg" style={{ height: '50px' }} alt="PayPal" />
+                                                    </div>
+                                                    <span>Pay through PayPal</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                            {/* === CONDITIONAL PRICE/DOWNLOAD SECTION END === */}
 
 
 
@@ -994,7 +1087,7 @@ function ModelDetails() {
                                             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                                                 <span className="fileNameStyle">{file.fileName}</span>
                                                 <span className="fileSizeStyle">
-                                                    {formatFileSize(file.fileSize)} • {file.software}
+                                                    {formatFileSize(file.fileSize)}
                                                 </span>
                                             </div>
                                         </div>
@@ -1307,6 +1400,40 @@ function ModelDetails() {
                     </div>
                 </div>
             )}
+            {/* === PAYMENT FORM MODAL START === */}
+            <div className={`payment-form-overlay ${isPaymentFormOpen ? 'open' : ''}`} onClick={() => setIsPaymentFormOpen(false)}>
+                <div className={`payment-form-content ${isPaymentFormOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+                    <button className="close-payment-form" onClick={() => setIsPaymentFormOpen(false)}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </button>
+                    <h3>Card Details</h3>
+                    <div className="form-group-payment">
+                        <label>Card Number</label>
+                        <input type="text" placeholder="**** **** **** ****" />
+                    </div>
+                    <div className="form-row-payment">
+                        <div className="form-group-payment">
+                            <label>Expiry Date</label>
+                            <input type="text" placeholder="MM / YY" />
+                        </div>
+                        <div className="form-group-payment">
+                            <label>CVC</label>
+                            <input type="text" placeholder="123" />
+                        </div>
+                    </div>
+                    <div className="form-group-payment">
+                        <label>Cardholder Name</label>
+                        <input type="text" placeholder="John Doe" />
+                    </div>
+                    <button className="complete-purchase-btn" onClick={() => alert('Purchase logic not implemented yet.')}>
+                        Complete Purchase
+                    </button>
+                </div>
+            </div>
+            {/* === PAYMENT FORM MODAL END === */}
             {isDeleteConfirmOpen && (
                 <div className="confirm-delete-modal-overlay">
                     <div className="confirm-delete-modal-content">

@@ -190,6 +190,11 @@ function Home() {
                         <div className="models-grid">
                             {models.map((model) => (
                                 <div key={model.id} className="model-card" onClick={() => handleCardClick(model.id)}>
+                                    {currentUser?.uid !== model.creatorUID && (
+                                        <div className="price-badge">
+                                            {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                        </div>
+                                    )}
                                     <img
                                         src={getModelThumbnail(model)}
                                         loading="lazy"

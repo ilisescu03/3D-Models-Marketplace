@@ -387,6 +387,11 @@ function Dashboard() {
                                                 className="model-card"
                                                 onClick={() => handleCardClick(model.id)}
                                             >
+                                                {user?.uid !== model.creatorUID && (
+                                                    <div className="price-badge">
+                                                        {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                                    </div>
+                                                )}
                                                 <img
                                                     src={getModelThumbnail(model)}
                                                     alt={model.title}

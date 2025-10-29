@@ -278,6 +278,26 @@
   margin-bottom: 4px;
 }
 
+.model-card {
+  position: relative; /* This is crucial for positioning the badge inside */
+  overflow: hidden; /* Ensures the badge doesn't overflow rounded corners */
+}
+
+.price-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  z-index: 2;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  pointer-events: none; /* Prevents the badge from interfering with clicks */
+}
 .model-header-left {
   display: flex;
   align-items: center;
