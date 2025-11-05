@@ -50,7 +50,9 @@ export const doCreateUserWithEmailAndPassword = async (username, email, password
       role: "other",
       bio: "",
       links: ["", "", "", ""],
+       cart: [],
       skills: []
+
     };
 
     console.log("User data to be saved:", userData);
@@ -222,6 +224,7 @@ export const doSignInWithGoogle = async () => {
         role: "other",
         bio: "",
         links: ["", "", "", ""],
+         cart: [],
         skills: []
       });
     }

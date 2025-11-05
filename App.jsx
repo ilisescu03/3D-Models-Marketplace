@@ -23,7 +23,7 @@ const CommunityMembers = lazy(() => import('/frontend/src/pages/CommunityMembers
 const CookiePolicy = lazy(() => import('/frontend/src/pages/CookiePolicy.jsx'));
 const TermsAndConditions = lazy(() => import('/frontend/src/pages/TermsAndConditions.jsx'));
 const Contact = lazy(() => import('/frontend/src/pages/Contact.jsx'));
-
+const MyCart = lazy(() => import('/frontend/src/pages/MyCart.jsx'));
 // O componentă simplă pentru starea de încărcare
 function LoadingFallback() {
   return (
@@ -71,6 +71,7 @@ function App() {
           <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/terms&conditions" element={<TermsAndConditions />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/my-cart" element={<MyCart />} />
         </Routes>
       </Suspense>
     </>

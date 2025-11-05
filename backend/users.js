@@ -12,7 +12,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, getDocs, updateDoc, onSnapshot, collection, deleteDoc,  writeBatch  } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-
+import { arrayUnion, arrayRemove } from "firebase/firestore";
 
 // Delete user
 export const doDeleteUserAccount = async (password) => {
@@ -614,4 +614,52 @@ export const sendNotification = async (userid, senderid, title, text, to) => {
     console.error("Failed to send notification:", error);
     return { success: false, message: error.message || "Error sending notification." };
   }
+};
+//Add to Cart
+export const addToCart = async (modelId) => {
+  if (!auth.currentUser) {
+    return { success: false, message: 'Please log in to add items to your cart.' };
+  }
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userRef, {
+      cart: arrayUnion(modelId)
+    });
+    return { success: true, message: 'Model added to cart.' };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
+
+// Remove from Cart
+export const removeFromCart = async (modelId) => {
+  if (!auth.currentUser) {
+    return { success: false, message: 'User not authenticated.' };
+  }
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userRef, {
+      cart: arrayRemove(modelId)
+    });
+    return { success: true, message: 'Model removed from cart.' };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
+
+// Get Cart Items
+export const getCartItems = async () => {
+    if (!auth.currentUser) {
+        return { success: false, message: 'User not authenticated.', cart: [] };
+    }
+    try {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+            return { success: true, cart: userDoc.data().cart || [] };
+        }
+        return { success: false, message: 'User not found.', cart: [] };
+    } catch (error) {
+        return { success: false, message: error.message, cart: [] };
+    }
 };

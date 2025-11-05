@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { doSignOut } from '/backend/auth.js';
 import { auth, db } from '/backend/firebase.js';
@@ -12,6 +11,20 @@ import {
     updateUsername, updateUserData
 } from '/backend/users.js';
 //Style for Sign Up
+const badgeStyle = {
+    position: 'absolute',
+    top: '-5px',
+    right: '-5px',
+    background: 'red',
+    color: 'white',
+    borderRadius: '50%',
+    padding: '1px 5px',
+    fontSize: '0.8rem',
+    fontWeight: 'bold',
+    zIndex: 1,
+    textAlign: 'center',
+    border: '2px solid white'
+};
 const buttonStyle = {
     backgroundColor: 'rgba(255, 123, 0, 1)',
     color: 'white',
@@ -75,6 +88,7 @@ function Header() {
     const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
     const [profilePicture, setProfilePicture] = useState("/profile.png"); // Default profile picture
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [cartCount, setCartCount] = useState(0);
     const navigate = useNavigate();
     const unreadCount = notifications.filter(n => n.read === false).length;
     // Track window resize
@@ -108,7 +122,7 @@ function Header() {
     }, [notifyMenu]);
     // Fetch user profile pics for notification authors
     useEffect(() => {
-        // Extract user uid 
+        // Extract user uid
         const uids = [...new Set((notifications || []).map(n => n.from).filter(Boolean))];
         if (uids.length === 0) return;
 
@@ -165,6 +179,7 @@ function Header() {
                     if (userData.profilePicture) {
                         setProfilePicture(userData.profilePicture);
                     }
+                    setCartCount(userData.cart?.length || 0);
                 } else {
                     setUser({
                         uid: currentUser.uid,
@@ -175,6 +190,7 @@ function Header() {
             } else {
                 setUser(null);
                 setProfilePicture("/profile.png"); // Reset to default
+                setCartCount(0);
             }
             setLoading(false);
         });
@@ -237,17 +253,20 @@ function Header() {
                         </button>
                     </div>
 
-                    
+
                     <div style={{
                         display: 'flex',
                         alignItems: 'flex-end',
                         gap: '0px',
                         position: 'relative',
-                        left: '6.5rem',
+                        left: '10rem',
                         paddingRight: '0px'
                     }}>
+
                         {!loading && user ? (
+
                             <div style={{ position: 'relative', display: 'inline-block' }}>
+
                                 <button
                                     ref={notifyButtonRef}
                                     style={imageButtonStyle}
@@ -263,8 +282,8 @@ function Header() {
                                     <img
                                         src='/notificationsIcon3.svg'
                                         style={{
-                                            width: "30px",
-                                            height: "30px",
+                                            width: "27px",
+                                            height: "27px",
                                             filter: notifyMenu === true
                                                 ? 'invert(44%) sepia(85%) saturate(1352%) hue-rotate(360deg) brightness(101%) contrast(101%)'
                                                 : 'invert(0%)',
@@ -355,9 +374,21 @@ function Header() {
                         <button
                             onClick={() => navigate('/search')}
                             style={imageButtonStyle}>
-                            <img src='/SearchBtn.png' alt='Search' style={{ height: '30px', position: 'relative', left: '-2rem', marginBottom: '0px' }} />
+                            <img src='/SearchBtn.png' alt='Search' style={{ height: '27px', position: 'relative', left: '-2.5rem', marginBottom: '0px' }} />
                         </button>
+                        {!loading && user ? (
+                            <div>
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <button
+                                        onClick={() => navigate('/my-cart')}
+                                        style={imageButtonStyle}
+                                    >
+                                        <img src='/cart.png' alt='Cart' style={{ height: '25px', position: 'relative', left: '-5rem'}} />
+                                    </button>
+                                    {cartCount > 0 && (<span style={{ ...badgeStyle, top: '-10px', right: '7rem' }}>{cartCount}</span>)}
+                                </div>
 
+                            </div>) : null}
                         {!loading && user ? (
                             /* Upload button */
                             <button style={imageButtonStyle}
@@ -366,7 +397,7 @@ function Header() {
                                         navigate('/upload');
                                     }
                                 }}>
-                                <img src='/UploadButton.png' alt='Upload' style={{ height: '25px', position:'relative', left:'-4rem', marginBottom: '0px', filter: 'invert(0%)' }} />
+                                <img src='/UploadButton.png' alt='Upload' style={{ height: '22px', position: 'relative', left: '-7.5rem', marginBottom: '0px', filter: 'invert(0%)' }} />
                             </button>
                         ) : null}
                     </div>
@@ -729,9 +760,19 @@ function Header() {
                                 alignItems: 'center',
                                 flex: '0 0 auto'
                             }}>
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <button
+                                        onClick={() => navigate('/my-cart')}
+                                        style={imageButtonStyle}
+                                    >
+                                        <img src='/cart.png' alt='Cart' style={{ height: '20px', filter: 'invert(25%)' }} />
+                                    </button>
+                                    {cartCount > 0 && (<span style={{ ...badgeStyle, top: '-5px', right: '20px' }}>{cartCount}</span>)}
+                                </div>
                                 <div
                                     style={{ position: 'relative', display: 'inline-block' }}
                                 >
+
                                     <button
                                         ref={notifyButtonRef}
                                         style={imageButtonStyle}

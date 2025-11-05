@@ -11,12 +11,13 @@ import { downloadModel } from '/backend/models.js';
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 import { useNavigate } from 'react-router-dom';
 import '/frontend/css/ModelDetails.css'
-
+import { addToCart, removeFromCart, getCartItems } from '/backend/users.js';
 // Screen size handle
 const useScreenSize = () => {
     const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentModalImageIndex, setCurrentModalImageIndex] = useState(0);
+
     useEffect(() => {
         const handleResize = () => {
             setIsLargeScreen(window.innerWidth >= 1024);
@@ -57,7 +58,8 @@ function ModelDetails() {
     const [comments, setComments] = useState([]); // Comments state
     const [commentLoading, setCommentLoading] = useState(false); // Check if the comment is loading
     const [replyLoading, setReplyLoading] = useState(false); // Check if the reply is loading
-
+    const [isInCart, setIsInCart] = useState(false);
+    const [cartLoading, setCartLoading] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editModelData, setEditModelData] = useState(null);
     const [newImageFiles, setNewImageFiles] = useState([]);
@@ -66,6 +68,9 @@ function ModelDetails() {
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [modalPreviewImages, setModalPreviewImages] = useState([]);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isCartPreviewOpen, setIsCartPreviewOpen] = useState(false);
+    const [cartPreviewItems, setCartPreviewItems] = useState([]);
+    const [cartPreviewTotalPrice, setCartPreviewTotalPrice] = useState(0);
     const CATEGORIES = [
         'Architecture',
         'Characters & Creatures',
@@ -92,6 +97,54 @@ function ModelDetails() {
         setModalPreviewImages(model.previewImages.map(url => ({ type: 'url', src: url })));
         setNewImageFiles([]); // Reset the list of new files
         setIsEditModalOpen(true);
+    };
+    
+      const loadCartPreviewDetails = async () => {
+        try {
+            const result = await getCartItems();
+            if (result.success && result.cart.length > 0) {
+                const detailedItems = await Promise.all(
+                    result.cart.map(async (id) => {
+                        const modelResult = await getModelById(id);
+                        return modelResult.success ? modelResult.model : null;
+                    })
+                );
+                const filteredItems = detailedItems.filter(item => item !== null);
+                setCartPreviewItems(filteredItems);
+                const total = filteredItems.reduce((sum, item) => sum + (item.price || 0), 0);
+                setCartPreviewTotalPrice(total);
+            } else {
+                setCartPreviewItems([]);
+                setCartPreviewTotalPrice(0);
+            }
+        } catch (err) {
+            console.error("Failed to load cart preview items:", err);
+            setCartPreviewItems([]);
+            setCartPreviewTotalPrice(0);
+        }
+    };
+    const handleCartToggle = async () => {
+        if (!currentUser) {
+            navigate('/login');
+            return;
+        }
+        if (cartLoading) return;
+
+        setCartLoading(true);
+        const result = isInCart
+            ? await removeFromCart(modelId)
+            : await addToCart(modelId);
+
+        if (result.success) {
+            setIsInCart(!isInCart);
+             if (!isInCart) { // If item was just added
+                await loadCartPreviewDetails(); // Load updated cart items for the preview
+                setIsCartPreviewOpen(true); // Open the cart preview modal
+            }
+        } else {
+            alert(`Error: ${result.message}`);
+        }
+        setCartLoading(false);
     };
 
     const handleEditFormChange = (e) => {
@@ -240,7 +293,24 @@ function ModelDetails() {
             );
         }
     };
-
+    useEffect(() => {
+        const checkCartStatus = async () => {
+            if (currentUser && model) {
+                const result = await getCartItems();
+                if (result.success && result.cart.includes(model.id)) {
+                    setIsInCart(true);
+                } else {
+                    setIsInCart(false);
+                }
+            }
+        };
+        checkCartStatus();
+    }, [currentUser, model]);
+     useEffect(() => {
+        if (currentUser) {
+            loadCartPreviewDetails();
+        }
+    }, [currentUser]);
     // Loading comments when the model is loaded
     useEffect(() => {
         if (model && model.comments) {
@@ -981,7 +1051,7 @@ function ModelDetails() {
                         <div className="detailsCardStyle">
                             {/* === CONDITIONAL PRICE/DOWNLOAD SECTION START === */}
                             {currentUser && userData?.downloadedModels?.includes(modelId) ? (
-                       
+
                                 <button
                                     className="downloadButtonStyle"
                                     onClick={() => {
@@ -1030,24 +1100,13 @@ function ModelDetails() {
                                         // --- PAID MODEL ---
                                         <div className="payment-section">
                                             <h2 className="price-display">€{model.price.toFixed(2)}</h2>
-                                            <div className="payment-methods">
-                                                <span className="payment-methods-title">Payment Method</span>
-                                                <button className="payment-button card-payment" onClick={handleCardPaymentClick}>
-                                                    <div className="payment-logos">
-                                                        <img src="/visa.svg" alt="Visa" />
-                                                        <img src="/mastercard.svg" alt="Mastercard" />
-                                                        <img src="/maestro.png" alt="Maestro" />
-                                                        <img src="/paytm.svg" style={{ height: '15px' }} alt="Paytm" />
-                                                    </div>
-                                                    <span>Pay with new credit or debit card</span>
-                                                </button>
-                                                <button className="payment-button paypal-payment" onClick={handlePayPalClick}>
-                                                    <div className="payment-logos">
-                                                        <img src="/paypal.svg" style={{ height: '50px' }} alt="PayPal" />
-                                                    </div>
-                                                    <span>Pay through PayPal</span>
-                                                </button>
-                                            </div>
+                                            <button
+                                                className={`add-to-cart-button ${isInCart ? 'in-cart' : ''}`}
+                                                onClick={handleCartToggle}
+                                                disabled={cartLoading}
+                                            >
+                                                {cartLoading ? 'Processing...' : (isInCart ? 'Remove from Cart' : 'Add to Cart')}
+                                            </button>
                                         </div>
                                     )}
                                 </>
@@ -1400,40 +1459,8 @@ function ModelDetails() {
                     </div>
                 </div>
             )}
-            {/* === PAYMENT FORM MODAL START === */}
-            <div className={`payment-form-overlay ${isPaymentFormOpen ? 'open' : ''}`} onClick={() => setIsPaymentFormOpen(false)}>
-                <div className={`payment-form-content ${isPaymentFormOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
-                    <button className="close-payment-form" onClick={() => setIsPaymentFormOpen(false)}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </button>
-                    <h3>Card Details</h3>
-                    <div className="form-group-payment">
-                        <label>Card Number</label>
-                        <input type="text" placeholder="**** **** **** ****" />
-                    </div>
-                    <div className="form-row-payment">
-                        <div className="form-group-payment">
-                            <label>Expiry Date</label>
-                            <input type="text" placeholder="MM / YY" />
-                        </div>
-                        <div className="form-group-payment">
-                            <label>CVC</label>
-                            <input type="text" placeholder="123" />
-                        </div>
-                    </div>
-                    <div className="form-group-payment">
-                        <label>Cardholder Name</label>
-                        <input type="text" placeholder="John Doe" />
-                    </div>
-                    <button className="complete-purchase-btn" onClick={() => alert('Purchase logic not implemented yet.')}>
-                        Complete Purchase
-                    </button>
-                </div>
-            </div>
-            {/* === PAYMENT FORM MODAL END === */}
+     
+      
             {isDeleteConfirmOpen && (
                 <div className="confirm-delete-modal-overlay">
                     <div className="confirm-delete-modal-content">
@@ -1448,7 +1475,48 @@ function ModelDetails() {
                     </div>
                 </div>
             )}
+             {/* === CART PREVIEW MODAL START === */}
+            <div className={`cart-preview-overlay ${isCartPreviewOpen ? 'open' : ''}`} onClick={() => setIsCartPreviewOpen(false)}>
+                <div className={`cart-preview-content ${isCartPreviewOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+                    <button className="close-cart-preview" onClick={() => setIsCartPreviewOpen(false)}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 8L12 16M12 16L16 12M12 16L8 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </button>
+                    <h3 className="cart-preview-title">Added to Cart</h3>
 
+                    {cartPreviewItems.length > 0 ? (
+                        <>
+                            <div className="cart-preview-items-list">
+                                {cartPreviewItems.map(item => (
+                                    <div key={item.id} className="cart-preview-item">
+                                        <img
+                                            src={item.previewImages?.[0] || '/default-model-preview.png'}
+                                            alt={item.title}
+                                            className="cart-preview-item-thumbnail"
+                                            onClick={() => { navigate(`/model/${item.id}`); setIsCartPreviewOpen(false); }}
+                                        />
+                                        <div className="cart-preview-item-details">
+                                            <h4 onClick={() => { navigate(`/model/${item.id}`); setIsCartPreviewOpen(false); }}>{item.title}</h4>
+                                            <p>€{item.price.toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="cart-preview-summary">
+                                <span>Subtotal:</span>
+                                <span>€{cartPreviewTotalPrice.toFixed(2)}</span>
+                            </div>
+                            <button className="cart-preview-view-cart-btn" onClick={() => { navigate('/my-cart'); setIsCartPreviewOpen(false); }}>
+                                View Cart
+                            </button>
+                        </>
+                    ) : (
+                        <p className="cart-preview-empty">Your cart is empty.</p>
+                    )}
+                </div>
+            </div>
+            {/* === CART PREVIEW MODAL END === */}
             {!loading && (<div style={{ marginTop: '4rem', width: '100%' }}>
                 <Footer />
             </div>)}
