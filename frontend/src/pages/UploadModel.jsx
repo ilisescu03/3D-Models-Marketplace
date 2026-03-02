@@ -1,8 +1,11 @@
 // UploadModel.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import {useNavigate} from 'react-router-dom';
 import JSZip from 'jszip';
 import { useAuth } from '/backend/contexts/authContext/index.jsx';
 import { uploadModel, getSupportedExtensions, getSoftwareOptions } from '/backend/models.js';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '/backend/firebase.js';
 import Header from '../UI+UX/Header';
 import '/frontend/css/UploadModel.css';
 
@@ -54,8 +57,10 @@ const TAG_OPTIONS = [
 const SUPPORTED_ARCHIVES = ['.zip'];
 
 function UploadModel() {
+    const navigate = useNavigate();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const { currentUser, userLogedIn } = useAuth();
+    const [hasPlatformBankDetails, setHasPlatformBankDetails] = useState(false); // NOU
 
     // Form data state
     const [formData, setFormData] = useState({
@@ -178,6 +183,20 @@ function UploadModel() {
             return () => clearTimeout(timer);
         }
     }, [error]);
+    useEffect(() => {
+        const fetchUserBankDetails = async () => {
+            if (currentUser) {
+                const userRef = doc(db, "users", currentUser.uid);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists() && userSnap.data().bankDetails?.iban) {
+                    setHasPlatformBankDetails(true);
+                } else {
+                    setHasPlatformBankDetails(false);
+                }
+            }
+        };
+        fetchUserBankDetails();
+    }, [currentUser]);
 
     useEffect(() => {
         if (success) {
@@ -623,8 +642,25 @@ function UploadModel() {
 
                             {/* ADDED: Pricing Section */}
                             <h2 className="section-title">Pricing</h2>
-                            <div className="pricing-toggle">
-                                {/* Hidden radio buttons for state management */}
+
+                        {!hasPlatformBankDetails  && (
+                                <div className="bank-account-warning">
+                                    <div className="warning-icon">⚠️</div>
+                                    <div className="warning-content">
+                                        <strong>Payment account required</strong>
+                                        <p>You need to set up your payment account in Settings to sell paid models.</p>
+                                        <button
+                                            type="button"
+                                            className="setup-payment-btn"
+                                            onClick={() => navigate('/settings?tab=payment')}
+                                        >
+                                            Set Up Payments
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className={`pricing-toggle ${!hasPlatformBankDetails  ? 'disabled' : ''}`}>
                                 <input
                                     id="price-free"
                                     type="radio"
@@ -645,16 +681,25 @@ function UploadModel() {
                                     name="pricing"
                                     value="paid"
                                     checked={!isFree}
-                                    onChange={() => setIsFree(false)}
-                                    disabled={uploading}
+                                    onChange={() => {
+                                        if (hasPlatformBankDetails ) {
+                                            setIsFree(false);
+                                        } else {
+                                            alert('Please set up your payment account first to sell paid models.');
+                                        }
+                                    }}
+                                    disabled={uploading || !hasPlatformBankDetails }
                                 />
-                                <label htmlFor="price-paid" className="toggle-label">Paid</label>
+                                <label
+                                    htmlFor="price-paid"
+                                    className={`toggle-label ${!hasPlatformBankDetails  ? 'disabled' : ''}`}
+                                >
+                                    Paid
+                                </label>
 
-                                {/* The visual sliding part of the switch */}
                                 <div className="switch-handle"></div>
                             </div>
-
-                            {!isFree && (
+                                    {!isFree && (
                                 <div className="input-group mt-20">
                                     <label className="form-label">Price (€) *</label>
                                     <input
@@ -672,7 +717,6 @@ function UploadModel() {
                                     <p className="hint">Enter a price greater than 0. Use a period (.) for decimals.</p>
                                 </div>
                             )}
-
                             {/* Tags */}
                             <h2 className="section-title">Tags</h2>
                             <p className="muted-paragraph">Select tags that describe your model or add your own:</p>

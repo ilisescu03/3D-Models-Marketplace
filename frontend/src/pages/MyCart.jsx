@@ -8,8 +8,20 @@ import { getCartItems, removeFromCart } from '/backend/users.js';
 import { getModelById } from '/backend/models.js';
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 import '/frontend/css/MyCart.css';
-
+import { loadStripe } from "@stripe/stripe-js";
+import {Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import CheckoutForm from "./CheckoutForm.jsx"; './CheckoutForm.jsx';
+const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY);
 function MyCart() {
+
+    const [clientSecret, setClientSecret] = useState("");
+
+    const stripe = useStripe();
+    const elements = useElements();
+
+    const [message, setMessage] = useState(null);
+    const [isStripeLoading, setIsStripeLoading] = useState(false);
+
     const { currentUser, userLogedIn } = useAuth();
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
@@ -17,7 +29,44 @@ function MyCart() {
     const [error, setError] = useState(null);
     const [totalPrice, setTotalPrice] = useState(0);
     const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false); // State for payment form
+    useEffect(() => {
+        // replace this with your own server endpoint
+        fetch("http://localhost:4242/create-payment-intent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: [{}] }),
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return res.json();
+            })
+            .then((data) => setClientSecret(data.clientSecret))
+            .catch((error) => {
+                console.log(error);
+            });
+    }, []);
+    const options = {
+        clientSecret,
+    };
+    useEffect(() => {
+        if (!stripe) {
+            return;
+        }
 
+        const clientSecret = new URLSearchParams(window.location.search).get(
+            "payment_intent_client_secret"
+        );
+
+        if (!clientSecret) {
+            return;
+        }
+
+        stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
+            setMessage(paymentIntent.status === "succeeded" ? "Your payment succeeded" : "Unexpected error occurred");
+        });
+    }, [stripe]);
     // Redirect if not logged in
     useEffect(() => {
         if (!userLogedIn) {
@@ -37,7 +86,28 @@ function MyCart() {
         const total = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
         setTotalPrice(total);
     }, [cartItems]);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
+        if (!stripe || !elements) {
+            return;
+        }
+
+        setIsStripeLoading(true);
+
+        const { error } = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+                return_url: "http://localhost:3000",
+            }
+        });
+
+        if (error && (error.type === "card_error" || error.type === "validation_error")) {
+            setMessage(error.message);
+        }
+
+        setIsStripeLoading(false);
+    };
     const loadCartDetails = async () => {
         try {
             setLoading(true);
@@ -149,48 +219,42 @@ function MyCart() {
                     </div>
                 ) : (
                     <div className="empty-cart-message">
-                       
+
                         <p>Your cart is empty.</p>
                     </div>
                 )}
             </div>
 
             {/* === PAYMENT FORM MODAL START === */}
-            <div className={`payment-form-overlay ${isPaymentFormOpen ? 'open' : ''}`} onClick={() => setIsPaymentFormOpen(false)}>
-                <div className={`payment-form-content ${isPaymentFormOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+            <div
+                className={`payment-form-overlay ${isPaymentFormOpen ? 'open' : ''}`}
+                onClick={() => setIsPaymentFormOpen(false)}
+            >
+                <div
+                    className={`payment-form-content ${isPaymentFormOpen ? 'open' : ''}`}
+                    onClick={(e) => e.stopPropagation()}
+                >
                     <button className="close-payment-form" onClick={() => setIsPaymentFormOpen(false)}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                            <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" />
+                            <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" />
                         </svg>
                     </button>
+
                     <h3>Card Details</h3>
-                    <div className="form-group-payment">
-                        <label>Card Number</label>
-                        <input type="text" placeholder="**** **** **** ****" />
-                    </div>
-                    <div className="form-row-payment">
-                        <div className="form-group-payment">
-                            <label>Expiry Date</label>
-                            <input type="text" placeholder="MM / YY" />
-                        </div>
-                        <div className="form-group-payment">
-                            <label>CVC</label>
-                            <input type="text" placeholder="123" />
-                        </div>
-                    </div>
-                    <div className="form-group-payment">
-                        <label>Cardholder Name</label>
-                        <input type="text" placeholder="John Doe" />
-                    </div>
-                    <button className="complete-purchase-btn" onClick={() => alert('Purchase logic not implemented yet.')}>
-                        Complete Purchase
-                    </button>
+
+                    {/* Stripe PaymentElement */}
+                    {clientSecret && (
+                        <Elements stripe={stripePromise} options={{ clientSecret }}>
+                            <CheckoutForm returnUrl="http://localhost:5173/my-cart" />
+                        </Elements>
+                    )}
                 </div>
             </div>
             {/* === PAYMENT FORM MODAL END === */}
 
-        
+
+
         </div>
     );
 }

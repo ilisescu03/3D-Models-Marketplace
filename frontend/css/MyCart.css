@@ -17,7 +17,7 @@
 
 .cart-items-list {
     background: #fcfcfc;
-    /* width: 94%; ENTFERNT, um Breitenkonflikte zu vermeiden */
+  
     position: sticky;
     padding: 15px 15px;
     min-height: 405px;
@@ -94,7 +94,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     padding: 1.5rem;
     border-radius: 8px;
-    /* max-width: 80vw; ENTFERNT, um Breitenkonflikte zu vermeiden */
+
     position: sticky;
     top: 120px;
 }
@@ -125,7 +125,7 @@
     margin-top: 2rem;
 }
 
-/* --- STILE FÜR LEERE WARENKORB-NACHRICHT --- */
+/* ---Style for empty cart message --- */
 .empty-cart-message {
     background-color: #fcfcfc;
     padding: 3rem;
@@ -151,10 +151,10 @@
 }
 
 
-/* --- Responsive Anpassungen --- */
+/* --- Responsive adjustment --- */
 @media (max-width: 992px) {
     .cart-container {
-        margin-top: -8rem; /* Korrigierter oberer Rand für mobile Ansicht */
+        margin-top: -8rem; 
     }
 
     .cart-layout {
@@ -163,8 +163,8 @@
 
     .order-summary,
     .cart-items-list {
-        width: 100%; /* Stellt sicher, dass beide Karten die gleiche Breite haben */
-        box-sizing: border-box; /* Verhindert, dass Padding die Breite beeinflusst */
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .order-summary {
@@ -173,7 +173,7 @@
     }
 }
 
-/* Zentrierung auf kleineren Bildschirmen */
+
 @media (max-width: 768px) {
     .empty-cart-message {
         align-items: center;

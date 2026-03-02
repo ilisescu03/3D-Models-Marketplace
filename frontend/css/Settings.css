@@ -16,7 +16,6 @@
   align-items: center;
 }
 
-
 .page-title {
   font-family: Arial, sans-serif;
   color: #333;
@@ -141,8 +140,6 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   max-width:93%;
-  
-  
 }
 .textarea { resize: vertical; font-family: Arial, sans-serif; font-size: 0.9rem; }
 .links-input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;  max-width:93%; }
@@ -215,3 +212,131 @@
 .status { margin-left: 0.5rem; }
 .status-green { color: #27ae60; }
 .status-red { color: #e74c3c; }
+
+/* --- PAYMENT ACCOUNT STYLES --- */
+.bank-account-status {
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid;
+}
+
+.bank-account-status.verified {
+  background: #f0f9f4;
+  border-color: #d1f0db;
+}
+
+.bank-account-status.pending {
+  background: #fff8e6;
+  border-color: #ffeeba;
+}
+
+.bank-account-status.not-connected {
+  background: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.status-indicator.success {
+  background: #28a745;
+}
+
+.status-indicator.warning {
+  background: #ffc107;
+}
+
+.status-indicator.error {
+  background: #dc3545;
+}
+
+.status-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+}
+
+.status-content p {
+  margin: 0 0 15px 0;
+  color: #666;
+}
+
+.account-info {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.account-info p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.benefits-list {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.benefits-list h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.benefits-list ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #555;
+}
+
+.benefits-list li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.stripe-info {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 15px;
+  text-align: center;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn-primary {
+  background-color: #635bff;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #5a54d6;
+}
+
+/* Payment account loading state */
+.payment-account-loading {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+}
+
+.payment-account-loading .spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #eb8d00;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

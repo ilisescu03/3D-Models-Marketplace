@@ -14,6 +14,7 @@ import { doc, getDoc, getDocs, updateDoc, onSnapshot, collection, deleteDoc,  wr
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { arrayUnion, arrayRemove } from "firebase/firestore";
 
+
 // Delete user
 export const doDeleteUserAccount = async (password) => {
   try {

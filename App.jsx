@@ -24,6 +24,11 @@ const CookiePolicy = lazy(() => import('/frontend/src/pages/CookiePolicy.jsx'));
 const TermsAndConditions = lazy(() => import('/frontend/src/pages/TermsAndConditions.jsx'));
 const Contact = lazy(() => import('/frontend/src/pages/Contact.jsx'));
 const MyCart = lazy(() => import('/frontend/src/pages/MyCart.jsx'));
+
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY);
 // O componentă simplă pentru starea de încărcare
 function LoadingFallback() {
   return (
@@ -71,7 +76,14 @@ function App() {
           <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/terms&conditions" element={<TermsAndConditions />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/my-cart" element={<MyCart />} />
+           <Route 
+          path="/my-cart" 
+          element={
+            <Elements stripe={stripePromise}>
+              <MyCart />
+            </Elements>
+          } 
+        />
         </Routes>
       </Suspense>
     </>
