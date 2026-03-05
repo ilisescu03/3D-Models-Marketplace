@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
@@ -28,6 +27,7 @@ const [availableTags, setAvailableTags] = useState([]);
 
 
     const [user, setUser] = useState(null);
+    const [boughtModels, setBoughtModels] = useState([]);
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(true);
     const [usersData, setUsersData] = useState([]);
@@ -416,6 +416,7 @@ const [availableTags, setAvailableTags] = useState([]);
                     if (userDocSnap.exists()) {
                         const userData = userDocSnap.data();
                         setUsername(userData.username || userData.email);
+                        setBoughtModels(userData.bought_models || []);
                     }
 
                     const stopListening = listenToUserStats(currentUser.uid, async (stats) => {
@@ -1318,8 +1319,10 @@ const [availableTags, setAvailableTags] = useState([]);
 
                                     >
                                         {user?.uid !== model.creatorUID && (
-                                            <div className="price-badge">
-                                                {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                            <div className={`price-badge ${boughtModels.includes(model.id) ? 'downloaded-badge' : ''}`}>
+                                                {boughtModels.includes(model.id)
+                                                    ? 'PURCHASED'
+                                                    : model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
                                             </div>
                                         )}
                                         <img

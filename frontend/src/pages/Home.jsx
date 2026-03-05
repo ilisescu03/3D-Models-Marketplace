@@ -7,7 +7,8 @@ import { getModels } from '/backend/models.js';
 import '/frontend/css/Home.css';
 import { Mosaic } from "react-loading-indicators";
 import { useNavigate } from "react-router-dom";
-
+import { doc, getDoc } from "firebase/firestore";
+import { db } from '/backend/firebase.js';
 function Home() {
     const navigate = useNavigate();
     const { currentUser, userLogedIn } = useAuth();
@@ -15,12 +16,29 @@ function Home() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
-
+     const [boughtModels, setBoughtModels] = useState([]); 
 
     const [activeSlide, setActiveSlide] = useState(0);
     const [animationKey, setAnimationKey] = useState(0);
     const [animationDirection, setAnimationDirection] = useState('right');
-
+    useEffect(() => {
+        if (!currentUser) {
+            setBoughtModels([]);
+            return;
+        }
+        const fetchBoughtModels = async () => {
+            try {
+                const userRef = doc(db, "users", currentUser.uid);
+                const userDoc = await getDoc(userRef);
+                if (userDoc.exists()) {
+                    setBoughtModels(userDoc.data().bought_models || []);
+                }
+            } catch (err) {
+                console.error("Error fetching bought models:", err);
+            }
+        };
+        fetchBoughtModels();
+    }, [currentUser]);
     useEffect(() => {
         console.log("=== HOME PAGE AUTH STATE ===");
         console.log("currentUser:", currentUser);
@@ -69,7 +87,7 @@ function Home() {
     useEffect(() => {
         document.title = 'ShapeHive';
     }, []);
-
+    const hasBought = (modelId) => boughtModels.includes(modelId);
     return (
         <div className="home-background">
             <Header />
@@ -128,9 +146,7 @@ function Home() {
                                     <button className="hero-cta-button" onClick={() => navigate('/signup')}>
                                         Join the Hive
                                     </button>
-                                    <button className="hero-cta-button" onClick={() => { /* No action for now */ }}>
-                                        See Pricing Plans
-                                    </button>
+                                  
                                 </div>
                             </>
                         )}
@@ -191,8 +207,11 @@ function Home() {
                             {models.map((model) => (
                                 <div key={model.id} className="model-card" onClick={() => handleCardClick(model.id)}>
                                     {currentUser?.uid !== model.creatorUID && (
-                                        <div className="price-badge">
-                                            {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                        <div className={`price-badge ${hasBought(model.id) ? 'downloaded-badge' : ''}`}>
+                                            {hasBought(model.id)
+                                                ? 'PURCHASED'
+                                                : model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'
+                                            }
                                         </div>
                                     )}
                                     <img

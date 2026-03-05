@@ -664,3 +664,33 @@ export const getCartItems = async () => {
         return { success: false, message: error.message, cart: [] };
     }
 };
+export const completePurchase = async (modelIds) => {
+  if (!auth.currentUser) {
+    return { success: false, message: 'User not authenticated.' };
+  }
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userRef, {
+      bought_models: arrayUnion(...modelIds),
+      cart: []
+    });
+    return { success: true, message: 'Purchase completed.' };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
+
+export const hasUserBoughtModel = async (modelId) => {
+  if (!auth.currentUser) return false;
+  try {
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+      const boughtModels = userDoc.data().bought_models || [];
+      return boughtModels.includes(modelId);
+    }
+    return false;
+  } catch (error) {
+    return false;
+  }
+};

@@ -11,7 +11,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 app.use(cors());
 app.use(bodyParser.json());
 
-const calculateOrderAmount = () => 2000;
+const calculateOrderAmount = (items) => {
+  const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
+  return Math.round(total * 100); 
+};
 
 app.post("/create-payment-intent", async (req, res) => {
   try {
@@ -19,7 +22,7 @@ app.post("/create-payment-intent", async (req, res) => {
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: calculateOrderAmount(items),
-      currency: "usd",
+      currency: "eur", 
       automatic_payment_methods: { enabled: true },
     });
 

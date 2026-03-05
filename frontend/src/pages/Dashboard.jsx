@@ -21,6 +21,7 @@ function Dashboard() {
     const [favoritesLoading, setFavoritesLoading] = useState(false);
     const [user, setUser] = useState(null);
     const [username, setUsername] = useState("");
+    const [boughtModels, setBoughtModels] = useState([]);
     const [activeIndex, setActiveIndex] = useState(5);
     const [hoveredCard, setHoveredCard] = useState(null);
     const [userStats, setUserStats] = useState({
@@ -138,6 +139,7 @@ function Dashboard() {
                     if (userDocSnap.exists()) {
                         const userData = userDocSnap.data();
                         setUsername(userData.username || userData.email);
+                        setBoughtModels(userData.bought_models || []);
                     }
                 } catch (error) {
                     console.error("Error getting user data:", error);
@@ -388,8 +390,10 @@ function Dashboard() {
                                                 onClick={() => handleCardClick(model.id)}
                                             >
                                                 {user?.uid !== model.creatorUID && (
-                                                    <div className="price-badge">
-                                                        {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                                    <div className={`price-badge ${boughtModels.includes(model.id) ? 'downloaded-badge' : ''}`}>
+                                                        {boughtModels.includes(model.id)
+                                                            ? 'PURCHASED'
+                                                            : model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
                                                     </div>
                                                 )}
                                                 <img

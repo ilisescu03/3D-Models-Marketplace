@@ -1050,7 +1050,7 @@ function ModelDetails() {
                     <div className={isLargeScreen ? 'rightColumnStyleLarge responsiveFixStyle' : 'rightColumnStyle responsiveFixStyle'}>
                         <div className="detailsCardStyle">
                             {/* === CONDITIONAL PRICE/DOWNLOAD SECTION START === */}
-                            {currentUser && userData?.downloadedModels?.includes(modelId) ? (
+                            {currentUser && (userData?.bought_models?.includes(modelId) || userData?.downloadedModels?.includes(modelId)) ? (
 
                                 <button
                                     className="downloadButtonStyle"

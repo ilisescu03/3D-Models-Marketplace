@@ -1,11 +1,10 @@
-
 import Header from '../UI+UX/Header.jsx';
 import Footer from '../UI+UX/Footer.jsx';
 import { useParams } from 'react-router-dom';
 import { auth, db } from '/backend/firebase.js';
 import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getUserFavoriteModels, getModelsByCreator } from '/backend/models.js';
 import { getUserStats, getFollowers, getFollowing, listenToUserStats, doFollowUser, doUnfollowUser, sendNotification } from '/backend/users.js';
 import CookiesBanner from '../UI+UX/CookiesBanner';
@@ -22,6 +21,7 @@ function OtherDashboard() {
     const [favoritesLoading, setFavoritesLoading] = useState(false);
     const { username } = useParams();
     const [currentUser, setCurrentUser] = useState(null);
+    const [boughtModels, setBoughtModels] = useState([]);
     const [currentUserUsername, setCurrentUserUsername] = useState('');
     const [profileUser, setProfileUser] = useState(null);
     const [profileUserId, setProfileUserId] = useState(null);
@@ -277,6 +277,14 @@ function OtherDashboard() {
         const stop = listenToUserStats(currentUser.uid, (stats) => {
             setViewerStats(stats || { followingList: [] });
         });
+        // Fetch bought_models
+        const fetchBought = async () => {
+            try {
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                if (userDoc.exists()) setBoughtModels(userDoc.data().bought_models || []);
+            } catch (err) { console.error("Error fetching bought models:", err); }
+        };
+        fetchBought();
         return () => stop && stop();
     }, [currentUser]);
 
@@ -431,8 +439,10 @@ function OtherDashboard() {
                                                 onClick={() => handleCardClick(model.id)}
                                             >
                                                 {currentUser?.uid !== model.creatorUID && (
-                                                    <div className="price-badge">
-                                                        {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                                    <div className={`price-badge ${boughtModels.includes(model.id) ? 'downloaded-badge' : ''}`}>
+                                                        {boughtModels.includes(model.id)
+                                                            ? 'PURCHASED'
+                                                            : model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
                                                     </div>
                                                 )}
                                                 <img
@@ -529,8 +539,10 @@ function OtherDashboard() {
                                                 onClick={() => handleCardClick(model.id)}
                                             >
                                                 {currentUser?.uid !== model.creatorUID && (
-                                                    <div className="price-badge">
-                                                        {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                                    <div className={`price-badge ${boughtModels.includes(model.id) ? 'downloaded-badge' : ''}`}>
+                                                        {boughtModels.includes(model.id)
+                                                            ? '⬇ Download'
+                                                            : model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
                                                     </div>
                                                 )}
                                                 <img

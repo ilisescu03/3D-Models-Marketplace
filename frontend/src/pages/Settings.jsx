@@ -339,12 +339,13 @@ function Settings() {
                             >
                                 Password
                             </button>
+                           {/*
                             <button
                                 onClick={() => setActiveTab('payment')}
                                 className={`tab-button ${activeTab === 'payment' ? 'active' : ''}`}
                             >
                                 Payment
-                            </button>
+                            </button>*/}
                             <button
                                 onClick={() => setActiveTab('account')}
                                 className={`tab-button ${activeTab === 'account' ? 'active' : ''}`}
@@ -613,7 +614,7 @@ function Settings() {
                                 </div>
                             )}
 
-                            {/* Payment Tab */}
+                            {/* Payment Tab 
                             {activeTab === 'payment' && (
                                 <div className="card small center">
                                     <h2 className="settings-section-title">Payment Agreement</h2>
@@ -624,7 +625,7 @@ function Settings() {
                                     </p>
                                     <button className="btn">Manage Payment Methods</button>
                                 </div>
-                            )}
+                            )}*/}
 
                             {/* Account Tab */}
                             {activeTab === 'account' && (
@@ -636,10 +637,11 @@ function Settings() {
                                     <div className="info-box">
                                         <strong>Member since:</strong> {userStats.createdAt ? formatFirebaseTimestamp(userStats.createdAt) : 'Unknown'}
                                     </div>
+                                    {/*
                                     <p className="info-muted">
                                         This is your account information. You can view your email address and
                                         membership duration here.
-                                    </p>
+                                    </p>*/}
                                 </div>
                             )}
 

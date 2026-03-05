@@ -9,64 +9,21 @@ import { getModelById } from '/backend/models.js';
 import LoadingScreen from '../UI+UX/LoadingScreen.jsx';
 import '/frontend/css/MyCart.css';
 import { loadStripe } from "@stripe/stripe-js";
-import {Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import CheckoutForm from "./CheckoutForm.jsx"; './CheckoutForm.jsx';
+import { Elements } from "@stripe/react-stripe-js";
+import CheckoutForm from "./CheckoutForm.jsx";
+
 const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY);
+
 function MyCart() {
-
     const [clientSecret, setClientSecret] = useState("");
-
-    const stripe = useStripe();
-    const elements = useElements();
-
-    const [message, setMessage] = useState(null);
-    const [isStripeLoading, setIsStripeLoading] = useState(false);
-
     const { currentUser, userLogedIn } = useAuth();
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [totalPrice, setTotalPrice] = useState(0);
-    const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false); // State for payment form
-    useEffect(() => {
-        // replace this with your own server endpoint
-        fetch("http://localhost:4242/create-payment-intent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: [{}] }),
-        })
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error("Network response was not ok");
-                }
-                return res.json();
-            })
-            .then((data) => setClientSecret(data.clientSecret))
-            .catch((error) => {
-                console.log(error);
-            });
-    }, []);
-    const options = {
-        clientSecret,
-    };
-    useEffect(() => {
-        if (!stripe) {
-            return;
-        }
+    const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
 
-        const clientSecret = new URLSearchParams(window.location.search).get(
-            "payment_intent_client_secret"
-        );
-
-        if (!clientSecret) {
-            return;
-        }
-
-        stripe.retrievePaymentIntent(clientSecret).then(({ paymentIntent }) => {
-            setMessage(paymentIntent.status === "succeeded" ? "Your payment succeeded" : "Unexpected error occurred");
-        });
-    }, [stripe]);
     // Redirect if not logged in
     useEffect(() => {
         if (!userLogedIn) {
@@ -86,28 +43,27 @@ function MyCart() {
         const total = cartItems.reduce((sum, item) => sum + (item.price || 0), 0);
         setTotalPrice(total);
     }, [cartItems]);
-    const handleSubmit = async (e) => {
-        e.preventDefault();
 
-        if (!stripe || !elements) {
-            return;
-        }
+    // ✅ Fetch payment intent DOAR după ce cartItems s-a încărcat și nu e gol
+    useEffect(() => {
+        if (cartItems.length === 0) return;
 
-        setIsStripeLoading(true);
+        const itemsToSend = cartItems.map(item => ({ price: item.price }));
+        console.log("Sending items to Stripe:", itemsToSend);
 
-        const { error } = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-                return_url: "http://localhost:3000",
-            }
-        });
+        fetch("http://localhost:4242/create-payment-intent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: itemsToSend }),
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error("Network response was not ok");
+                return res.json();
+            })
+            .then((data) => setClientSecret(data.clientSecret))
+            .catch((error) => console.log("Stripe fetch error:", error));
+    }, [cartItems]); // ✅ se re-execută când cartItems se schimbă
 
-        if (error && (error.type === "card_error" || error.type === "validation_error")) {
-            setMessage(error.message);
-        }
-
-        setIsStripeLoading(false);
-    };
     const loadCartDetails = async () => {
         try {
             setLoading(true);
@@ -142,11 +98,7 @@ function MyCart() {
     };
 
     const handleCardPaymentClick = () => {
-        setIsPaymentFormOpen(true); // Open the modal
-    };
-
-    const handlePayPalClick = () => {
-        // Does nothing for now
+        setIsPaymentFormOpen(true);
     };
 
     if (loading) {
@@ -207,25 +159,18 @@ function MyCart() {
                                         </div>
                                         <span>Pay with new credit or debit card</span>
                                     </button>
-                                    <button className="payment-button paypal-payment" onClick={handlePayPalClick}>
-                                        <div className="payment-logos">
-                                            <img src="/paypal.svg" style={{ height: '50px' }} alt="PayPal" />
-                                        </div>
-                                        <span>Pay through PayPal</span>
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 ) : (
                     <div className="empty-cart-message">
-
                         <p>Your cart is empty.</p>
                     </div>
                 )}
             </div>
 
-            {/* === PAYMENT FORM MODAL START === */}
+            {/* === PAYMENT FORM MODAL === */}
             <div
                 className={`payment-form-overlay ${isPaymentFormOpen ? 'open' : ''}`}
                 onClick={() => setIsPaymentFormOpen(false)}
@@ -243,18 +188,16 @@ function MyCart() {
 
                     <h3>Card Details</h3>
 
-                    {/* Stripe PaymentElement */}
-                    {clientSecret && (
+                    {/* ✅ clientSecret gata înainte să se deschidă modalul */}
+                    {clientSecret ? (
                         <Elements stripe={stripePromise} options={{ clientSecret }}>
                             <CheckoutForm returnUrl="http://localhost:5173/my-cart" />
                         </Elements>
+                    ) : (
+                        <p>Loading payment form...</p>
                     )}
                 </div>
             </div>
-            {/* === PAYMENT FORM MODAL END === */}
-
-
-
         </div>
     );
 }

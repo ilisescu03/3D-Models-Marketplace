@@ -640,7 +640,7 @@ function UploadModel() {
                                 </div>
                             </div>
 
-                            {/* ADDED: Pricing Section */}
+                            {/* ADDED: Pricing Section 
                             <h2 className="section-title">Pricing</h2>
 
                         {!hasPlatformBankDetails  && (
@@ -716,7 +716,7 @@ function UploadModel() {
                                     />
                                     <p className="hint">Enter a price greater than 0. Use a period (.) for decimals.</p>
                                 </div>
-                            )}
+                            )}*/}
                             {/* Tags */}
                             <h2 className="section-title">Tags</h2>
                             <p className="muted-paragraph">Select tags that describe your model or add your own:</p>

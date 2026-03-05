@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import Header from "../UI+UX/Header";
 import Footer from "../UI+UX/Footer.jsx";
@@ -7,11 +6,13 @@ import CookiesBanner from '../UI+UX/CookiesBanner';
 import { getModels } from '/backend/models.js';
 import '/frontend/css/Home.css';
 import { Mosaic } from "react-loading-indicators";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from '/backend/firebase.js';
 
 function ModelsPage() {
     const [filteredModels, setFilteredModels] = useState([]);
-    // Authentication state and user data
     const { currentUser, userLogedIn } = useAuth();
+    const [boughtModels, setBoughtModels] = useState([]);
     // State for storing models data
     const [models, setModels] = useState([]);
     // Loading state
@@ -190,6 +191,18 @@ function ModelsPage() {
     
         };
     }, [category]); 
+    // Fetch bought_models
+    useEffect(() => {
+        if (!currentUser) { setBoughtModels([]); return; }
+        const fetchBought = async () => {
+            try {
+                const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+                if (userDoc.exists()) setBoughtModels(userDoc.data().bought_models || []);
+            } catch (err) { console.error("Error fetching bought models:", err); }
+        };
+        fetchBought();
+    }, [currentUser]);
+
     // Function to load models from backend
     const loadModels = async () => {
         try {
@@ -1274,8 +1287,10 @@ function ModelsPage() {
                                             onClick={() => handleCardClick(model.id)}
                                         >
                                             {currentUser?.uid !== model.creatorUID && (
-                                                <div className="price-badge">
-                                                    {model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
+                                                <div className={`price-badge ${boughtModels.includes(model.id) ? 'downloaded-badge' : ''}`}>
+                                                    {boughtModels.includes(model.id)
+                                                        ? 'PURCHASED'
+                                                        : model.price > 0 ? `€${model.price.toFixed(2)}` : 'FREE'}
                                                 </div>
                                             )}
                                             <img
