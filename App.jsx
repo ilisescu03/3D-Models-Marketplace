@@ -24,6 +24,7 @@ const CookiePolicy = lazy(() => import('/frontend/src/pages/CookiePolicy.jsx'));
 const TermsAndConditions = lazy(() => import('/frontend/src/pages/TermsAndConditions.jsx'));
 const Contact = lazy(() => import('/frontend/src/pages/Contact.jsx'));
 const MyCart = lazy(() => import('/frontend/src/pages/MyCart.jsx'));
+const MyLibrary = lazy(() => import('/frontend/src/pages/MyLibrary.jsx'));
 
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -76,7 +77,7 @@ function App() {
           <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/terms&conditions" element={<TermsAndConditions />} />
           <Route path="/contact" element={<Contact />} />
-           <Route 
+          <Route 
           path="/my-cart" 
           element={
             <Elements stripe={stripePromise}>
@@ -84,6 +85,7 @@ function App() {
             </Elements>
           } 
         />
+          <Route path="/my-library" element={<MyLibrary />} />
         </Routes>
       </Suspense>
     </>

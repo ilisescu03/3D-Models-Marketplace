@@ -94,7 +94,9 @@ function Home() {
             <CookiesBanner />
 
             <div className="hero-section">
+               
                 <div className="hero-content">
+                     <div className="hero-background"></div>
                     {/*Text column */}
                     <div className="hero-text">
                         {userLogedIn ? (

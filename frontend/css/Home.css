@@ -1,9 +1,10 @@
 
 /* Background and page scaffolding */
 .home-background {
-  background-image: url('/background.jpg');
+  background: white;
   background-attachment: fixed;
   background-position: center;
+  
   background-repeat: no-repeat;
   background-size: cover;
   min-height: 100vh;
@@ -21,8 +22,27 @@
   justify-content: center;
   padding: 40px;
   box-sizing: border-box;
-  color:white;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.5) 100%);
+  color: white;
+  background: transparent; 
+  position: relative;
+  overflow: hidden;
+  z-index: 1; 
+}
+.hero-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+              url('/background2.jpg');
+  
+  background-position: center 70%; 
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: scroll; 
+  z-index: -1; 
 }
 .hero-content {
   display: flex;

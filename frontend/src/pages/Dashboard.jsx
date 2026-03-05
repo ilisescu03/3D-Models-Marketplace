@@ -262,6 +262,12 @@ function Dashboard() {
                         >
                             Favourites
                         </button>
+                        <button
+                            onClick={() => navigate('/my-library')}
+                            className="tab-btn"
+                        >
+                            My Library
+                        </button>
                     </div>
 
                     {/* Tab content 1 - Your Work*/}
