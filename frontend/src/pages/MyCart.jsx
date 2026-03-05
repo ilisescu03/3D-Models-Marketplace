@@ -23,7 +23,10 @@ function MyCart() {
     const [error, setError] = useState(null);
     const [totalPrice, setTotalPrice] = useState(0);
     const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
+    const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
+    // În componentă:
+    const currentOrigin = window.location.origin; //
     // Redirect if not logged in
     useEffect(() => {
         if (!userLogedIn) {
@@ -45,24 +48,22 @@ function MyCart() {
     }, [cartItems]);
 
     // ✅ Fetch payment intent DOAR după ce cartItems s-a încărcat și nu e gol
+    // În MyCart.jsx
     useEffect(() => {
         if (cartItems.length === 0) return;
 
         const itemsToSend = cartItems.map(item => ({ price: item.price }));
-        console.log("Sending items to Stripe:", itemsToSend);
+        const apiUrl = import.meta.env.VITE_API_URL;
 
-        fetch("http://localhost:4242/create-payment-intent", {
+        fetch(`${apiUrl}/create-payment-intent`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ items: itemsToSend }),
         })
-            .then((res) => {
-                if (!res.ok) throw new Error("Network response was not ok");
-                return res.json();
-            })
+            .then((res) => res.json())
             .then((data) => setClientSecret(data.clientSecret))
-            .catch((error) => console.log("Stripe fetch error:", error));
-    }, [cartItems]); // ✅ se re-execută când cartItems se schimbă
+            .catch((err) => console.log("Fetch error:", err));
+    }, [cartItems]);
 
     const loadCartDetails = async () => {
         try {
@@ -188,10 +189,10 @@ function MyCart() {
 
                     <h3>Card Details</h3>
 
-                    {/* ✅ clientSecret gata înainte să se deschidă modalul */}
                     {clientSecret ? (
                         <Elements stripe={stripePromise} options={{ clientSecret }}>
-                            <CheckoutForm returnUrl="http://localhost:5173/my-cart" />
+                            {/* MODIFICĂ LINIA DE MAI JOS: */}
+                            <CheckoutForm returnUrl={`${currentOrigin}/my-library`} />
                         </Elements>
                     ) : (
                         <p>Loading payment form...</p>
