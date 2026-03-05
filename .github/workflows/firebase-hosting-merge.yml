@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Install and Build
-        run: |
+        run: 
           npm run build
         env:
           # Mapează aici toate secretele din imaginea ta GitHub:
