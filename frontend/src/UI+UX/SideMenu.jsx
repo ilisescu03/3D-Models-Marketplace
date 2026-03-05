@@ -85,7 +85,7 @@ const arrowStyle = {
     marginLeft: '5px'
 }
 
-function SideMenu({ isOpen, onClose, children, activeIndex }) {
+function SideMenu({ isOpen, onClose, children, activeIndex, isMobile }) {
     const menuRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [isMenuExpanded, setIsMenuExpanded] = useState(false);
@@ -354,6 +354,28 @@ function SideMenu({ isOpen, onClose, children, activeIndex }) {
                                     </button>
                                 </div>
                             </div>
+                            {/* Upload button - only visible on mobile for logged in users */}
+                            {isMobile && (
+                                <button
+                                    onClick={() => {
+                                        window.location.href = '/upload';
+                                        onClose();
+                                    }}
+                                    style={{
+                                        ...buttonStyle,
+                                        marginTop: '20px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(204, 100, 3, 1)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 123, 0, 1)'}
+                                >
+                                    <img src="/UploadButton.png" alt="Upload" style={{ width: '15px', filter: 'invert(1)' }} />
+                                    Upload
+                                </button>
+                            )}
                         </>
                     ) : (
                         // User is not logged in

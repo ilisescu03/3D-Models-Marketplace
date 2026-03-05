@@ -259,7 +259,7 @@ function Header() {
                         alignItems: 'flex-end',
                         gap: '0px',
                         position: 'relative',
-                        left: '8rem',
+                        left: '5rem',
                         paddingRight: '0px'
                     }}>
 
@@ -389,22 +389,11 @@ function Header() {
                                 </div>
 
                             </div>) : null}
-                        {!loading && user ? (
-                            /* Upload button */
-                            <button style={imageButtonStyle}
-                                onClick={() => {
-                                    if (user) {
-                                        navigate('/upload');
-                                    }
-                                }}>
-                                <img src='/UploadButton.png' alt='Upload' style={{ height: '22px', position: 'relative', left: '-7.5rem', marginBottom: '0px', filter: 'invert(0%)' }} />
-                            </button>
-                        ) : null}
                     </div>
                 </nav>
             </header>
             {/* Side menu component */}
-            <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)}></SideMenu>
+            <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} isMobile={true}></SideMenu>
         </>)
     }
 
