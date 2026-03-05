@@ -14,7 +14,6 @@ jobs:
       
       - name: Install and Build
         run: |
-          npm ci
           npm run build
         env:
           # Mapează aici toate secretele din imaginea ta GitHub:
