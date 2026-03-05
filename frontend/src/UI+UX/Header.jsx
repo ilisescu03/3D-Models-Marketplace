@@ -259,7 +259,7 @@ function Header() {
                         alignItems: 'flex-end',
                         gap: '0px',
                         position: 'relative',
-                        left: '10rem',
+                        left: '8rem',
                         paddingRight: '0px'
                     }}>
 
