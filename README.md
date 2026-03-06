@@ -6,6 +6,7 @@
 
 ShapeHive is a comprehensive online marketplace for 3D models, designed for graphic designers, 3D artists, game developers, architects, and hobbyists. The platform allows creators to upload and sell their 3D models while enabling buyers to discover, preview, and purchase high-quality digital assets.
 
+ [shapehive.tech](https://shapehive.tech)
 ---
 
 ## Table of Contents
