@@ -248,16 +248,19 @@ ShapeHive uses **Stripe** for secure payment processing:
 ## License
 This project is developed for commercial and demonstration purposes, serving as a comprehensive showcase of full-stack capabilities, including secure payment integration and 3D asset management.
 
-The software is released under the MIT License.
+The software is released under the GNU General Public License v2.0 (GPLv2).
 
 Key Terms:
-Permissive Use: You are free to use, copy, and modify the code for both personal and commercial projects.
+
+Copyleft: If you modify and distribute this software, you must make the source code available under the same GPL v2.0 license.
+
+Commercial Use: The licensed material and derivatives may be used for commercial purposes.
+
+Distribution: You are free to copy and distribute verbatim copies of this license document and the software.
 
 Demonstration Focus: While the project is a functional marketplace, it is primarily intended to demonstrate architectural best practices (React, Firebase, Stripe).
 
-No Warranty: The software is provided "as is", meaning the author is not liable for any issues arising from its use in production environments.
-
----
+No Warranty: The software is provided "as is". The author provides no warranty and is not liable for any issues arising from its use.
 
 ## Credits
 
