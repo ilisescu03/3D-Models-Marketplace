@@ -148,9 +148,9 @@ function Footer({ onManageCookiesClick }) {
                     </ul>
                 </div>
 
-                {/* --- COLUMN 3: COMPANY --- */}
+                {/* --- COLUMN 3: Contact and policy --- */}
                 <div style={columnStyle}>
-                    <h4 style={titleStyle}>Company</h4>
+                    <h4 style={titleStyle}>Contact & Policy</h4>
                     <ul style={listStyle}>
                         <li><a href="/contact" style={linkStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>About Me</a></li>
                         <li><a href="/terms&conditions" style={linkStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>Terms & Conditions</a></li>

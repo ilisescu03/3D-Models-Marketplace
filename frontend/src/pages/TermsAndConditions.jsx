@@ -4,9 +4,9 @@ import Header from "../UI+UX/Header";
 // Reusing the background style for consistency
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
-    backgroundAttachment: "fixed",
+    backgroundAttachment: "scroll",
     backgroundPosition: "center",
-    backgroundRepeat: "repeat",
+    backgroundRepeat: "no-repeat",
     backgroundSize: "cover",
     minHeight: "100vh",
     display: 'flex',
@@ -143,8 +143,22 @@ function TermsAndConditions() {
                 <p>
                     These terms and conditions will be governed by and construed in accordance with the laws of Romania. Any dispute arising from or in connection with these terms shall be subject to the exclusive jurisdiction of the courts of Romania.
                 </p>
+
+                <h2 style={h2Style}>8. Refund Policy</h2>
+                <p>
+                    At ShapeHive, we strive to ensure customer satisfaction with every purchase. However, we understand that sometimes a refund may be necessary.
+                </p>
+                <ul style={{ listStyleType: 'disc', paddingLeft: '20px' }}>
+                    <li><strong>Digital Products:</strong> All 3D model purchases are final and non-refundable, as digital files cannot be returned once downloaded or accessed. We encourage buyers to preview available models and read descriptions carefully before purchasing.</li>
+                    <li><strong>Technical Issues:</strong> If you encounter technical problems with a purchased model (e.g., corrupted files, missing textures, or incompatible formats), please contact us within 14 days of purchase. We will work to resolve the issue or provide a replacement file at no additional cost.</li>
+                    <li><strong>Unauthorized Charges:</strong> If you notice any unauthorized charges on your account, please contact us immediately. We will investigate and issue a refund if appropriate.</li>
+                    <li><strong>Subscription Cancellations:</strong> If you have a subscription service, you may cancel at any time. Refunds will be prorated based on the remaining subscription period.</li>
+                </ul>
+                <p>
+                    To request a refund or report an issue, please contact us at: <a href="mailto:ilici75@gmail.com">ilici75@gmail.com</a>.
+                </p>
                 
-                <h2 style={h2Style}>8. Contact</h2>
+                <h2 style={h2Style}>9. Contact</h2>
                 <p>
                     If you have any questions about these Terms and Conditions, you can contact us at the email address: <a href="mailto:ilici75@gmail.com">ilici75@gmail.com</a>.
                 </p>

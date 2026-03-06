@@ -5,19 +5,19 @@ import Header from "../UI+UX/Header";
 import '/frontend/css/Contact.css';
 
 function Contact() {
-    const form = useRef(); 
+    const form = useRef();
     const [status, setStatus] = useState('');
     useEffect(() => {
-       
-            document.title = `Contact - ShapeHive`;
-        
+
+        document.title = `Contact - ShapeHive`;
+
 
     }, []);
     const handleSubmit = (e) => {
         e.preventDefault();
         setStatus('submitting');
 
-        
+
         const serviceID = import.meta.env.VITE_EMAIL_SEND_SERVICE;
         const templateID = import.meta.env.VITE_EMAIL_SEND_TEMPLATE;
         const publicKey = import.meta.env.VITE_EMAIL_SEND_KEY;
@@ -28,7 +28,7 @@ function Contact() {
                 setStatus('success');
                 form.current.reset();
             }, (error) => {
-                 console.error("Eroare EmailJS:", error); 
+                console.error("Eroare EmailJS:", error);
                 setStatus('error');
             });
     };
@@ -43,22 +43,25 @@ function Contact() {
                         <div className="about-me-section">
                             <h1 className="contact-title">About Me</h1>
                             <div className="about-me-content">
-                                <div className="profile-picture-placeholder">
-                                    {/* The image component will go here */}
-                                </div>
+
+                                <img src="profilepic.webp"
+                                    className="profile-picture-placeholder"
+
+                                />
                                 <div className="about-me-text">
                                     <p>
-                                        <strong>Ilisescu Adrian (Founder)</strong>
+                                        <strong>Ilisescu Adrian </strong>
                                     </p>
                                     <p>
-                                        I am a passionate freelancer and creative graphic designer with a modern vision for digital art. I am dedicated to transforming ideas into remarkable visual concepts, whether for branding, illustrations, or web design. My goal is to deliver custom solutions that not only meet but exceed client expectations.
+                                        I am a passionate freelancer. I am dedicated to transforming ideas into remarkable visual concepts, whether for branding, illustrations, or web design. My goal is to deliver custom solutions that not only meet but exceed client expectations.
                                     </p>
                                     <div className="contact-info">
+                                        <p><strong>Website:</strong><a href="https://ilisescuadrian.dev">https://ilisescuadrian.dev</a></p>
                                         <p><strong>Phone:</strong> +40 723 990 262</p>
                                         <div className="social-media-links">
-                                            <a href="#" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-                                            <a href="#" target="_blank" rel="noopener noreferrer">TikTok</a>
-                                            <a href="#" target="_blank" rel="noopener noreferrer">Instagram</a>
+                                            <a href="https://www.linkedin.com/in/adrian-ilisescu-771a11300/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                                            <a href="https://github.com/ilisescu03" target="_blank" rel="noopener noreferrer">GitHub</a>
+                                            <a href="mailto:ilisescuadrian03@gmail.com" target="_blank" rel="noopener noreferrer">Email</a>
                                         </div>
                                     </div>
                                 </div>
@@ -78,7 +81,7 @@ function Contact() {
                                     <input type="email" id="email" name="email" required />
                                 </div>
 
-                               
+
                                 <div className="form-group">
                                     <label htmlFor="title">Title</label>
                                     <input type="text" id="title" name="title" required />
