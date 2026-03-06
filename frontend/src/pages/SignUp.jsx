@@ -14,7 +14,7 @@ const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
     backgroundAttachment: "fixed",
     backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
+    backgroundRepeat: "repeat",
     backgroundSize: "cover",
     minHeight: "100vh",
     display: 'flex',

@@ -10,9 +10,9 @@ import LoadingScreen from "../UI+UX/LoadingScreen";
 
 const backgroundStyle = {
     backgroundImage: `url(/background.jpg)`,
-    backgroundAttachment: "fixed",
+    backgroundAttachment: "scroll",
     backgroundPosition: "center",
-    backgroundRepeat: "repeat",
+    backgroundRepeat: "no-repeat",
     backgroundSize: "cover",
     minHeight: "100vh",
     display: 'flex',
