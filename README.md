@@ -123,7 +123,6 @@ The platform is built with modern web technologies and follows best practices fo
 ### Other Libraries
 - **emailjs/browser** - Email sending service
 - **jszip** - ZIP file creation
-- **node-unrar-js** - RAR archive handling
 - **lucide-react** - Icon library
 - **react-loading-indicators** - Loading animations
 
