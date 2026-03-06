@@ -1,6 +1,6 @@
 # ShapeHive - 3D Models Marketplace
 
-<p align="center">
+<p align="left">
   <img src="public/WebsiteLogo2.png" alt="ShapeHive Logo" width="200"/>
 </p>
 
@@ -15,11 +15,9 @@ ShapeHive is a comprehensive online marketplace for 3D models, designed for grap
 3. [Pages Overview](#pages-overview)
 4. [Tech Stack](#tech-stack)
 5. [Project Structure](#project-structure)
-6. [Getting Started](#getting-started)
-7. [Firebase Services](#firebase-services)
-8. [Payment Integration](#payment-integration)
-9. [Deployment](#deployment)
-10. [Future Enhancements](#future-enhancements)
+6. [Firebase Services](#firebase-services)
+7. [Payment Integration](#payment-integration)
+8. [Future Enhancements](#future-enhancements)
 
 ---
 
@@ -101,7 +99,6 @@ The platform is built with modern web technologies and follows best practices fo
 - **React 19** - Modern React framework with hooks
 - **React Router v7** - Client-side routing
 - **Vite** - Next-generation build tool
-- **Three.js** - 3D graphics library for model previews
 - **@react-three/fiber** - React renderer for Three.js
 - **@react-three/drei** - Useful helpers for react-three-fiber
 - **CSS Modules / Inline Styles** - Component-level styling
@@ -129,6 +126,13 @@ The platform is built with modern web technologies and follows best practices fo
 - **node-unrar-js** - RAR archive handling
 - **lucide-react** - Icon library
 - **react-loading-indicators** - Loading animations
+
+
+<img width="75" height="75" alt="image" src="https://github.com/user-attachments/assets/9a9192a8-4b6f-4e0e-9c56-6d85359d75b8" />
+<img width="75" height="75" alt="image" src="https://github.com/user-attachments/assets/65132251-a925-481e-a658-b658c0b2c1a3" />
+<img width="75" height="75" alt="image" src="https://github.com/user-attachments/assets/7b0839d7-5293-481e-80da-4e31a275d7aa" />
+<img width="75" height="75" alt="image" src="https://github.com/user-attachments/assets/2a5ace05-edff-4913-9f9e-22dbf3b066cd" />
+<img width="75" height="75" alt="image" src="https://github.com/user-attachments/assets/9aeeb9d4-05be-4b5a-ba44-6d3199f6d55b" />
 
 ---
 
@@ -193,58 +197,7 @@ The platform is built with modern web technologies and follows best practices fo
 
 ---
 
-## Getting Started
 
-### Prerequisites
-
-- Node.js (v18+)
-- npm or yarn
-- Firebase project with:
-  - Authentication enabled (Email/Password, Google)
-  - Firestore database
-  - Storage bucket
-- Stripe account (for payments)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd 3D-Models-Marketplace
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   
-   Create a `.env` file in the root directory:
-   ```env
-   # Firebase Configuration
-   VITE_FIREBASE_API_KEY=your_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-   VITE_FIREBASE_APP_ID=your_app_id
-
-   # Stripe Configuration
-   VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-   ```
-
-4. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Build for production**
-   ```bash
-   npm run build
-   ```
-
----
 
 ## Firebase Services
 
@@ -263,7 +216,7 @@ Collections:
 - `comments` - Model comments/reviews
 
 ### Storage
-- 3D model file uploads (.zip, .rar, .7z)
+- 3D model file uploads (.zip, .fbx, .obj ...)
 - Model preview images
 - User avatars
 
@@ -281,55 +234,35 @@ ShapeHive uses **Stripe** for secure payment processing:
 
 ### Supported Payment Methods
 - Credit/Debit Cards (Visa, Mastercard, American Express)
-- PayPal integration available
+
 
 ---
 
-## Deployment
 
-### Frontend (Firebase Hosting)
-```bash
-firebase deploy --only hosting
-```
-
-### Firebase Cloud Functions
-```bash
-firebase deploy --only functions
-```
-
-### GitHub Actions
-The project includes CI/CD workflow for automatic deployment on merge to main branch.
-
----
 
 ## Future Enhancements
 
-- [ ] User reviews and ratings system
-- [ ] Model wishlist/favorites
-- [ ] Social sharing features
-- [ ] More payment gateways (PayPal, etc.)
-- [ ] Advanced search filters
-- [ ] Real-time chat between users
-- [ ] Subscription plans for creators
-- [ ] Mobile app development
-- [ ] Multi-language support
-- [ ] AI-powered model recommendations
+- [ ] Users can become sellers
 
 ---
 
 ## License
+This project is developed for commercial and demonstration purposes, serving as a comprehensive showcase of full-stack capabilities, including secure payment integration and 3D asset management.
 
-This project is for educational and demonstration purposes.
+The software is released under the MIT License.
+
+Key Terms:
+Permissive Use: You are free to use, copy, and modify the code for both personal and commercial projects.
+
+Demonstration Focus: While the project is a functional marketplace, it is primarily intended to demonstrate architectural best practices (React, Firebase, Stripe).
+
+No Warranty: The software is provided "as is", meaning the author is not liable for any issues arising from its use in production environments.
 
 ---
 
-## Contact
+## Credits
 
-For questions or inquiries:
-- Email: ilici75@gmail.com
-- Website: https://shapehive.com
-
----
-
-<p align="center">Built with ❤️ using React, Firebase, and Three.js</p>
+<a href="https://github.com/ilisescu03">
+  <img src="https://github.com/user-attachments/assets/a829fc36-b57c-4885-a226-ec71d954b17e" width="100" height="100" alt="GitHub Profile">
+</a>
 
